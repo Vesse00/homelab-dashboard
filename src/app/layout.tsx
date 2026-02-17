@@ -1,5 +1,6 @@
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import Providers from "@/components/Providers";
 
 export default function RootLayout({
   children,
@@ -26,18 +27,18 @@ export default function RootLayout({
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-950/80 to-slate-950" />
         </div>
 
+        <Providers>
+          {/* Navbar jest fixed */}
+          <Navbar />
 
-        {/* Navbar jest fixed */}
-        <Navbar />
-
-        {/* Główny kontener z Twoim ustawieniem pt-16 (64px) */}
-        {/* Dodajemy relative z-10, żeby treść była na pewno nad tłem */}
-        <main className="pt-16 relative z-10">
-          {/* Usunąłem px-6, żeby wykorzystać pełną szerokość, jeśli będziesz chciał */}
-          <div className="w-full h-full">
-            {children}
-          </div>
-        </main>
+          <main className="pt-16 relative z-10">
+            {/* Usunąłem px-6, żeby wykorzystać pełną szerokość, jeśli będziesz chciał */}
+            <div className="w-full h-full">
+              {children}
+            </div>
+          </main>
+        </Providers>
+        
       </body>
     </html>
   );

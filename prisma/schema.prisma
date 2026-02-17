@@ -3,11 +3,12 @@
 
 generator client {
   provider = "prisma-client-js"
+  engineType = "library"
 }
 
 datasource db {
   provider = "sqlite"
-  url = "file:./dev.db"
+  url       = env("DATABASE_URL")
 }
 
 model ContainerStat {
@@ -71,4 +72,14 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([email, token])
 }
