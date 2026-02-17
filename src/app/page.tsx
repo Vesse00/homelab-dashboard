@@ -1,5 +1,6 @@
 'use client';
 
+
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import DockerWidget from '@/components/widgets/DockerWidget';
@@ -12,6 +13,7 @@ export default function Dashboard() {
       .then(res => res.json())
       .then(data => setContainers(data));
   }, []);
+  
 
   return (
     <main className="min-h-screen  text-white p-8">
