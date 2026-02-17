@@ -1,0 +1,25 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url = "file:./dev.db"
+}
+
+model ContainerStat {
+  id          Int      @id @default(autoincrement())
+  containerId String
+  name        String
+  state       String   // np. "running", "exited"
+  status      String   // np. "Up 2 hours"
+  cpu         Float?   // opcjonalnie: użycie procka (dodamy później)
+  memory      Float?   // opcjonalnie: użycie ramu
+  createdAt   DateTime @default(now())
+  
+  // Indeks przyspieszy wyszukiwanie historii dla konkretnego kontenera
+  @@index([containerId])
+}
