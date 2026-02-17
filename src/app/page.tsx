@@ -1,57 +1,49 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import DashboardGrid from '@/components/DashboardGrid';
+import { motion } from 'framer-motion';
+import DockerWidget from '@/components/widgets/DockerWidget';
 
-export default function Home() {
-  const [containers, setContainers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchData = () => {
-    fetch('/api/containers') // To Twoje stare API, które zwraca listę
-      .then((res) => res.json())
-      .then((data) => {
-        if (!data.error) setContainers(data);
-      })
-      .finally(() => setLoading(false));
-  };
+export default function Dashboard() {
+  const [containers, setContainers] = useState([]);
 
   useEffect(() => {
-    fetchData();
-    // Odświeżaj listę co 10 sekund
-    const interval = setInterval(fetchData, 10000);
-    return () => clearInterval(interval);
+    fetch('/api/containers')
+      .then(res => res.json())
+      .then(data => setContainers(data));
   }, []);
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-200 p-8">
-      <div className="max-w-7xl mx-auto">
-        <header className="mb-10 flex justify-between items-center">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
-              Homelab Command Center
-            </h1>
-            <p className="text-slate-500 mt-2">
-              Status systemu i monitorowanie kontenerów
-            </p>
-          </div>
-          <div className="text-right">
-            <div className="text-3xl font-mono font-bold">
-              {containers.filter(c => c.State === 'running').length} / {containers.length}
-            </div>
-            <div className="text-xs text-slate-500 uppercase tracking-widest">Online</div>
-          </div>
+    <main className="min-h-screen  text-white p-8">
+      <div className="max-w-6xl mx-auto">
+        <header className="mb-12">
+          <h1 className="text-3xl font-bold tracking-tight">Cześć, Admin 👋</h1>
+          <p className="text-slate-500">Wszystkie systemy działają prawidłowo.</p>
         </header>
 
-        {loading ? (
-          <div className="text-center py-20 animate-pulse text-blue-400">
-            Łączenie z bazą...
-          </div>
-        ) : (
-          <div className="mt-8">
-            <DashboardGrid containers={containers} />
-          </div>
-        )}
+        {/* Miejsce na Widgety - Teraz Draggable! */}
+        <div className="flex flex-wrap gap-6">
+          
+          {/* DRAGGABLE WRAPPER DLA WIDGETA DOCKER */}
+          <motion.div
+            drag
+            dragConstraints={{ left: 0, right: 800, top: 0, bottom: 500 }}
+            dragElastic={0.1}
+            whileDrag={{ scale: 1.05, zIndex: 50 }}
+            className="w-full max-w-sm"
+          >
+            <DockerWidget containers={containers} />
+          </motion.div>
+
+          {/* TUTAJ DODAMY KOLEJNE WIDGETY (KALENDARZ, SYSTEM) */}
+          <motion.div
+            drag
+            className="w-full max-w-sm h-48 bg-slate-900/40 border border-dashed border-slate-800 rounded-3xl flex items-center justify-center text-slate-600"
+          >
+            Miejsce na kolejny widget...
+          </motion.div>
+
+        </div>
       </div>
     </main>
   );

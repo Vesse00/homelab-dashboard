@@ -38,7 +38,7 @@ export default function ContainerCard({ container }: Props) {
     `}>
       
       {/* Header */}
-      <div className="flex justify-between items-start mb-2 z-10 relative">
+      <div className="flex justify-between items-start mb-2 z-10 relative drag-handle cursor-move">
         <div className="overflow-hidden">
           <h3 className="font-bold text-lg text-slate-100 truncate pr-2" title={container.Names[0]}>
             {container.Names[0].replace('/', '')}

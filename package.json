@@ -12,6 +12,8 @@
     "@prisma/client": "5.10.2",
     "date-fns": "^4.1.0",
     "dockerode": "^4.0.9",
+    "framer-motion": "^12.34.1",
+    "lucide-react": "^0.574.0",
     "next": "16.1.6",
     "prisma": "5.10.2",
     "react": "19.2.3",
