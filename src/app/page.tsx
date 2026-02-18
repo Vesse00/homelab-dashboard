@@ -55,30 +55,32 @@ export default function Dashboard() {
   const [availableServices, setAvailableServices] = useState<any[]>([]);
 
   // Zapisywanie layoutu do localStorage (prymitywne persistence)
-  useEffect(() => {
-    const fetchLayout = async () => {
+useEffect(() => {
+    const fetchData = async () => {
       if (session?.user) {
         try {
-          const res = await fetch('/api/user/layout');
-          const data = await res.json();
-          if (data.layout) {
-            setWidgets(data.layout);
+          // 1. Pobierz Layout Dashboardu
+          const layoutRes = await fetch('/api/user/layout');
+          const layoutData = await layoutRes.json();
+          if (layoutData.layout) {
+            setWidgets(layoutData.layout);
           } else {
-            // Jeśli użytkownik jest nowy i nie ma layoutu w bazie, użyj domyślnego
             setWidgets(DEFAULT_LAYOUT);
           }
-        } catch (e) {
-          console.error("Błąd pobierania layoutu", e);
-        }
 
-        try {
-         const res = await fetch('/api/docker/scan'); // Metoda GET pobiera z bazy
-         const data = await res.json();
-         if (data.services) setAvailableServices(data.services);
-      } catch(e) { console.error(e); }
+          // 2. Pobierz Zapisane Usługi (To jest to, czego brakowało!)
+          const servicesRes = await fetch('/api/docker/scan');
+          const servicesData = await servicesRes.json();
+          if (servicesData.services) {
+            setAvailableServices(servicesData.services);
+          }
+
+        } catch (e) {
+          console.error("Błąd pobierania danych", e);
+        }
       }
     };
-    fetchLayout();
+    fetchData();
   }, [session]); // Uruchom, gdy sesja się załaduje
 
 const handleScan = async () => {
@@ -105,6 +107,29 @@ const handleScan = async () => {
   };
 
 
+  const addServiceWidget = async (serviceData: any) => {
+    const newId = widgets.length > 0 ? (Math.max(...widgets.map(w => parseInt(w.i))) + 1).toString() : "1";
+    
+    // Tworzymy widget na podstawie zapisanych danych
+    const newWidget: WidgetItem = {
+      i: newId,
+      x: 0, 
+      y: Infinity, // Grid sam znajdzie miejsce na dole
+      w: 2,
+      h: 2,
+      type: WIDGET_TYPES.SERVICE,
+      data: serviceData // Przekazujemy gotowe dane (nazwa, ikona, url)
+    };
+
+    const newWidgets = [...widgets, newWidget];
+    setWidgets(newWidgets);
+    
+    // Zapisz layout
+    await saveLayout(newWidgets); // Używamy Twojej funkcji saveLayout
+    
+    setIsAddMenuOpen(false);
+    toast.success(`Dodano ${serviceData.name}`);
+  };
 
 
   // 2. IMPORTOWANIE Z MODALA (dodaje widgety na pulpit)
@@ -261,6 +286,34 @@ const handleScan = async () => {
                       </button>
                       {/* Tu dodasz kolejne typy widgetów */}
                     </div>
+                    {/* --- NOWA SEKCJA: TWOJE APLIKACJE --- */}
+                    {availableServices.length > 0 && (
+                      <div className="p-2 border-t border-slate-700/50 space-y-1">
+                         <p className="text-xs font-bold text-slate-500 uppercase px-3 py-2">Twoje Aplikacje</p>
+                         {availableServices.map((service, idx) => (
+                            <button 
+                              key={idx}
+                              onClick={() => addServiceWidget(service)}
+                              className="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors flex items-center gap-2"
+                            >
+                              {/* Kropka w kolorze aplikacji */}
+                              <div className={`w-2 h-2 rounded-full bg-${service.color}-500 shadow-[0_0_5px_currentColor] text-${service.color}-500`} /> 
+                              <span className="truncate">{service.name}</span>
+                            </button>
+                         ))}
+                      </div>
+                    )}
+
+                    <div className="p-2 border-t border-slate-700/50 bg-slate-900 sticky bottom-0">
+                      <button 
+                        onClick={handleScan}
+                        className="w-full text-center px-3 py-2 text-xs font-bold text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 rounded-lg border border-dashed border-purple-500/30 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <Radar size={14} />
+                        Skanuj ponownie
+                      </button>
+                    </div>
+
                   </div>
                 )}
               </motion.div>

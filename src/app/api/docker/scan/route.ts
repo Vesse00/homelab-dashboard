@@ -4,8 +4,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
 import { KNOWN_APPS } from '@/app/lib/appMap';
+import { headers } from 'next/headers'; // <--- DODAJ IMPORT
 
-// GET: Pobiera zapisane usługi (do wyświetlenia w menu)
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session || !session.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -19,40 +19,43 @@ export async function GET() {
   return NextResponse.json({ services });
 }
 
-// POST: Skanuje Dockera i ZAPISUJE wyniki w bazie
 export async function POST() {
   const session = await getServerSession(authOptions);
   if (!session || !session.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
+    // 1. Pobierz adres IP (host), z którego przyszło żądanie
+    // Dzięki temu, jeśli wchodzisz przez 192.168.1.63, widgety też dostaną taki adres
+    const headersList = await headers();
+    const hostHeader = headersList.get('host') || 'localhost';
+    const hostname = hostHeader.split(':')[0]; // Usuwamy port dashboardu (np. :3000)
+
     const docker = new Docker({ socketPath: '/var/run/docker.sock' });
     const containers = await docker.listContainers();
     
-    // Lista usług, którą zapiszemy w bazie
     const foundServices: any[] = [];
 
     containers.forEach((c) => {
       const image = c.Image.toLowerCase();
-      // Sprawdzamy czy obraz pasuje do znanych aplikacji
+      
       for (const [key, config] of Object.entries(KNOWN_APPS)) {
         if (image.includes(key)) {
-            // URL domyślny
-            const url = `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:${config.port}`;
+            // 2. Używamy wykrytego hostname zamiast 'localhost'
+            const url = `http://${hostname}:${config.port}`;
             
             foundServices.push({
                 name: config.name,
                 icon: config.icon,
                 url: url,
                 color: config.color,
-                status: 'running' // Domyślnie running, bo znaleźliśmy kontener
+                status: 'running',
+                widgetType: config.widgetType,
             });
             break; 
         }
       }
     });
 
-    // ZAPIS DO BAZY
-    // Możemy nadpisać stare lub dodać nowe (tutaj nadpisujemy listę dostępnych opcji)
     await prisma.user.update({
       where: { email: session.user.email },
       data: { discoveredServices: JSON.stringify(foundServices) }
