@@ -1,53 +1,158 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import { X, GripHorizontal, Activity, Server, ExternalLink } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ReactNode } from 'react';
 
-interface Props {
-  containers: any[];
+interface DockerWidgetProps {
+  style?: React.CSSProperties;
+  className?: string;
+  onMouseDown?: React.MouseEventHandler;
+  onMouseUp?: React.MouseEventHandler;
+  onTouchEnd?: React.TouchEventHandler;
+  id: string;
+  title: string;
+  isEditMode: boolean;
+  onRemove: (id: string) => void;
+  children?: ReactNode;
 }
 
-export default function DockerWidget({ containers }: Props) {
-  const online = containers.filter(c => c.State === 'running').length;
-  const total = containers.length;
-  const percentage = total > 0 ? (online / total) * 100 : 0;
+export default function DockerWidget({
+  style,
+  className,
+  onMouseDown,
+  onMouseUp,
+  onTouchEnd,
+  id,
+  title,
+  isEditMode,
+  onRemove,
+}: DockerWidgetProps) {
+  const router = useRouter();
+  
+  // Stan na dane z API
+  const [data, setData] = useState({ running: 0, total: 0, uptime: '0.00' });
+  const [loading, setLoading] = useState(true);
+
+  // Pobieranie danych co 5 sekund
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch('/api/docker/stats');
+        const json = await res.json();
+        setData(json);
+        setLoading(false);
+      } catch (error) {
+        console.error("Widget fetch error", error);
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+    const interval = setInterval(fetchData, 5000); // Odświeżanie
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <Link href="/containers">
-      <div className="h-full w-full bg-slate-900/80 border border-slate-800 p-5 rounded-3xl hover:border-blue-500/50 transition-colors group cursor-pointer overflow-hidden relative">
-        {/* Tło z lekkim gradientem dla efektu */}
-        <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all" />
-        
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-slate-400 text-sm font-medium uppercase tracking-wider">Kontenery</h3>
-          <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-            </svg>
-          </div>
+    <div
+      style={style}
+      className={`${className} bg-slate-800 border border-slate-700 rounded-xl shadow-xl overflow-hidden flex flex-col transition-all duration-200`}
+      onMouseDown={onMouseDown}
+      onMouseUp={onMouseUp}
+      onTouchEnd={onTouchEnd}
+    >
+      {/* --- NAGŁÓWEK --- */}
+      <div className={`
+        flex items-center justify-between px-3 py-2 h-[40px] border-b border-slate-700/50
+        ${isEditMode ? 'bg-slate-700/50 cursor-move' : 'bg-slate-900/50'}
+      `}>
+        <div className="flex items-center gap-2 w-full overflow-hidden">
+          {isEditMode ? (
+            <div className="grid-drag-handle text-blue-400 hover:text-white cursor-grab active:cursor-grabbing">
+              <GripHorizontal size={16} />
+            </div>
+          ) : (
+            <Activity size={16} className="text-blue-400" />
+          )}
+          
+          <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider truncate select-none">
+            {title}
+          </span>
         </div>
 
-        <div className="flex items-end justify-between">
-          <div>
-            <span className="text-4xl font-bold text-white">{online}</span>
-            <span className="text-slate-500 text-xl font-medium ml-1">/ {total}</span>
+        {isEditMode && (
+          <div
+            className="cursor-pointer text-slate-500 hover:text-red-400 transition-colors p-1"
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove(id);
+            }}
+          >
+            <X size={16} />
           </div>
-          <div className="text-right">
-            <span className={`text-xs font-bold px-2 py-1 rounded-full ${percentage === 100 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-orange-500/20 text-orange-400'}`}>
-              {Math.round(percentage)}% UP
-            </span>
-          </div>
-        </div>
-
-        {/* Pasek postępu */}
-        <div className="w-full bg-slate-800 h-1.5 rounded-full mt-4 overflow-hidden">
-          <motion.div 
-            initial={{ width: 0 }}
-            animate={{ width: `${percentage}%` }}
-            className="h-full bg-blue-500"
-          />
-        </div>
+        )}
       </div>
-    </Link>
+
+      {/* --- TREŚĆ --- */}
+      <div className="flex-1 p-5 flex flex-col justify-between relative">
+        {loading ? (
+           <div className="animate-pulse flex flex-col gap-2">
+             <div className="h-8 bg-slate-700 rounded w-1/2"></div>
+             <div className="h-4 bg-slate-700 rounded w-full"></div>
+           </div>
+        ) : (
+          <>
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">Kontenery</p>
+                <div className="text-3xl font-bold text-white flex items-baseline gap-1">
+                  {data.running}
+                  <span className="text-slate-500 text-lg">/ {data.total}</span>
+                </div>
+              </div>
+              
+              <div className="text-right">
+                <p className="text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">Uptime</p>
+                <div className="text-lg font-mono font-medium text-emerald-400">
+                  {data.uptime}%
+                </div>
+              </div>
+            </div>
+
+            {/* Pasek postępu */}
+            <div className="w-full bg-slate-900 h-2 rounded-full mt-4 overflow-hidden border border-slate-700/50">
+              <div 
+                className="bg-gradient-to-r from-blue-500 to-emerald-400 h-full rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${(data.running / (data.total || 1)) * 100}%` }}
+              />
+            </div>
+
+            {/* Przycisk akcji na dole widgetu */}
+            <div className="mt-4 pt-4 border-t border-slate-700/50 flex justify-end">
+                {/* W trybie edycji przycisk jest nieaktywny, żeby nie przeszkadzał */}
+               <button
+                  onMouseDown={(e) => e.stopPropagation()} // Stop propagation dla drag&drop
+                  onClick={() => !isEditMode && router.push('/containers')}
+                  className={`
+                    flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors
+                    ${isEditMode 
+                        ? 'opacity-50 cursor-default border-slate-700 text-slate-500' 
+                        : 'border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700 hover:border-slate-500 cursor-pointer'
+                    }
+                  `}
+               >
+                 <span>Szczegóły</span>
+                 <ExternalLink size={12} />
+               </button>
+            </div>
+          </>
+        )}
+        
+        {/* Nakładka w trybie edycji, żeby nie klikać przycisków przypadkiem */}
+        {isEditMode && <div className="absolute inset-0 z-10 bg-transparent" />}
+      </div>
+    </div>
   );
 }

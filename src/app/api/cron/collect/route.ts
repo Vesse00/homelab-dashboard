@@ -1,28 +1,36 @@
 import { NextResponse } from 'next/server';
 import Docker from 'dockerode';
-import { prisma } from '@/app/lib/prisma'; // Upewnij się, że ten import działa
+import { prisma } from '@/app/lib/prisma';
 
-// Wyłączamy cache Next.js dla crona
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
+  // 1. ZABEZPIECZENIE: Sprawdzamy klucz API
+  // Możesz go podać w URL (?key=sekret) lub w nagłówku (Authorization: Bearer sekret)
+  const { searchParams } = new URL(request.url);
+  const apiKey = searchParams.get('key');
+  
+  // Ustaw ten sam klucz w pliku .env (np. CRON_SECRET="moje_super_tajne_haslo")
+  const CRON_SECRET = process.env.CRON_SECRET || "zmien_mnie_w_produkcji";
+
+  if (apiKey !== CRON_SECRET) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // --- Reszta Twojego kodu bez zmian ---
   const docker = new Docker({ socketPath: '/var/run/docker.sock' });
 
   try {
-    // 1. Pobieramy kontenery
     const containers = await docker.listContainers({ all: true });
 
-    // 2. Przygotowujemy dane
     const statsToSave = containers.map((container) => ({
       containerId: container.Id,
       name: container.Names[0].replace('/', ''),
       state: container.State,
       status: container.Status,
-      // cpu/memory dodamy w przyszłości
+      // cpu/memory w przyszłości
     }));
 
-    // 3. ZAPISUJEMY (Poprawka dla SQLite: używamy $transaction zamiast createMany)
-    // To tworzy wiele zapytań "INSERT", ale wykonuje je w jednej bezpiecznej transakcji.
     await prisma.$transaction(
       statsToSave.map((stat) => 
         prisma.containerStat.create({
@@ -39,7 +47,6 @@ export async function GET() {
 
   } catch (error: any) {
     console.error("Błąd Crona:", error);
-    // Zwracamy pełny błąd, żeby wiedzieć co się dzieje
     return NextResponse.json(
       { success: false, error: error.message || error.toString() }, 
       { status: 500 }

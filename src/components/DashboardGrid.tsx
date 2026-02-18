@@ -1,32 +1,37 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import ContainerCard from './ContainerCard';
+import { Responsive, WidthProvider } from 'react-grid-layout/legacy';
+import 'react-grid-layout/css/styles.css';
+import 'react-resizable/css/styles.css';
+import { ReactNode } from 'react';
 
-interface Props {
-  containers: any[];
+import 'react-grid-layout/css/styles.css';
+import 'react-resizable/css/styles.css';
+
+const ResponsiveGridLayout = WidthProvider(Responsive);
+
+interface DashboardGridProps {
+  children: ReactNode[];
+  layout: any[];
+  onLayoutChange: (layout: any) => void;
+  isEditMode: boolean;
 }
 
-export default function DashboardGrid({ containers }: Props) {
+export default function DashboardGrid({ children, layout, onLayoutChange, isEditMode }: DashboardGridProps) {
   return (
-    // Używamy standardowego CSS Grid - prosty, szybki i niezawodny
-    <motion.div 
-      layout
-      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+    <ResponsiveGridLayout
+      className="layout"
+      layouts={{ lg: layout }} // Używamy tego samego layoutu dla dużych ekranów (można rozbudować o inne breakpointy)
+      breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+      cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+      rowHeight={100} // Wysokość pojedynczego wiersza w px
+      isDraggable={isEditMode}
+      isResizable={isEditMode}
+      onLayoutChange={(currentLayout) => onLayoutChange(currentLayout)}
+      margin={[16, 16]} // Odstępy między kafelkami
+      draggableHandle=".drag-handle" // Tylko ten element (np. nagłówek) pozwala przesuwać widget
     >
-      {containers.map((container, index) => (
-        <motion.div
-          key={container.Id}
-          layout
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: index * 0.05 }}
-          whileHover={{ scale: 1.02 }}
-          className="h-full"
-        >
-          <ContainerCard container={container} />
-        </motion.div>
-      ))}
-    </motion.div>
+      {children}
+    </ResponsiveGridLayout>
   );
 }
