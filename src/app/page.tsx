@@ -3,19 +3,39 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Edit2, Save, Plus, X, LayoutGrid, HardDrive, CloudSun } from 'lucide-react';
+import { Edit2, Save, Plus, X, LayoutGrid, HardDrive, CloudSun, Radar } from 'lucide-react';
 import DashboardGrid from '@/components/DashboardGrid';
 import DockerWidget from '@/components/widgets/DockerWidget';
 import ContainerCard from '@/components/ContainerCard';
 import DiskWidget from '@/components/widgets/DiskWidget';
 import WeatherWidget from '@/components/widgets/WeatherWidget';
+import ServiceDiscoveryModal from '@/components/ServiceDiscoveryModal';
+import { toast } from 'react-hot-toast';
 
 // Definicja dostępnych typów widgetów
 const WIDGET_TYPES = {
   DOCKER_STATS: 'docker_stats',
   DISK_STATS: 'disk_stats', 
   WEATHER: 'weather',
+  SERVICE: 'service', // Nowy typ dla usług z autodekrypcji
 };
+
+interface WidgetItem {
+  i: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  type: string;
+  // Pole opcjonalne, tylko dla widgetów typu 'service'
+  data?: {
+    name: string;
+    icon: string;
+    url: string;
+    color: string;
+    status: string;
+  };
+}
 
 // Domyślny layout startowy
 const DEFAULT_LAYOUT = [
@@ -27,30 +47,113 @@ export default function Dashboard() {
   const { data: session } = useSession();
   const [isEditMode, setIsEditMode] = useState(false);
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
+  const [isDiscoveryOpen, setIsDiscoveryOpen] = useState(false);
   
   // Stan widgetów (pobieramy z localStorage lub domyślny)
-  const [widgets, setWidgets] = useState(DEFAULT_LAYOUT);
+  const [widgets, setWidgets] = useState<WidgetItem[]>(DEFAULT_LAYOUT);
+  const [scannedServices, setScannedServices] = useState<any[]>([]);
+  const [availableServices, setAvailableServices] = useState<any[]>([]);
 
   // Zapisywanie layoutu do localStorage (prymitywne persistence)
   useEffect(() => {
-    const saved = localStorage.getItem('dashboard_layout');
-    if (saved) {
-      setWidgets(JSON.parse(saved));
-    }
-  }, []);
+    const fetchLayout = async () => {
+      if (session?.user) {
+        try {
+          const res = await fetch('/api/user/layout');
+          const data = await res.json();
+          if (data.layout) {
+            setWidgets(data.layout);
+          } else {
+            // Jeśli użytkownik jest nowy i nie ma layoutu w bazie, użyj domyślnego
+            setWidgets(DEFAULT_LAYOUT);
+          }
+        } catch (e) {
+          console.error("Błąd pobierania layoutu", e);
+        }
 
-  const saveLayout = (newLayout: any[]) => {
-    // Scalamy nowy layout (pozycje x,y,w,h) z naszymi danymi o typie widgetu
+        try {
+         const res = await fetch('/api/docker/scan'); // Metoda GET pobiera z bazy
+         const data = await res.json();
+         if (data.services) setAvailableServices(data.services);
+      } catch(e) { console.error(e); }
+      }
+    };
+    fetchLayout();
+  }, [session]); // Uruchom, gdy sesja się załaduje
+
+const handleScan = async () => {
+    const toastId = toast.loading("Skanowanie Dockera...");
+    try {
+      const res = await fetch('/api/docker/scan', { method: 'POST' });
+      const data = await res.json();
+      
+      if (data.success) {
+         // A. Aktualizujemy listę w menu "Dodaj" (persistence)
+         setAvailableServices(data.services);
+         
+         // B. Otwieramy Modal z tymi wynikami, żeby użytkownik mógł edytować porty
+         setScannedServices(data.services);
+         setIsDiscoveryOpen(true);
+         
+         toast.success(`Znaleziono ${data.count} usług!`, { id: toastId });
+      } else {
+         throw new Error(data.error);
+      }
+    } catch (e) {
+      toast.error("Błąd skanowania", { id: toastId });
+    }
+  };
+
+
+
+
+  // 2. IMPORTOWANIE Z MODALA (dodaje widgety na pulpit)
+  const handleImportServices = (servicesData: any[]) => {
+    const newWidgets: WidgetItem[] = [...widgets];
+    let lastId = widgets.length > 0 ? Math.max(...widgets.map(w => parseInt(w.i))) : 0;
+
+    servicesData.forEach((data) => {
+      lastId++;
+      newWidgets.push({
+        i: lastId.toString(),
+        x: (newWidgets.length * 2) % 12,
+        y: Infinity,
+        w: 2,
+        h: 2,
+        type: WIDGET_TYPES.SERVICE,
+        data: data // Tu są dane z portem zmienionym w Modalu
+      });
+    });
+
+    setWidgets(newWidgets);
+    saveLayout(newWidgets);
+    toast.success(`Dodano ${servicesData.length} widgetów`);
+  };
+
+  const saveLayout = async (newLayout: any[]) => {
+    // Aktualizuj stan lokalny (żeby UI działało płynnie)
     const updatedWidgets = newLayout.map(l => {
       const existing = widgets.find(w => w.i === l.i);
       return { ...l, type: existing?.type || WIDGET_TYPES.DOCKER_STATS };
     });
     setWidgets(updatedWidgets);
-    localStorage.setItem('dashboard_layout', JSON.stringify(updatedWidgets));
+
+    // Wyślij do bazy (w tle)
+    if (session?.user) {
+      try {
+        await fetch('/api/user/layout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ layout: updatedWidgets }),
+        });
+      } catch (e) {
+        console.error("Błąd zapisu layoutu", e);
+      }
+    }
   };
 
-  const addWidget = (type: string) => {
-    const newId = (Math.max(...widgets.map(w => parseInt(w.i))) + 1).toString();
+  const addWidget = async (type: string) => {
+    const newId = widgets.length > 0 ? (Math.max(...widgets.map(w => parseInt(w.i))) + 1).toString() : "1";
     const newWidget = {
       i: newId,
       x: 0,
@@ -61,14 +164,25 @@ export default function Dashboard() {
     };
     const newWidgets = [...widgets, newWidget];
     setWidgets(newWidgets);
-    localStorage.setItem('dashboard_layout', JSON.stringify(newWidgets));
+    if (session?.user) {
+        await fetch('/api/user/layout', {
+          method: 'POST',
+          body: JSON.stringify({ layout: newWidgets }),
+        });
+    }
     setIsAddMenuOpen(false);
   };
 
-  const removeWidget = (id: string) => {
+  const removeWidget = async (id: string) => {
     const filtered = widgets.filter(w => w.i !== id);
     setWidgets(filtered);
-    localStorage.setItem('dashboard_layout', JSON.stringify(filtered));
+    // Zapisz do bazy
+    if (session?.user) {
+        await fetch('/api/user/layout', {
+          method: 'POST',
+          body: JSON.stringify({ layout: filtered }),
+        });
+    }
   };
 
   return (
@@ -86,6 +200,21 @@ export default function Dashboard() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* PRZYCISK AUTODETEKCJI (Widoczny w trybie edycji) */}
+             <AnimatePresence>
+               {isEditMode && (
+                 <motion.button
+                   initial={{ opacity: 0, scale: 0.9 }}
+                   animate={{ opacity: 1, scale: 1 }}
+                   exit={{ opacity: 0, scale: 0.9 }}
+                   onClick={handleScan}
+                   className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-medium transition-colors shadow-lg shadow-purple-500/20"
+                 >
+                   <Radar size={18} />
+                   <span className="hidden md:inline">Wykryj</span>
+                 </motion.button>
+               )}
+             </AnimatePresence>
           {/* Przycisk DODAJ WIDGET (widoczny w trybie edycji) */}
           <AnimatePresence>
             {isEditMode && (
@@ -170,7 +299,8 @@ export default function Dashboard() {
                 id={widget.i}
                 isEditMode={isEditMode}
                 onRemove={() => removeWidget(widget.i)}
-                title={`Kontener #${widget.i}`} // Tutaj docelowo nazwa kontenera
+                title='Docker'
+                className='h-full w-full'
               />
             )}
             {widget.type === WIDGET_TYPES.DISK_STATS && (
@@ -178,6 +308,7 @@ export default function Dashboard() {
                 id={widget.i}
                 isEditMode={isEditMode}
                 onRemove={() => removeWidget(widget.i)}
+                className='h-full w-full'
               />
             )}
             {widget.type === WIDGET_TYPES.WEATHER && (
@@ -185,6 +316,7 @@ export default function Dashboard() {
                 id={widget.i}
                 isEditMode={isEditMode}
                 onRemove={() => removeWidget(widget.i)}
+                className='h-full w-full'
               />
             )}
             
@@ -197,6 +329,14 @@ export default function Dashboard() {
           </div>
         ))}
       </DashboardGrid>
+
+      {/* MODAL  */}
+       <ServiceDiscoveryModal 
+          isOpen={isDiscoveryOpen} 
+          onClose={() => setIsDiscoveryOpen(false)}
+          onImport={handleImportServices}
+          initialServices={scannedServices}
+       />
 
     </div>
   );

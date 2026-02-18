@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Cpu, HardDrive, Play, Square, RotateCcw, Activity, Circle } from 'lucide-react';
+import { ArrowLeft, Cpu, HardDrive, Play, Square, RotateCcw, Activity, Circle, Shield } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area
 } from 'recharts';
@@ -15,6 +16,7 @@ interface StatPoint {
 }
 
 export default function ContainerDetailsPage() {
+    const { data: session } = useSession();
   const params = useParams();
   const router = useRouter();
   const containerId = params?.containerId as string;
@@ -118,32 +120,43 @@ export default function ContainerDetailsPage() {
 
         {/* Prawa strona: Panel Sterowania */}
         <div className="flex gap-2 self-start md:self-auto">
-           <button
-             onClick={() => handleControl('start')}
-             disabled={actionLoading || currentStatus.state === 'running'}
-             className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors shadow-lg shadow-emerald-900/20"
-           >
-             <Play size={16} fill="currentColor" />
-             <span className="hidden md:inline">Start</span>
-           </button>
-           
-           <button
-             onClick={() => handleControl('stop')}
-             disabled={actionLoading || currentStatus.state !== 'running'}
-             className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors shadow-lg shadow-rose-900/20"
-           >
-             <Square size={16} fill="currentColor" />
-             <span className="hidden md:inline">Stop</span>
-           </button>
-
-           <button
-             onClick={() => handleControl('restart')}
-             disabled={actionLoading}
-             className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors shadow-lg shadow-blue-900/20"
-           >
-             <RotateCcw size={16} />
-             <span className="hidden md:inline">Restart</span>
-           </button>
+           {/* WYŚWIETL GUZIKI TYLKO ADMINOWI */}
+           {session?.user?.role === 'ADMIN' ? (
+             <>
+               <button
+                 onClick={() => handleControl('start')}
+                 disabled={actionLoading || currentStatus.state === 'running'}
+                 className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors shadow-lg shadow-emerald-900/20"
+               >
+                 <Play size={16} fill="currentColor" />
+                 <span className="hidden md:inline">Start</span>
+               </button>
+               
+               <button
+                 onClick={() => handleControl('stop')}
+                 disabled={actionLoading || currentStatus.state !== 'running'}
+                 className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors shadow-lg shadow-rose-900/20"
+               >
+                 <Square size={16} fill="currentColor" />
+                 <span className="hidden md:inline">Stop</span>
+               </button>
+    
+               <button
+                 onClick={() => handleControl('restart')}
+                 disabled={actionLoading}
+                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors shadow-lg shadow-blue-900/20"
+               >
+                 <RotateCcw size={16} />
+                 <span className="hidden md:inline">Restart</span>
+               </button>
+             </>
+           ) : (
+             /* JEŚLI NIE JEST ADMINEM */
+             <div className="px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-400 text-sm font-medium flex items-center gap-2">
+               <Shield size={16} />
+               <span>Tryb podglądu</span>
+             </div>
+           )}
         </div>
       </div>
 

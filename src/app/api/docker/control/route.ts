@@ -4,10 +4,18 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/auth";
 
 export async function POST(req: Request) {
-  // 1. Zabezpieczenie: Tylko zalogowani użytkownicy
   const session = await getServerSession(authOptions);
-  if (!session) {
+
+  // 1. Sprawdzamy, czy zalogowany
+  if (!session || !session.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // 2. NOWOŚĆ: Sprawdzamy, czy jest ADMINEM
+  if (session.user.role !== 'ADMIN') {
+    return NextResponse.json({ 
+      error: "Forbidden: Only admins can control containers" 
+    }, { status: 403 });
   }
 
   try {
@@ -21,28 +29,17 @@ export async function POST(req: Request) {
     const docker = new Docker({ socketPath: '/var/run/docker.sock' });
     const container = docker.getContainer(containerId);
 
-    // Wykonujemy akcję
-    if (action === 'start') {
-      await container.start();
-    } else if (action === 'stop') {
-      await container.stop();
-    } else if (action === 'restart') {
-      await container.restart();
-    }
+    if (action === 'start') await container.start();
+    else if (action === 'stop') await container.stop();
+    else if (action === 'restart') await container.restart();
 
     return NextResponse.json({ success: true, action });
 
   } catch (error: any) {
-    // Docker rzuca błąd np. gdy próbujesz zatrzymać już zatrzymany kontener (kod 304)
-    // Ignorujemy kod 304 (Not Modified) jako sukces
     if (error.statusCode === 304) {
       return NextResponse.json({ success: true, message: "Already in that state" });
     }
-    
     console.error("Docker Control Error:", error);
-    return NextResponse.json(
-      { success: false, error: error.message || error.json?.message }, 
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

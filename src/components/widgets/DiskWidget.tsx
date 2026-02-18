@@ -26,17 +26,30 @@ export default function DiskWidget({
         const res = await fetch('/api/system/disks');
         const data = await res.json();
         if (Array.isArray(data)) setDisks(data);
-      } catch (e) {} finally { setLoading(false); }
+      } catch (e) {
+        console.error(e);
+      } finally { 
+        setLoading(false); 
+      }
     };
     fetchDisks();
+    // Odświeżaj co 30 sekund
+    const interval = setInterval(fetchDisks, 30000); 
+    return () => clearInterval(interval);
   }, []);
 
   return (
-    <div style={style} className={`${className} bg-slate-800 border border-slate-700 rounded-xl shadow-xl flex flex-col overflow-hidden`} onMouseDown={onMouseDown} onMouseUp={onMouseUp} onTouchEnd={onTouchEnd}>
+    <div 
+      style={style} 
+      className={`${className} bg-slate-800 border border-slate-700 rounded-xl shadow-xl flex flex-col overflow-hidden`} 
+      onMouseDown={onMouseDown} 
+      onMouseUp={onMouseUp} 
+      onTouchEnd={onTouchEnd}
+    >
       
-      {/* NAGŁÓWEK JAKO UCHWYT */}
+      {/* NAGŁÓWEK */}
       <div className={`
-        flex items-center justify-between px-3 py-2 h-[40px] border-b border-slate-700/50
+        flex items-center justify-between px-3 py-2 h-[40px] border-b border-slate-700/50 flex-shrink-0
         ${isEditMode ? 'bg-slate-700/50 cursor-move grid-drag-handle' : 'bg-slate-900/50'}
       `}>
         <div className="flex items-center gap-2 w-full pointer-events-none">
@@ -50,20 +63,45 @@ export default function DiskWidget({
         )}
       </div>
 
-      <div className="flex-1 p-4 overflow-y-auto space-y-4">
-        {loading ? <div className="text-xs text-slate-500 animate-pulse">Skanowanie...</div> : 
+      {/* TREŚĆ (Lista dysków) */}
+      <div className="flex-1 p-4 overflow-y-auto space-y-4 no-scrollbar">
+        {loading ? (
+          <div className="flex flex-col gap-3 animate-pulse">
+             <div className="h-8 bg-slate-700 rounded w-full"></div>
+             <div className="h-8 bg-slate-700 rounded w-3/4"></div>
+          </div>
+        ) : disks.length === 0 ? (
+           <div className="flex flex-col items-center justify-center h-full text-slate-500 text-xs">
+             Brak widocznych dysków
+           </div>
+        ) : (
           disks.map((disk, idx) => (
-            <div key={idx}>
-              <div className="flex justify-between text-xs mb-1">
-                <span className="text-slate-300 font-mono">{disk.mounted}</span>
-                <span className="text-slate-400">{disk.used} GB / {disk.total} GB</span>
+            <div key={idx} className="group">
+              <div className="flex justify-between text-xs mb-1.5 items-end">
+                <div>
+                  <span className="text-slate-200 font-bold font-mono mr-2">{disk.mounted}</span>
+                  <span className="text-slate-500 text-[10px]">{disk.filesystem}</span>
+                </div>
+                {/* Nowe formatowanie: np. 1.2 TB / 4 TB */}
+                <span className="text-slate-400 font-mono">
+                  {disk.usedStr} / {disk.totalStr}
+                </span>
               </div>
-              <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-700/50">
-                <div className={`h-full transition-all duration-1000 ${parseInt(disk.capacity) > 90 ? 'bg-red-500' : 'bg-purple-500'}`} style={{ width: disk.capacity }} />
+              
+              {/* Pasek postępu */}
+              <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-slate-700/50 relative">
+                <div 
+                  className={`h-full rounded-full transition-all duration-1000 ${
+                    disk.usagePercent > 90 ? 'bg-red-500' : 
+                    disk.usagePercent > 75 ? 'bg-amber-500' : 
+                    'bg-gradient-to-r from-blue-600 to-purple-500'
+                  }`}
+                  style={{ width: disk.capacity }} 
+                />
               </div>
             </div>
           ))
-        }
+        )}
       </div>
     </div>
   );
