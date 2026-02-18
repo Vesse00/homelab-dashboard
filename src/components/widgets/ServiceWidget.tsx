@@ -37,6 +37,20 @@ export default function ServiceWidget(props: ServiceWidgetProps) {
   // Stan na statystyki "Live" z Dockera
   const [stats, setStats] = useState<{ cpuUsage: string, memoryUsage: string } | null>(null);
 
+  if (true) { 
+    return (
+      <div style={style} className={`${className} bg-slate-800 text-xs overflow-hidden border-2 border-red-500 relative`} onMouseDown={onMouseDown} onMouseUp={onMouseUp} onTouchEnd={onTouchEnd}>
+         <div className="absolute top-0 left-0 bg-red-600 text-white px-2 font-bold z-50">DEBUG MODE</div>
+         <div className="p-4 pt-8 text-white space-y-1 font-mono break-all">
+            <p><span className="text-slate-400">Name:</span> {data.name}</p>
+            <p><span className="text-slate-400">Type:</span> <span className="text-yellow-400 font-bold">'{data.widgetType}'</span></p>
+            <p><span className="text-slate-400">Icon:</span> {data.icon}</p>
+            <button onClick={() => onRemove(id)} className="mt-2 bg-red-600 px-2 py-1 rounded">Usuń mnie</button>
+         </div>
+      </div>
+    );
+  }
+
   // Pobieranie statystyk (Proste fetchowanie po nazwie, jeśli mamy API)
   // UWAGA: To zadziała dobrze, jeśli 'data.name' w miarę odpowiada nazwie kontenera lub jeśli dodamy containerId do data
   // Na razie zrobimy prostą symulację lub placeholder, a w przyszłości wepniemy tu containerId
@@ -44,6 +58,8 @@ export default function ServiceWidget(props: ServiceWidgetProps) {
     // Tu w przyszłości: fetch('/api/stats/' + data.containerId)
     // Na razie zostawmy null, szablony obsłużą brak danych
   }, []);
+
+  
 
   // --- WYBÓR SZABLONU ---
   const renderContent = () => {

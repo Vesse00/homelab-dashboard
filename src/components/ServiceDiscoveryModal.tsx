@@ -12,19 +12,26 @@ interface DiscoveredService {
   port: number;
   color: string;
   selected: boolean;
+  widgetType?: string; // <--- WAŻNE: Dodaliśmy pole do typu
 }
 
 interface ServiceDiscoveryModalProps {
   isOpen: boolean;
   onClose: () => void;
   onImport: (services: any[]) => void;
-  initialServices: any[]; // <--- NOWY PROP: Dane przekazane z page.tsx
+  initialServices: any[];
 }
 
 export default function ServiceDiscoveryModal({ isOpen, onClose, onImport, initialServices }: ServiceDiscoveryModalProps) {
   const [services, setServices] = useState<DiscoveredService[]>([]);
 
-  // Gdy otwieramy okno i dostajemy nowe dane -> mapujemy je do edycji
+  // Debugowanie: Sprawdźmy co przychodzi z API
+  useEffect(() => {
+    if (initialServices.length > 0) {
+      console.log("Dane z API (ServiceDiscoveryModal):", initialServices);
+    }
+  }, [initialServices]);
+
   useEffect(() => {
     if (isOpen && initialServices.length > 0) {
       const mapped = initialServices.map((s: any, idx: number) => {
@@ -44,9 +51,15 @@ export default function ServiceDiscoveryModal({ isOpen, onClose, onImport, initi
           ip: ip,
           port: port,
           color: s.color,
-          selected: true // Domyślnie zaznaczamy wszystko co znaleźliśmy teraz
+          selected: true,
+          
+          // --- TU BYŁ BŁĄD ---
+          // Musimy przepisać widgetType z API do stanu lokalnego
+          widgetType: s.widgetType 
+          // -------------------
         };
       });
+      // @ts-ignore
       setServices(mapped);
     }
   }, [isOpen, initialServices]);
@@ -57,11 +70,17 @@ export default function ServiceDiscoveryModal({ isOpen, onClose, onImport, initi
       .map(s => ({
         name: s.name,
         icon: s.icon,
-        url: `http://${s.ip}:${s.port}`, // Składamy URL z Twoim portem
+        url: `http://${s.ip}:${s.port}`,
         color: s.color,
-        status: 'running'
+        status: 'running',
+        
+        // --- TU TEŻ BYŁ BRAK ---
+        // Przekazujemy typ dalej do page.tsx
+        widgetType: s.widgetType
+        // ----------------------
       }));
       
+    console.log("Dane wysyłane do importu:", finalData); // Debug log
     onImport(finalData);
     onClose();
   };
@@ -116,7 +135,13 @@ export default function ServiceDiscoveryModal({ isOpen, onClose, onImport, initi
                   </div>
 
                   <div className="flex-1">
-                     <h3 className="font-bold text-white">{service.name}</h3>
+                     <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-white">{service.name}</h3>
+                        {/* Pokażmy typ widgetu dla pewności */}
+                        <span className="text-[10px] bg-slate-700 text-slate-400 px-1.5 py-0.5 rounded">
+                           {service.widgetType || 'generic'}
+                        </span>
+                     </div>
                      <div className="flex items-center gap-2 text-xs text-slate-500">
                         <Server size={10} /> {service.ip}
                      </div>

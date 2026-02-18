@@ -341,8 +341,13 @@ const handleScan = async () => {
       {/* Grid z Widgetami */}
       <DashboardGrid 
         layout={widgets} 
-        onLayoutChange={saveLayout}
+        onLayoutChange={(newLayout) => {
+             // Tutaj Twoja logika zapisywania (saveLayout lub setWidgets)
+             setWidgets(newLayout);
+             saveLayout(newLayout);
+          }}
         isEditMode={isEditMode}
+        onRemove={removeWidget}
       >
         {widgets.map((widget) => (
           <div key={widget.i} className={isEditMode ? "z-10" : "z-0"}>
