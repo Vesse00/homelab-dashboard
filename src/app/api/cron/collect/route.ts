@@ -4,52 +4,69 @@ import { prisma } from '@/app/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request) {
-  // 1. ZABEZPIECZENIE: Sprawdzamy klucz API
-  // Możesz go podać w URL (?key=sekret) lub w nagłówku (Authorization: Bearer sekret)
-  const { searchParams } = new URL(request.url);
-  const apiKey = searchParams.get('key');
-  
-  // Ustaw ten sam klucz w pliku .env (np. CRON_SECRET="moje_super_tajne_haslo")
-  const CRON_SECRET = process.env.CRON_SECRET || "zmien_mnie_w_produkcji";
-
-  if (apiKey !== CRON_SECRET) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  // --- Reszta Twojego kodu bez zmian ---
+export async function GET() {
   const docker = new Docker({ socketPath: '/var/run/docker.sock' });
 
   try {
     const containers = await docker.listContainers({ all: true });
 
-    const statsToSave = containers.map((container) => ({
-      containerId: container.Id,
-      name: container.Names[0].replace('/', ''),
-      state: container.State,
-      status: container.Status,
-      // cpu/memory w przyszłości
-    }));
+    // Równolegle pobieramy szczegółowe statystyki dla każdego kontenera
+    const statsPromises = containers.map(async (containerInfo) => {
+      const container = docker.getContainer(containerInfo.Id);
+      
+      // Pobieramy statystyki (stream: false = jednorazowy odczyt)
+      let stats: any = {};
+      try {
+        stats = await container.stats({ stream: false });
+      } catch (e) {
+        console.log(`Nie można pobrać statystyk dla ${containerInfo.Names[0]}`);
+        return null; // Kontener wyłączony
+      }
 
+      // --- OBLICZANIE CPU ---
+      let cpuPercent = 0.0;
+      const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
+      const systemDelta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
+      const cpuCount = stats.cpu_stats.online_cpus || 1;
+
+      if (systemDelta > 0 && cpuDelta > 0) {
+        cpuPercent = (cpuDelta / systemDelta) * cpuCount * 100.0;
+      }
+
+      // --- OBLICZANIE RAM ---
+      // Użycie pamięci w MB
+      const memoryUsage = stats.memory_stats.usage || 0;
+      const memoryMb = memoryUsage / 1024 / 1024;
+
+      return {
+        containerId: containerInfo.Id,
+        name: containerInfo.Names[0].replace('/', ''),
+        state: containerInfo.State,
+        status: containerInfo.Status,
+        cpu: parseFloat(cpuPercent.toFixed(2)),
+        memory: parseFloat(memoryMb.toFixed(2)),
+      };
+    });
+
+    // Czekamy na wszystkie obliczenia
+    const results = await Promise.all(statsPromises);
+    const validStats = results.filter((s): s is NonNullable<typeof s> => s !== null);
+
+    // Zapisujemy w transakcji
     await prisma.$transaction(
-      statsToSave.map((stat) => 
-        prisma.containerStat.create({
-          data: stat
-        })
+      validStats.map((stat) => 
+        prisma.containerStat.create({ data: stat })
       )
     );
 
     return NextResponse.json({ 
       success: true, 
-      count: statsToSave.length,
-      message: "Dane zapisane pomyślnie!" 
+      count: validStats.length,
+      message: "Zapisano użycie CPU i RAM!" 
     });
 
   } catch (error: any) {
     console.error("Błąd Crona:", error);
-    return NextResponse.json(
-      { success: false, error: error.message || error.toString() }, 
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

@@ -9,7 +9,8 @@ import {
   Clock, 
   MoreVertical, 
   ArrowRight,
-  LayoutGrid
+  LayoutGrid,
+  ArrowLeft
 } from 'lucide-react';
 
 interface Container {
@@ -60,16 +61,24 @@ export default function ContainersPage() {
   return (
     <div className="min-h-screen p-6 bg-slate-950 text-slate-200">
       
-      {/* Nagłówek */}
+      {/* --- Nagłówek ze strzałką powrotu --- */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-            <LayoutGrid className="text-blue-500" />
-            Twoje Kontenery
-          </h1>
-          <p className="text-slate-400 mt-1">
-            Zarządzaj i monitoruj {containers.length} instancji
-          </p>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => router.push('/')}
+            className="p-2 bg-slate-900 border border-slate-700 hover:bg-slate-800 hover:text-white rounded-xl transition-colors group"
+          >
+            <ArrowLeft className="group-hover:-translate-x-1 transition-transform" size={20} />
+          </button>
+          <div>
+            <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+              <LayoutGrid className="text-blue-500" />
+              Twoje Kontenery
+            </h1>
+            <p className="text-slate-400 mt-1">
+              Zarządzaj i monitoruj {containers.length} instancji
+            </p>
+          </div>
         </div>
 
         {/* Wyszukiwarka */}

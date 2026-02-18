@@ -65,11 +65,11 @@ export default function DockerWidget({
       {/* --- NAGŁÓWEK --- */}
       <div className={`
         flex items-center justify-between px-3 py-2 h-[40px] border-b border-slate-700/50
-        ${isEditMode ? 'bg-slate-700/50 cursor-move' : 'bg-slate-900/50'}
+        ${isEditMode ? 'bg-slate-700/50 cursor-move grid-drag-handle' : 'bg-slate-900/50'}
       `}>
         <div className="flex items-center gap-2 w-full overflow-hidden">
           {isEditMode ? (
-            <div className="grid-drag-handle text-blue-400 hover:text-white cursor-grab active:cursor-grabbing">
+            <div className=" text-blue-400 hover:text-white cursor-grab active:cursor-grabbing">
               <GripHorizontal size={16} />
             </div>
           ) : (

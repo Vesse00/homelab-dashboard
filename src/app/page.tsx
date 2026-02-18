@@ -3,15 +3,18 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Edit2, Save, Plus, X, LayoutGrid } from 'lucide-react';
+import { Edit2, Save, Plus, X, LayoutGrid, HardDrive, CloudSun } from 'lucide-react';
 import DashboardGrid from '@/components/DashboardGrid';
 import DockerWidget from '@/components/widgets/DockerWidget';
 import ContainerCard from '@/components/ContainerCard';
+import DiskWidget from '@/components/widgets/DiskWidget';
+import WeatherWidget from '@/components/widgets/WeatherWidget';
 
 // Definicja dostępnych typów widgetów
 const WIDGET_TYPES = {
   DOCKER_STATS: 'docker_stats',
-  CONTAINER_LIST: 'container_list', // Np. lista kontenerów jako widget
+  DISK_STATS: 'disk_stats', 
+  WEATHER: 'weather',
 };
 
 // Domyślny layout startowy
@@ -112,6 +115,21 @@ export default function Dashboard() {
                         <LayoutGrid size={16} className="text-blue-400"/>
                         Docker Stats
                       </button>
+                      <button 
+                        onClick={() => addWidget(WIDGET_TYPES.DISK_STATS)}
+                        className="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors flex items-center gap-2"
+                      >
+                        <HardDrive size={16} className="text-purple-400"/>
+                        Status Dysków
+                      </button>
+
+                      <button 
+                        onClick={() => addWidget(WIDGET_TYPES.WEATHER)}
+                        className="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors flex items-center gap-2"
+                      >
+                        <CloudSun size={16} className="text-yellow-400"/>
+                        Pogoda
+                      </button>
                       {/* Tu dodasz kolejne typy widgetów */}
                     </div>
                   </div>
@@ -149,9 +167,24 @@ export default function Dashboard() {
             {/* Renderowanie warunkowe na podstawie typu widgetu */}
             {widget.type === WIDGET_TYPES.DOCKER_STATS && (
               <DockerWidget 
+                id={widget.i}
                 isEditMode={isEditMode}
                 onRemove={() => removeWidget(widget.i)}
                 title={`Kontener #${widget.i}`} // Tutaj docelowo nazwa kontenera
+              />
+            )}
+            {widget.type === WIDGET_TYPES.DISK_STATS && (
+              <DiskWidget 
+                id={widget.i}
+                isEditMode={isEditMode}
+                onRemove={() => removeWidget(widget.i)}
+              />
+            )}
+            {widget.type === WIDGET_TYPES.WEATHER && (
+              <WeatherWidget 
+                id={widget.i}
+                isEditMode={isEditMode}
+                onRemove={() => removeWidget(widget.i)}
               />
             )}
             
