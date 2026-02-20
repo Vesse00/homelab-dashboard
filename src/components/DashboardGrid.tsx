@@ -18,13 +18,15 @@ interface DashboardGridProps {
   onLayoutChange: (layout: any[]) => void;
   isEditMode: boolean;
   onRemove: (id: string) => void;
+  onUpdateData?: (id: string, newData: any) => void;
 }
 
 export default function DashboardGrid({ 
   layout, 
   onLayoutChange, 
   isEditMode, 
-  onRemove 
+  onRemove,
+  onUpdateData
 }: DashboardGridProps) {
 
   // Funkcja, która wybiera odpowiedni komponent widgetu
@@ -35,7 +37,10 @@ export default function DashboardGrid({
       isEditMode: isEditMode,
       onRemove: onRemove,
       className: "h-full w-full", // To naprawia rozjeżdżanie się (zajmuje 100% kafelka)
-      data: item.data
+      data: item.data,
+      onUpdateData: onUpdateData,
+      w: item.w,
+      h: item.h,
     };
 
     switch (item.type) {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Cloud, Sun, GripHorizontal, X, Settings, MapPin, CloudRain, CloudSnow } from 'lucide-react';
+import { Cloud, Sun, GripHorizontal, X, Settings, MapPin, CloudRain, CloudSnow, ArrowDownRight } from 'lucide-react';
 
 interface WeatherWidgetProps {
   style?: React.CSSProperties;
@@ -12,6 +12,8 @@ interface WeatherWidgetProps {
   id: string;
   isEditMode: boolean;
   onRemove: (id: string) => void;
+  w?: number;
+  h?: number;
 }
 
 export default function WeatherWidget({
@@ -70,11 +72,27 @@ export default function WeatherWidget({
   return (
     <div 
       style={style} 
-      className={`${className} perspective-1000`} 
+      className={`h-full w-full bg-slate-800 border border-slate-700 rounded-xl shadow-xl flex flex-col relative overflow-hidden group ${className} perspective-1000`} 
       onMouseDown={onMouseDown} 
       onMouseUp={onMouseUp} 
       onTouchEnd={onTouchEnd}
     >
+      {/* --- TRYB EDYCJI (Nakładka) --- */}
+      {isEditMode && (
+        <div className="absolute inset-0 bg-slate-900/80 z-50 flex flex-col items-center justify-center border-2 border-blue-500/50 rounded-xl cursor-move grid-drag-handle">
+           <div className="absolute top-2 right-2 cursor-pointer text-slate-400 hover:text-red-500" onClick={(e) => { e.stopPropagation(); onRemove(id); }}>
+             <X size={20} />
+           </div>
+           <GripHorizontal className="text-blue-400 mb-2" />
+           <span className="text-white font-bold">Pogoda</span>
+           <span className="text-xs text-slate-400">weather</span>
+
+           {/* --- IKONA SKALOWANIA (Prawy dolny róg) --- */}
+            <div className="absolute bottom-2 right-2 text-blue-400/80 pointer-events-none flex items-center justify-center p-1 bg-blue-500/20 rounded-tl-xl rounded-br-lg">
+              <ArrowDownRight size={16} />
+            </div>
+        </div>
+      )}
       <div className={`relative w-full h-full transition-transform duration-700 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
         
         {/* === PRZÓD KARTY (WIDGET) === */}

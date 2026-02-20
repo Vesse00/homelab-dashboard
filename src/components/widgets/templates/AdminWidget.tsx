@@ -1,34 +1,86 @@
-import { Box, Settings, Cpu } from 'lucide-react';
+'use client';
 
-export default function AdminWidget({ data, stats }: any) {
+import { Box, ServerCrash, ExternalLink, Loader2, Activity, Layers } from 'lucide-react';
+
+interface AdminWidgetProps {
+  data: any;
+  stats?: any;
+  isLoading?: boolean;
+}
+
+export default function AdminWidget({ data, stats, isLoading }: AdminWidgetProps) {
+  
+  const isOnline = stats?.status === 'online';
+  const isError = stats?.status === 'error';
+  
+  let bgClass = 'bg-slate-800 border-slate-700';
+  let iconColor = 'text-slate-500';
+  let Icon = Box;
+
+  if (isOnline) {
+    bgClass = 'bg-blue-950/30 border-blue-900/50';
+    iconColor = 'text-blue-500';
+  } else if (isError) {
+    bgClass = 'bg-red-950/30 border-red-900/50';
+    iconColor = 'text-red-500';
+    Icon = ServerCrash;
+  }
+
   return (
-    <div className="h-full w-full bg-slate-900 relative flex flex-col p-4 rounded-xl border border-blue-500/30 overflow-hidden group">
-       {/* Tło techniczne */}
-       <div className="absolute inset-0 bg-[linear-gradient(rgba(30,58,138,0.1)_2px,transparent_2px),linear-gradient(90deg,rgba(30,58,138,0.1)_2px,transparent_2px)] bg-[size:20px_20px]"></div>
-       
-       <div className="z-10 flex justify-between items-start">
-          <div className="p-2 bg-blue-600 rounded-lg text-white shadow-lg shadow-blue-500/30">
-             <Box size={24} />
-          </div>
-          {/* Status badge */}
-          <div className="px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/50 text-[10px] text-blue-400 font-mono">
-             SYSTEM
-          </div>
-       </div>
+    <div className={`h-full w-full border flex flex-col p-4 relative overflow-hidden transition-colors ${bgClass}`}>
+      
+      {/* Tło i poświata */}
+      {isOnline && <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/10 blur-2xl rounded-full" />}
+      {isError && <div className="absolute -right-4 -top-4 w-24 h-24 bg-red-500/10 blur-2xl rounded-full" />}
 
-       <div className="z-10 mt-auto">
-         <h3 className="text-slate-100 font-bold text-lg leading-tight">{data.name}</h3>
-         <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
-            <span className="flex items-center gap-1"><Cpu size={10}/> {stats?.cpuUsage || '0%'}</span>
-            <span className="flex items-center gap-1"><Settings size={10}/> Admin</span>
+      {/* Nagłówek */}
+      <div className="flex justify-between items-start z-10 mb-2">
+         <div className="flex items-center gap-2">
+            <div className={`p-2 rounded-lg bg-slate-900/50 border border-slate-700/50 ${iconColor} shadow-inner`}>
+               <Icon size={20} />
+            </div>
+            <span className="font-bold text-slate-200">{data.name}</span>
          </div>
-       </div>
+         <a href={data.url} target="_blank" rel="noopener noreferrer" onMouseDown={e => e.stopPropagation()} className="text-slate-500 hover:text-white transition-colors p-1">
+            <ExternalLink size={14}/>
+        </a>
+      </div>
 
-       <a 
-         href={data.url} 
-         target="_blank"
-         className="absolute inset-0 z-20 group-hover:bg-blue-600/10 transition-colors"
-       />
+      {/* Główna sekcja danych */}
+      <div className="flex-1 flex flex-col justify-end z-10 mt-2">
+         {isLoading ? (
+            <div className="flex items-center gap-2 text-slate-500 text-xs font-mono h-full justify-center">
+              <Loader2 size={14} className="animate-spin" /> Ładowanie...
+            </div>
+         ) : (
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+               <div className="text-lg font-bold text-white tracking-tight leading-none">
+                 {stats?.primaryText || 'Brak danych'}
+               </div>
+               <div className="text-xs text-slate-400 font-mono mt-1 mb-3">
+                 {stats?.secondaryText || 'Wymagana konfiguracja'}
+               </div>
+
+               {/* Małe kafelki z dodatkowymi statystykami */}
+               {isOnline && (
+                 <div className="grid grid-cols-2 gap-2 mt-auto">
+                    <div className="bg-black/20 border border-white/5 rounded-lg p-2 flex flex-col">
+                       <span className="text-[9px] text-slate-400 uppercase font-bold flex items-center gap-1 mb-0.5">
+                         <Layers size={10} className="text-blue-400" /> Razem
+                       </span>
+                       <span className="text-sm text-white font-mono">{stats?.queries || 0}</span>
+                    </div>
+                    <div className="bg-black/20 border border-white/5 rounded-lg p-2 flex flex-col">
+                       <span className="text-[9px] text-slate-400 uppercase font-bold flex items-center gap-1 mb-0.5">
+                         <Activity size={10} className="text-emerald-400" /> Ping
+                       </span>
+                       <span className="text-sm text-white font-mono">{stats?.latency || 0} ms</span>
+                    </div>
+                 </div>
+               )}
+            </div>
+         )}
+      </div>
     </div>
   );
 }

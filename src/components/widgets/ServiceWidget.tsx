@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { GripHorizontal, X, ExternalLink } from 'lucide-react';
+import { GripHorizontal, X, ExternalLink, Settings, Save, ArrowDownRight } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
 // Importujemy nasze szablony
@@ -20,6 +20,7 @@ interface ServiceWidgetProps {
   id: string;
   isEditMode: boolean;
   onRemove: (id: string) => void;
+  onUpdateData?: (id: string, newData: any) => void;
   data: {
     name: string;
     icon: string;
@@ -27,53 +28,118 @@ interface ServiceWidgetProps {
     color: string;
     status: string;
     widgetType?: string; // Tutaj przychodzi typ z appMap
+    settings?: {
+      authType?: string;
+      apiKey?: string;
+      username?: string;
+      password?: string;
+    };
+    w?: number; // Szerokość w gridzie
+    h?: number; // Wysokość w gridzie
   };
+  
 }
 
 export default function ServiceWidget(props: ServiceWidgetProps) {
-  const { style, className, onMouseDown, onMouseUp, onTouchEnd, id, isEditMode, onRemove, data } = props;
-  console.log("ServiceWidget Data:", data.name, data.widgetType);
-  
-  // Stan na statystyki "Live" z Dockera
-  const [stats, setStats] = useState<{ cpuUsage: string, memoryUsage: string } | null>(null);
+  const { style, className, onMouseDown, onMouseUp, onTouchEnd, id, isEditMode, onRemove, onUpdateData,w, h, data } = props;
 
-  if (true) { 
+  // --- ZABEZPIECZENIE PRZED BRAKIEM DANYCH ---
+  if (!data) {
     return (
-      <div style={style} className={`${className} bg-slate-800 text-xs overflow-hidden border-2 border-red-500 relative`} onMouseDown={onMouseDown} onMouseUp={onMouseUp} onTouchEnd={onTouchEnd}>
-         <div className="absolute top-0 left-0 bg-red-600 text-white px-2 font-bold z-50">DEBUG MODE</div>
-         <div className="p-4 pt-8 text-white space-y-1 font-mono break-all">
-            <p><span className="text-slate-400">Name:</span> {data.name}</p>
-            <p><span className="text-slate-400">Type:</span> <span className="text-yellow-400 font-bold">'{data.widgetType}'</span></p>
-            <p><span className="text-slate-400">Icon:</span> {data.icon}</p>
-            <button onClick={() => onRemove(id)} className="mt-2 bg-red-600 px-2 py-1 rounded">Usuń mnie</button>
-         </div>
+      <div style={style} className={`${className} bg-red-900/50 border border-red-500 rounded-xl p-4 flex flex-col items-center justify-center`} onMouseDown={onMouseDown} onMouseUp={onMouseUp} onTouchEnd={onTouchEnd}>
+         <span className="text-white font-bold">Błąd wczytywania danych</span>
+         <button onClick={() => onRemove(id)} className="mt-2 text-xs bg-red-600 hover:bg-red-500 text-white px-2 py-1 rounded">Usuń uszkodzony widget</button>
       </div>
     );
   }
 
+  console.log("ServiceWidget Data:", data.name, data.widgetType);
+  
+  // Stan na statystyki "Live" z Dockera
+  const [stats, setStats] = useState<{ cpuUsage: string, memoryUsage: string } | null>(null);
+  const [isConfiguring, setIsConfiguring] = useState(false);
+  const [settings, setSettings] = useState({
+    authType: data.settings?.authType || 'none', // 'none', 'apikey', 'basic'
+    apiKey: data.settings?.apiKey || '',
+    username: data.settings?.username || '',
+    password: data.settings?.password || ''
+  });
+  const [editedUrl, setEditedUrl] = useState(data.url || '');
+
+  // Stan na statystyki "Live"
+  const [liveStats, setLiveStats] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const handleSettingChange = (field: string, value: string) => {
+    setSettings(prev => ({ ...prev, [field]: value }));
+  };
+
+  
   // Pobieranie statystyk (Proste fetchowanie po nazwie, jeśli mamy API)
   // UWAGA: To zadziała dobrze, jeśli 'data.name' w miarę odpowiada nazwie kontenera lub jeśli dodamy containerId do data
   // Na razie zrobimy prostą symulację lub placeholder, a w przyszłości wepniemy tu containerId
   useEffect(() => {
-    // Tu w przyszłości: fetch('/api/stats/' + data.containerId)
-    // Na razie zostawmy null, szablony obsłużą brak danych
-  }, []);
+    let isMounted = true;
+
+    const fetchStats = async () => {
+      // Jeśli widget nie ma przypisanego typu lub URL, nie ma sensu pytać API
+      if (!data.url || !data.widgetType || data.widgetType === 'generic') {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/services/stats', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            appName: data.name,
+            url: data.url,
+            widgetType: data.widgetType,
+            settings: data.settings // Przekazujemy zapisane hasła do backendu!
+          })
+        });
+
+        const result = await res.json();
+        
+        if (isMounted) {
+          setLiveStats(result);
+          setIsLoading(false);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setLiveStats({ status: 'error', primaryText: 'Błąd połączenia', secondaryText: 'Sprawdź logi' });
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchStats(); // Pobierz natychmiast po załadowaniu
+    const interval = setInterval(fetchStats, 15000); // Odświeżaj co 15 sekund
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [data.url, data.settings, data.name, data.widgetType]); // Zależności: odśwież, jeśli user zmieni hasło w zębatce
 
   
 
   // --- WYBÓR SZABLONU ---
   const renderContent = () => {
+    const templateProps = { data, stats: liveStats, isLoading, w, h }; // <-- ZBIERAMY PROPSY
+
     switch (data.widgetType) {
       case 'minecraft':
-        return <MinecraftWidget data={data} stats={stats} />;
+        return <MinecraftWidget {...templateProps} />;
       case 'pihole':
-        return <PiholeWidget data={data} stats={stats} />;
+        return <PiholeWidget {...templateProps} />;
       case 'media':
-        return <MediaWidget data={data} stats={stats} />;
+        return <MediaWidget {...templateProps} />;
       case 'admin':  
-        return <AdminWidget data={data} stats={stats} />;
+        return <AdminWidget {...templateProps} />;
       case 'proxy':  
-        return <ProxyWidget data={data} />;
+        return <ProxyWidget {...templateProps} />;
       default:
         return <GenericTemplate data={data} />;
     }
@@ -82,20 +148,132 @@ export default function ServiceWidget(props: ServiceWidgetProps) {
   return (
     <div 
       style={style} 
-      className={`${className} rounded-xl shadow-xl flex flex-col overflow-hidden relative group`} 
+      className={`h-full w-full bg-slate-800 border border-slate-700 rounded-xl shadow-xl flex flex-col relative overflow-hidden group ${className}`} 
       onMouseDown={onMouseDown} 
       onMouseUp={onMouseUp} 
       onTouchEnd={onTouchEnd}
     >
       {/* --- TRYB EDYCJI (Nakładka) --- */}
-      {isEditMode && (
+      {isEditMode && !isConfiguring && (
         <div className="absolute inset-0 bg-slate-900/80 z-50 flex flex-col items-center justify-center border-2 border-blue-500/50 rounded-xl cursor-move grid-drag-handle">
-           <div className="absolute top-2 right-2 cursor-pointer text-slate-400 hover:text-red-500" onClick={(e) => { e.stopPropagation(); onRemove(id); }}>
-             <X size={20} />
-           </div>
+           
+           {/* Prawy górny róg - akcje */}
+            <div className="absolute top-2 right-2 flex gap-2 z-50">
+              <button 
+                className="text-slate-400 hover:text-emerald-400 bg-slate-800/80 p-1.5 rounded-lg transition-colors cursor-pointer"
+                onMouseDown={(e) => e.stopPropagation()} 
+                onClick={(e) => { e.stopPropagation(); setIsConfiguring(true); }}
+              >
+                <Settings size={18} />
+              </button>
+              <button 
+                className="text-slate-400 hover:text-red-500 bg-slate-800/80 p-1.5 rounded-lg transition-colors cursor-pointer"
+                onMouseDown={(e) => e.stopPropagation()} 
+                onClick={(e) => { e.stopPropagation(); onRemove(id); }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+           
            <GripHorizontal className="text-blue-400 mb-2" />
            <span className="text-white font-bold">{data.name}</span>
            <span className="text-xs text-slate-400">{data.widgetType || 'generic'}</span>
+
+           {/* --- IKONA SKALOWANIA (Prawy dolny róg) --- */}
+           <div className="absolute bottom-2 right-2 text-blue-400/80 pointer-events-none flex items-center justify-center p-1 bg-blue-500/20 rounded-tl-xl rounded-br-lg">
+             <ArrowDownRight size={16} />
+           </div>
+        </div>
+      )}
+
+      {/* --- PANEL KONFIGURACJI WIDGETU --- */}
+      {isConfiguring && (
+        <div className="absolute inset-0 bg-slate-900 z-[60] p-4 flex flex-col rounded-xl border-2 border-emerald-500 shadow-2xl overflow-y-auto" onMouseDown={e => e.stopPropagation()}>
+           <div className="flex justify-between items-center mb-4">
+              <h4 className="text-white font-bold flex items-center gap-2"><Settings size={16} className="text-emerald-400"/> Ustawienia</h4>
+              <button onClick={() => setIsConfiguring(false)} className="text-slate-400 hover:text-white"><X size={18}/></button>
+           </div>
+           
+           <div className="flex-1 space-y-3">
+              {/* NOWE POLE: Adres URL */}
+              <div>
+                 <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Adres URL Aplikacji</label>
+                 <input 
+                   type="text" 
+                   value={editedUrl}
+                   onChange={(e) => setEditedUrl(e.target.value)}
+                   className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                 />
+              </div>
+
+              {/* Wybór typu autoryzacji */}
+              <div>
+                 <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Typ autoryzacji</label>
+                 <select 
+                   value={settings.authType}
+                   onChange={(e) => handleSettingChange('authType', e.target.value)}
+                   className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                 >
+                    <option value="none">Brak (Publiczne API)</option>
+                    <option value="apikey">Token / API Key</option>
+                    <option value="basic">Login i Hasło (Basic Auth)</option>
+                 </select>
+              </div>
+
+              {/* Pola dla API Key */}
+              {settings.authType === 'apikey' && (
+                <div className="animate-in fade-in slide-in-from-top-2">
+                   <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Klucz API</label>
+                   <input 
+                     type="password" 
+                     value={settings.apiKey}
+                     onChange={(e) => handleSettingChange('apiKey', e.target.value)}
+                     className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                   />
+                </div>
+              )}
+
+              {/* Pola dla Login i Hasło */}
+              {settings.authType === 'basic' && (
+                <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                   <div>
+                     <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Login</label>
+                     <input 
+                       type="text" 
+                       value={settings.username}
+                       onChange={(e) => handleSettingChange('username', e.target.value)}
+                       className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                     />
+                   </div>
+                   <div>
+                     <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Hasło</label>
+                     <input 
+                       type="password" 
+                       value={settings.password}
+                       onChange={(e) => handleSettingChange('password', e.target.value)}
+                       className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+                     />
+                   </div>
+                </div>
+              )}
+           </div>
+
+           <button 
+             onClick={() => {
+               // Zapisujemy stare dane widgetu + dorzucamy nasze nowe settings (login/hasło/apikey)
+               if (onUpdateData) {
+                 onUpdateData(id, {
+                   ...data,
+                   settings: settings,
+                   url: editedUrl // Aktualizujemy też URL, który jest kluczowy do pobierania statystyk 
+                 });
+               }
+               setIsConfiguring(false);
+             }}
+             className="w-full mt-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 transition-colors"
+           >
+             <Save size={16} /> Zapisz
+           </button>
         </div>
       )}
 

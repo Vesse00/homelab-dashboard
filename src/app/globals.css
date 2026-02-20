@@ -41,3 +41,19 @@ body {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+
+/* --- CUSTOM RESIZE HANDLE DLA DASHBOARDU --- */
+.react-resizable-handle {
+  z-index: 60 !important; /* Przesuwamy nad nakładkę edycji (z-50) */
+  width: 30px !important; /* Zwiększamy obszar łapania */
+  height: 30px !important;
+  bottom: 0 !important;
+  right: 0 !important;
+  cursor: nwse-resize !important;
+  background: transparent !important; /* Ukrywamy domyślny wygląd */
+}
+
+/* Ukrywamy domyślny szary trójkącik z biblioteki */
+.react-resizable-handle::after {
+  display: none !important;
+}

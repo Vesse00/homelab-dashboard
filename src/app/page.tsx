@@ -11,6 +11,7 @@ import DiskWidget from '@/components/widgets/DiskWidget';
 import WeatherWidget from '@/components/widgets/WeatherWidget';
 import ServiceDiscoveryModal from '@/components/ServiceDiscoveryModal';
 import { toast } from 'react-hot-toast';
+import ServiceWidget from '@/components/widgets/ServiceWidget';
 
 // Definicja dostępnych typów widgetów
 const WIDGET_TYPES = {
@@ -34,7 +35,9 @@ interface WidgetItem {
     url: string;
     color: string;
     status: string;
+    settings?: any; // Tu możemy później przechowywać ustawienia (np. porty, auth) dla tego widgetu
   };
+  
 }
 
 // Domyślny layout startowy
@@ -118,7 +121,15 @@ const handleScan = async () => {
       w: 2,
       h: 2,
       type: WIDGET_TYPES.SERVICE,
-      data: serviceData // Przekazujemy gotowe dane (nazwa, ikona, url)
+      data: {
+        ...serviceData,
+      settings: {
+          authType: 'none',
+          apiKey: '',
+          username: '',
+          password: ''
+        }
+      }, // Przekazujemy gotowe dane (nazwa, ikona, url)
     };
 
     const newWidgets = [...widgets, newWidget];
@@ -146,7 +157,15 @@ const handleScan = async () => {
         w: 2,
         h: 2,
         type: WIDGET_TYPES.SERVICE,
-        data: data // Tu są dane z portem zmienionym w Modalu
+        data: {
+          ...data,
+          settings: {
+            authType: 'none',
+            apiKey: '',
+            username: '',
+            password: ''
+          }
+        } // Tu są dane z portem zmienionym w Modalu
       });
     });
 
@@ -159,7 +178,14 @@ const handleScan = async () => {
     // Aktualizuj stan lokalny (żeby UI działało płynnie)
     const updatedWidgets = newLayout.map(l => {
       const existing = widgets.find(w => w.i === l.i);
-      return { ...l, type: existing?.type || WIDGET_TYPES.DOCKER_STATS };
+      
+      return { 
+        ...l, 
+        // 1. Przywracamy poprawny typ
+        type: l.type || existing?.type || WIDGET_TYPES.DOCKER_STATS,
+        // 2. Przywracamy dane, których Grid nas pozbawił!
+        data: l.data || existing?.data 
+      };
     });
     setWidgets(updatedWidgets);
 
@@ -208,6 +234,21 @@ const handleScan = async () => {
           body: JSON.stringify({ layout: filtered }),
         });
     }
+  };
+
+  // Aktualizuje dane (w tym ustawienia i hasła) wewnątrz widgetu
+  const updateWidgetData = (id: string, newData: any) => {
+    const updatedWidgets = widgets.map(w => {
+      if (w.i === id) {
+         // Nadpisujemy stare 'data' nowymi danymi (które zawierają nasze settings)
+        return { ...w, data: newData };
+      }
+      return w;
+    });
+    
+    setWidgets(updatedWidgets);
+    saveLayout(updatedWidgets); // Zapisujemy od razu do bazy!
+    toast.success("Zapisano ustawienia widgetu");
   };
 
   return (
@@ -348,6 +389,7 @@ const handleScan = async () => {
           }}
         isEditMode={isEditMode}
         onRemove={removeWidget}
+        onUpdateData={updateWidgetData}
       >
         {widgets.map((widget) => (
           <div key={widget.i} className={isEditMode ? "z-10" : "z-0"}>
@@ -377,6 +419,7 @@ const handleScan = async () => {
                 className='h-full w-full'
               />
             )}
+            
             
             {/* Jeśli typ jest nieznany */}
             {widget.type === 'unknown' && (

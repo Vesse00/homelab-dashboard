@@ -82,6 +82,8 @@ export default function ContainerCard({ container }: Props) {
         <span>{container.Status}</span>
         <span>UPTIME</span>
       </div>
+
+      
     </div>
   );
 }
