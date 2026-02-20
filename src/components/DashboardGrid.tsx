@@ -10,6 +10,7 @@ import ServiceWidget from './widgets/ServiceWidget';
 import DockerWidget from './widgets/DockerWidget';
 import DiskWidget from './widgets/DiskWidget';
 import WeatherWidget from './widgets/WeatherWidget';
+import ServerStatsWidget from './widgets/ServerStatsWidget';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -55,6 +56,9 @@ export default function DashboardGrid({
       
       case 'weather':
         return <WeatherWidget {...commonProps} />;
+
+      case 'server_stats':
+        return <ServerStatsWidget {...commonProps} />;
         
       default:
         // Fallback dla nieznanych lub starych widgetów

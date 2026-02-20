@@ -12,12 +12,14 @@ import WeatherWidget from '@/components/widgets/WeatherWidget';
 import ServiceDiscoveryModal from '@/components/ServiceDiscoveryModal';
 import { toast } from 'react-hot-toast';
 import ServiceWidget from '@/components/widgets/ServiceWidget';
+import ServerStatsWidget from '@/components/widgets/ServerStatsWidget';
 
 // Definicja dostępnych typów widgetów
 const WIDGET_TYPES = {
   DOCKER_STATS: 'docker_stats',
   DISK_STATS: 'disk_stats', 
   WEATHER: 'weather',
+  SERVER_STATS: 'server_stats',
   SERVICE: 'service', // Nowy typ dla usług z autodekrypcji
 };
 
@@ -43,7 +45,8 @@ interface WidgetItem {
 // Domyślny layout startowy
 const DEFAULT_LAYOUT = [
   { i: '1', x: 0, y: 0, w: 4, h: 2, type: WIDGET_TYPES.DOCKER_STATS },
-  { i: '2', x: 4, y: 0, w: 4, h: 2, type: WIDGET_TYPES.DOCKER_STATS },
+  { i: '2', x: 4, y: 0, w: 4, h: 2, type: WIDGET_TYPES.DISK_STATS },
+  { i: '3', x: 0, y: 2, w: 4, h: 2, type: WIDGET_TYPES.SERVER_STATS },
 ];
 
 export default function Dashboard() {
@@ -325,6 +328,14 @@ const handleScan = async () => {
                         <CloudSun size={16} className="text-yellow-400"/>
                         Pogoda
                       </button>
+                      <button
+                        onClick={() => addWidget(WIDGET_TYPES.SERVER_STATS)}
+                        className="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors flex items-center gap-2"
+                      >
+                        <LayoutGrid size={16} className="text-green-400"/>
+                        Statystyki Serwera
+
+                      </button>
                       {/* Tu dodasz kolejne typy widgetów */}
                     </div>
                     {/* --- NOWA SEKCJA: TWOJE APLIKACJE --- */}
@@ -413,6 +424,14 @@ const handleScan = async () => {
             )}
             {widget.type === WIDGET_TYPES.WEATHER && (
               <WeatherWidget 
+                id={widget.i}
+                isEditMode={isEditMode}
+                onRemove={() => removeWidget(widget.i)}
+                className='h-full w-full'
+              />
+            )}
+            {widget.type === WIDGET_TYPES.SERVER_STATS && (
+              <ServerStatsWidget 
                 id={widget.i}
                 isEditMode={isEditMode}
                 onRemove={() => removeWidget(widget.i)}
