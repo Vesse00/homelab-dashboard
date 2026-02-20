@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { GripHorizontal, X, ExternalLink, Settings, Save, ArrowDownRight } from 'lucide-react';
+import { GripHorizontal, X, ExternalLink, Settings, Save, ArrowDownRight, Lock, Unlock } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
 // Importujemy nasze szablony
@@ -34,14 +34,16 @@ interface ServiceWidgetProps {
       username?: string;
       password?: string;
     };
-    w?: number; // Szerokość w gridzie
-    h?: number; // Wysokość w gridzie
   };
+  w?: number; // Szerokość w gridzie
+  h?: number; // Wysokość w gridzie
+  isLocked?: boolean; // Czy widget jest zablokowany przed przenoszeniem/skalowaniem
+  onToggleLock?: (id: string) => void;
   
 }
 
 export default function ServiceWidget(props: ServiceWidgetProps) {
-  const { style, className, onMouseDown, onMouseUp, onTouchEnd, id, isEditMode, onRemove, onUpdateData,w, h, data } = props;
+  const { style, className, onMouseDown, onMouseUp, onTouchEnd, id, isEditMode, onRemove, onUpdateData,w, h, data, isLocked, onToggleLock } = props;
 
   // --- ZABEZPIECZENIE PRZED BRAKIEM DANYCH ---
   if (!data) {
@@ -156,7 +158,13 @@ export default function ServiceWidget(props: ServiceWidgetProps) {
       {/* --- TRYB EDYCJI (Nakładka) --- */}
       {isEditMode && !isConfiguring && (
         <div className="absolute inset-0 bg-slate-900/80 z-50 flex flex-col items-center justify-center border-2 border-blue-500/50 rounded-xl cursor-move grid-drag-handle">
-           
+           <div 
+             className={`absolute top-2 left-2 cursor-pointer p-1.5 rounded-lg z-50 transition-colors ${isLocked ? 'text-amber-400 bg-slate-800/90 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : 'text-slate-400 hover:text-white bg-slate-800/80 hover:bg-slate-800'}`} 
+             onMouseDown={(e) => e.stopPropagation()} 
+             onClick={(e) => { e.stopPropagation(); onToggleLock?.(id); }}
+           >
+             {isLocked ? <Lock size={18} /> : <Unlock size={18} />}
+           </div>
            {/* Prawy górny róg - akcje */}
             <div className="absolute top-2 right-2 flex gap-2 z-50">
               <button 

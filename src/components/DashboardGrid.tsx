@@ -20,6 +20,7 @@ interface DashboardGridProps {
   isEditMode: boolean;
   onRemove: (id: string) => void;
   onUpdateData?: (id: string, newData: any) => void;
+  onToggleLock: (id: string) => void;
 }
 
 export default function DashboardGrid({ 
@@ -27,7 +28,8 @@ export default function DashboardGrid({
   onLayoutChange, 
   isEditMode, 
   onRemove,
-  onUpdateData
+  onUpdateData,
+  onToggleLock
 }: DashboardGridProps) {
 
   // Funkcja, która wybiera odpowiedni komponent widgetu
@@ -42,6 +44,8 @@ export default function DashboardGrid({
       onUpdateData: onUpdateData,
       w: item.w,
       h: item.h,
+      isLocked: item.static, // <--- PRZEKAZUJEMY STAN KŁÓDKI (wbudowane w item)
+      onToggleLock: onToggleLock
     };
 
     switch (item.type) {
@@ -70,6 +74,8 @@ export default function DashboardGrid({
     }
   };
 
+  
+
   return (
     <ResponsiveGridLayout
       className="layout"
@@ -84,7 +90,16 @@ export default function DashboardGrid({
       isResizable={isEditMode}
       draggableHandle=".grid-drag-handle"
       
-      onLayoutChange={(currentLayout) => onLayoutChange(currentLayout)}
+      onLayoutChange={(currentLayout, allLayouts) => {
+        // 1. Zapisujemy układ do bazy TYLKO w trybie edycji. 
+        // Wciskając F12 w normalnym trybie nic się nie zepsuje w pamięci!
+        if (isEditMode) {
+          // 2. Zawsze priorytetyzujemy układ 'lg' (desktopowy), żeby po zwężeniu
+          // i rozszerzeniu okna wszystko miało gdzie wrócić.
+          const layoutToSave = allLayouts.lg || currentLayout;
+          onLayoutChange(layoutToSave);
+        }
+      }}
     >
       {/* Tutaj tworzymy strukturę Grid > Div > Widget */}
       {layout.map((item: any) => (

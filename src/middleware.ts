@@ -24,7 +24,9 @@ export const config = {
      * - favicon.ico (ikona)
      * - public files (pliki z kropką, np. window.svg)
      * - api/cron
+     * - forgot-password
+     * - auth/reset (strona resetu hasła)
      */
-    "/((?!api/cron|login|register|api/register|api/auth|_next/static|_next/image|favicon.ico|.*\\..*).*)",
+    "/((?!api/cron|login|register|api/register|api/auth|_next/static|_next/image|favicon.ico|forgot-password|auth/reset/*|.*\\..*).*)",
   ],
 };

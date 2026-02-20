@@ -1,199 +1,180 @@
 'use client';
 
-import { useState } from 'react';
-import { useSession, signOut } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { User, Lock, Save, Trash2, ArrowLeft } from 'lucide-react';
-import toast from 'react-hot-toast'; // <--- NOWY IMPORT
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { User, Mail, Shield, KeyRound, Save, Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function SettingsPage() {
   const { data: session, update } = useSession();
-  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<'profile' | 'security'>('profile');
+  const [loading, setLoading] = useState(false);
 
   // Stany formularza
   const [name, setName] = useState(session?.user?.name || '');
+  const [email, setEmail] = useState(session?.user?.email || '');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
-  
-  // Stan ładowania
-  const [loading, setLoading] = useState(false);
-  // USUNIĘTO: const [message, setMessage] ... (niepotrzebne)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
-    // Używamy toast.promise dla lepszego efektu (loading -> success/error automatycznie)
-    const promise = fetch('/api/user/settings', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name,
-        currentPassword: newPassword ? currentPassword : undefined,
-        newPassword: newPassword || undefined
-      }),
-    }).then(async (res) => {
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Wystąpił błąd");
-      return data;
-    });
-
+    
     try {
-      // Magia toast.promise: sam obsłuży ładowanie, sukces i błąd
-      const data = await toast.promise(promise, {
-        loading: 'Zapisywanie zmian...',
-        success: (data) => data.message || 'Zapisano pomyślnie!',
-        error: (err) => err.message,
+      const res = await fetch('/api/user/settings', {
+        method: 'POST', // Upewnij się, że używasz POST zgodnie z Twoim najnowszym API
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'updateProfile', name, email }),
       });
 
-      // Logika po sukcesie
-      if (name !== session?.user?.name) {
-        await update({ name }); 
-      }
-      setCurrentPassword('');
-      setNewPassword('');
+      const data = await res.json();
 
+      if (res.ok) {
+        // 1. Kluczowy krok: Wymuszenie aktualizacji sesji w NextAuth
+        // Przekazujemy nowe dane, aby Navbar od razu je zauważył
+        await update({
+          ...session,
+          user: {
+            ...session?.user,
+            name: name,
+            email: email
+          }
+        });
+
+        toast.success(data.message || "Profil zaktualizowany!");
+        
+        // 2. Odświeżenie strony, aby Server Components pobrały nowe dane
+        window.location.reload(); 
+      } else {
+        toast.error(data.error || "Wystąpił błąd");
+      }
     } catch (err) {
-      // Błędy są już obsłużone przez toast.promise, ale catch jest potrzebny dla Reacta
-      console.error(err);
+      toast.error("Błąd połączenia z serwerem");
     } finally {
       setLoading(false);
     }
   };
-
-  const handleDeleteAccount = async () => {
-    // Tutaj używamy zwykłego window.confirm, bo to krytyczna akcja
-    if (!confirm("Czy na pewno chcesz usunąć swoje konto? Ta operacja jest nieodwracalna.")) return;
-
-    const toastId = toast.loading("Usuwanie konta...");
-
-    try {
-      const res = await fetch('/api/user/settings', { method: 'DELETE' });
-      const data = await res.json();
-      
-      if (!res.ok) throw new Error(data.error);
-      
-      toast.success("Konto usunięte", { id: toastId });
-      signOut({ callbackUrl: '/login' });
-
-    } catch (err: any) {
-      toast.error(err.message, { id: toastId });
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const res = await fetch('/api/user/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'changePassword', currentPassword, newPassword }),
+    });
+    const data = await res.json();
+    setLoading(false);
+    if (res.ok) {
+      alert(data.message);
+      setCurrentPassword('');
+      setNewPassword('');
+    } else {
+      alert(data.error);
     }
   };
 
+  useEffect(() => {
+    if (session?.user) {
+      setName(session.user.name || '');
+      setEmail(session.user.email || '');
+    }
+  }, [session]);
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 p-6 flex justify-center">
-      <div className="w-full max-w-2xl">
-        
-        {/* Nagłówek */}
-        <div className="flex items-center gap-4 mb-8">
-          <button 
-            onClick={() => router.back()}
-            className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
-          >
-            <ArrowLeft />
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold text-white">Ustawienia Konta</h1>
-            <p className="text-slate-400 text-sm">Zarządzaj swoim profilem i bezpieczeństwem</p>
+    <div className="min-h-screen p-6 relative">
+      {/* Ozdobne tła */}
+      <div className="absolute top-20 left-10 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-600/10 rounded-full blur-[120px] pointer-events-none" />
+
+      <div className="max-w-5xl mx-auto z-10 relative">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+            <User className="text-blue-500" size={32} />
+            Ustawienia Konta
+          </h1>
+          <p className="text-slate-400 text-sm mt-1">Dostosuj swoje dane i zabezpiecz konto.</p>
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* Menu boczne */}
+          <div className="w-full md:w-64 flex flex-col gap-2">
+            <button 
+              onClick={() => setActiveTab('profile')}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'profile' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200 border border-transparent'}`}
+            >
+              <User size={18} /> Profil
+            </button>
+            <button 
+              onClick={() => setActiveTab('security')}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'security' ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200 border border-transparent'}`}
+            >
+              <Shield size={18} /> Bezpieczeństwo
+            </button>
+          </div>
+
+          {/* Główny kontener formularzy */}
+          <div className="flex-1 bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl animate-in fade-in duration-500">
+            
+            {activeTab === 'profile' && (
+              <form onSubmit={handleUpdateProfile} className="space-y-6">
+                <h2 className="text-xl font-bold text-white mb-4">Informacje o profilu</h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Nazwa użytkownika</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><User size={16} className="text-slate-500" /></div>
+                      <input type="text" value={name} onChange={e => setName(e.target.value)} className="block w-full pl-10 pr-3 py-2.5 border border-slate-700 rounded-xl bg-black/50 text-white placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Adres E-mail</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Mail size={16} className="text-slate-500" /></div>
+                      <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="block w-full pl-10 pr-3 py-2.5 border border-slate-700 rounded-xl bg-black/50 text-white placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/10 flex justify-end">
+                  <button type="submit" disabled={loading} className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50">
+                    {loading ? <Loader2 size={18} className="animate-spin" /> : <><Save size={18} /> Zapisz zmiany</>}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {activeTab === 'security' && (
+              <form onSubmit={handleUpdatePassword} className="space-y-6">
+                <h2 className="text-xl font-bold text-white mb-4">Zmiana hasła</h2>
+                
+                <div className="max-w-md space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Obecne hasło</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><KeyRound size={16} className="text-slate-500" /></div>
+                      <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required className="block w-full pl-10 pr-3 py-2.5 border border-slate-700 rounded-xl bg-black/50 text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500" placeholder="••••••••" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Nowe hasło</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><KeyRound size={16} className="text-slate-500" /></div>
+                      <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required minLength={6} className="block w-full pl-10 pr-3 py-2.5 border border-slate-700 rounded-xl bg-black/50 text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500" placeholder="••••••••" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/10 flex justify-start">
+                  <button type="submit" disabled={loading} className="flex items-center gap-2 px-6 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-purple-500/20 disabled:opacity-50">
+                    {loading ? <Loader2 size={18} className="animate-spin" /> : <><Save size={18} /> Zaktualizuj hasło</>}
+                  </button>
+                </div>
+              </form>
+            )}
+
           </div>
         </div>
-
-        {/* Formularz */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-8">
-          
-          <form onSubmit={handleSubmit} className="space-y-6">
-            
-            {/* Sekcja: Profil */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2 border-b border-slate-800 pb-2">
-                <User size={20} className="text-blue-500"/> Profil
-              </h2>
-              
-              <div>
-                <label className="block text-sm font-medium text-slate-400 mb-1">Email</label>
-                <input 
-                  type="text" 
-                  value={session?.user?.email || ''} 
-                  disabled 
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-slate-500 cursor-not-allowed"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-400 mb-1">Nazwa wyświetlana</label>
-                <input 
-                  type="text" 
-                  value={name} 
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 transition-colors"
-                />
-              </div>
-            </div>
-
-            {/* Sekcja: Bezpieczeństwo */}
-            <div className="space-y-4 pt-4">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2 border-b border-slate-800 pb-2">
-                <Lock size={20} className="text-emerald-500"/> Zmiana Hasła
-              </h2>
-              <p className="text-xs text-slate-500">Wypełnij tylko jeśli chcesz zmienić hasło.</p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-1">Nowe hasło</label>
-                  <input 
-                    type="password" 
-                    value={newPassword} 
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500 transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-1">Obecne hasło</label>
-                  <input 
-                    type="password" 
-                    value={currentPassword} 
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    disabled={!newPassword} 
-                    placeholder={newPassword ? "Wymagane do potwierdzenia" : "••••••••"}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Przycisk Zapisz */}
-            <div className="flex justify-end pt-4">
-              <button 
-                type="submit" 
-                disabled={loading}
-                className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-medium transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
-              >
-                {loading ? 'Zapisywanie...' : <><Save size={18}/> Zapisz zmiany</>}
-              </button>
-            </div>
-
-          </form>
-        </div>
-
-        {/* Strefa Niebezpieczna */}
-        <div className="mt-12 border-t border-slate-800 pt-8">
-           <h3 className="text-rose-500 font-bold mb-2">Strefa Niebezpieczna</h3>
-           <div className="flex items-center justify-between bg-rose-950/20 border border-rose-900/50 p-4 rounded-xl">
-              <div>
-                <p className="text-slate-300 text-sm font-medium">Usuń konto</p>
-                <p className="text-slate-500 text-xs">Trwale usuwa konto i wszystkie przypisane ustawienia.</p>
-              </div>
-              <button 
-                onClick={handleDeleteAccount}
-                className="px-4 py-2 bg-transparent border border-rose-700 text-rose-500 hover:bg-rose-600 hover:text-white rounded-lg text-sm transition-colors flex items-center gap-2"
-              >
-                <Trash2 size={16}/> Usuń
-              </button>
-           </div>
-        </div>
-
       </div>
     </div>
   );

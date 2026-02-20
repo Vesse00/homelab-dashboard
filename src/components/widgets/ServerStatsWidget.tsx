@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { GripHorizontal, X, ArrowDownRight, Cpu, MemoryStick, ThermometerSun, Activity } from 'lucide-react';
+import { GripHorizontal, X, ArrowDownRight, Cpu, MemoryStick, ThermometerSun, Activity, Lock, Unlock } from 'lucide-react';
 
 interface ServerStatsWidgetProps {
   style?: React.CSSProperties;
@@ -14,10 +14,12 @@ interface ServerStatsWidgetProps {
   onRemove: (id: string) => void;
   w?: number;
   h?: number;
+  isLocked?: boolean;
+  onToggleLock?: (id: string) => void;
 }
 
 export default function ServerStatsWidget({
-  style, className, onMouseDown, onMouseUp, onTouchEnd, id, isEditMode, onRemove, w = 2, h = 2
+  style, className, onMouseDown, onMouseUp, onTouchEnd, id, isEditMode, onRemove, w = 2, h = 2, isLocked, onToggleLock
 }: ServerStatsWidgetProps) {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -63,6 +65,13 @@ export default function ServerStatsWidget({
         <div className="absolute inset-0 bg-slate-900/80 z-50 flex flex-col items-center justify-center border-2 border-blue-500/50 rounded-xl cursor-move grid-drag-handle backdrop-blur-sm">
            <div className="absolute top-2 right-2 cursor-pointer text-slate-400 hover:text-red-500 bg-slate-800/80 p-1.5 rounded-lg" onMouseDown={e => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onRemove(id); }}>
              <X size={18} />
+           </div>
+           <div 
+             className={`absolute top-2 left-2 cursor-pointer p-1.5 rounded-lg z-50 transition-colors ${isLocked ? 'text-amber-400 bg-slate-800/90 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : 'text-slate-400 hover:text-white bg-slate-800/80 hover:bg-slate-800'}`} 
+             onMouseDown={(e) => e.stopPropagation()} 
+             onClick={(e) => { e.stopPropagation(); onToggleLock?.(id); }}
+           >
+             {isLocked ? <Lock size={18} /> : <Unlock size={18} />}
            </div>
            <GripHorizontal className="text-blue-400 mb-2" size={28} />
            <span className="text-white font-bold tracking-wide">Zasoby Serwera</span>

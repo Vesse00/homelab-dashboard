@@ -1,93 +1,75 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/lib/auth";
-import { prisma } from "@/app/lib/prisma";
-import bcrypt from "bcryptjs";
+import { prisma } from '@/app/lib/prisma';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/lib/auth';
+import bcrypt from 'bcryptjs';
 
-// AKTUALIZACJA DANYCH (Nazwa / Hasło)
-export async function PUT(req: Request) {
+export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
+  
+  // Zabezpieczenie: Pobieramy niezmienne ID użytkownika z sesji
+  const userId = (session?.user as any)?.id;
+  const currentSessionEmail = session?.user?.email;
 
-  if (!session || !session.user?.email) {
-    return NextResponse.json({ error: "Nieautoryzowany" }, { status: 401 });
+  if (!userId || !currentSessionEmail) {
+    return NextResponse.json({ error: 'Nieautoryzowany dostęp' }, { status: 401 });
   }
 
   try {
     const body = await req.json();
-    const { name, currentPassword, newPassword } = body;
-    const email = session.user.email;
+    const { action } = body;
 
-    // 1. Zmiana samej nazwy
-    if (name && !newPassword) {
+    // --- AKCJA 1: Zmiana danych profilu (Nazwa, Email) ---
+    if (action === 'updateProfile') {
+      const { name, email } = body;
+      
+      // Sprawdzamy, czy ktoś inny nie używa już tego maila
+      if (email !== currentSessionEmail) {
+        const existingUser = await prisma.user.findUnique({ where: { email } });
+        if (existingUser) {
+          return NextResponse.json({ error: 'Ten e-mail jest już zajęty.' }, { status: 400 });
+        }
+      }
+
+      // KULOOODPORNA POPRAWKA: Szukamy i aktualizujemy po ID
       await prisma.user.update({
-        where: { email },
-        data: { name },
+        where: { id: userId },
+        data: { name, email },
       });
-      return NextResponse.json({ success: true, message: "Nazwa została zmieniona" });
+
+      return NextResponse.json({ message: 'Profil zaktualizowany pomyślnie!' });
     }
 
-    // 2. Zmiana hasła (Wymaga podania starego hasła!)
-    if (newPassword) {
-      if (!currentPassword) {
-        return NextResponse.json({ error: "Podaj aktualne hasło, aby ustawić nowe" }, { status: 400 });
-      }
-
-      // Pobierz użytkownika z bazy, aby sprawdzić hasło
-      const user = await prisma.user.findUnique({ where: { email } });
+    // --- AKCJA 2: Zmiana Hasła ---
+    if (action === 'changePassword') {
+      const { currentPassword, newPassword } = body;
+      
+      // KULOOODPORNA POPRAWKA: Szukamy po ID
+      const user = await prisma.user.findUnique({ where: { id: userId } });
       if (!user || !user.password) {
-        return NextResponse.json({ error: "Błąd użytkownika" }, { status: 404 });
+        return NextResponse.json({ error: 'Konto nie istnieje.' }, { status: 400 });
       }
 
-      // Sprawdź stare hasło
+      // Weryfikacja starego hasła
       const isValid = await bcrypt.compare(currentPassword, user.password);
       if (!isValid) {
-        return NextResponse.json({ error: "Obecne hasło jest nieprawidłowe" }, { status: 400 });
+        return NextResponse.json({ error: 'Obecne hasło jest nieprawidłowe.' }, { status: 400 });
       }
 
-      // Hashuj nowe hasło
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
-
+      // Szyfrowanie i zapis nowego hasła
+      const hashedNewPassword = await bcrypt.hash(newPassword, 10);
       await prisma.user.update({
-        where: { email },
-        data: { 
-          password: hashedPassword,
-          name: name || user.name // Przy okazji aktualizuj nazwę jeśli podana
-        },
+        where: { id: userId },
+        data: { password: hashedNewPassword },
       });
 
-      return NextResponse.json({ success: true, message: "Hasło zostało zmienione" });
+      return NextResponse.json({ message: 'Hasło zostało zmienione!' });
     }
 
-    return NextResponse.json({ error: "Brak danych do zmiany" }, { status: 400 });
+    return NextResponse.json({ error: 'Nieznana akcja' }, { status: 400 });
 
   } catch (error) {
-    return NextResponse.json({ error: "Błąd serwera" }, { status: 500 });
-  }
-}
-
-// USUWANIE KONTA
-export async function DELETE(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session || !session.user?.email) {
-    return NextResponse.json({ error: "Nieautoryzowany" }, { status: 401 });
-  }
-
-  try {
-    // Nie pozwól usunąć ostatniego admina (opcjonalne zabezpieczenie)
-    const user = await prisma.user.findUnique({ where: { email: session.user.email } });
-    if (user?.role === 'ADMIN') {
-        const adminCount = await prisma.user.count({ where: { role: 'ADMIN' } });
-        if (adminCount <= 1) {
-            return NextResponse.json({ error: "Nie można usunąć jedynego administratora" }, { status: 400 });
-        }
-    }
-
-    await prisma.user.delete({
-      where: { email: session.user.email },
-    });
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    return NextResponse.json({ error: "Błąd podczas usuwania konta" }, { status: 500 });
+    console.error("Błąd ustawień:", error);
+    return NextResponse.json({ error: 'Wystąpił błąd serwera' }, { status: 500 });
   }
 }

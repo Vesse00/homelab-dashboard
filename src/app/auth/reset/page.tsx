@@ -3,7 +3,7 @@
 import { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Shield, KeyRound, Loader2, ArrowLeft } from 'lucide-react';
+import { Shield, KeyRound, Loader2, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -11,19 +11,29 @@ function ResetPasswordForm() {
   const token = searchParams.get('token');
 
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+
     if (!token) {
       setError('Brak tokenu resetującego w adresie URL.');
       return;
     }
+
+    if (password !== confirmPassword) {
+      setError('Podane hasła nie są identyczne.');
+      return;
+    }
     
     setLoading(true);
-    setError('');
 
     try {
       const res = await fetch('/api/auth/reset-password', {
@@ -38,7 +48,7 @@ function ResetPasswordForm() {
         setError(data.error || 'Wystąpił błąd podczas zmiany hasła.');
       } else {
         setSuccess(true);
-        setTimeout(() => router.push('/login'), 3000); // Automatycznie przenieś do logowania
+        setTimeout(() => router.push('/login'), 3000);
       }
     } catch (err) {
       setError('Błąd połączenia z serwerem.');
@@ -62,7 +72,7 @@ function ResetPasswordForm() {
     return (
       <div className="text-center p-6 bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl">
         <div className="text-emerald-400 text-xl font-bold mb-2">Hasło zostało zmienione!</div>
-        <p className="text-slate-400 text-sm mb-4">Za chwilę zostaniesz przeniesiony do strony logowania...</p>
+        <p className="text-slate-400 text-sm mb-4">Za chwilę zostaniesz przeniesiony do logowania...</p>
         <Loader2 size={24} className="animate-spin text-emerald-500 mx-auto" />
       </div>
     );
@@ -73,6 +83,7 @@ function ResetPasswordForm() {
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium">{error}</div>}
         
+        {/* Hasło 1 */}
         <div>
           <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Nowe hasło</label>
           <div className="relative">
@@ -80,14 +91,47 @@ function ResetPasswordForm() {
               <KeyRound size={16} className="text-slate-500" />
             </div>
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               required
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="block w-full pl-10 pr-3 py-2.5 border border-slate-700 rounded-xl bg-black/50 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors sm:text-sm"
+              className="block w-full pl-10 pr-10 py-2.5 border border-slate-700 rounded-xl bg-black/50 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors sm:text-sm"
               placeholder="••••••••"
             />
+            <button 
+              type="button" 
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
+            >
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Hasło 2 (Potwierdzenie) */}
+        <div>
+          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Potwierdź nowe hasło</label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <KeyRound size={16} className="text-slate-500" />
+            </div>
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              required
+              minLength={6}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="block w-full pl-10 pr-10 py-2.5 border border-slate-700 rounded-xl bg-black/50 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors sm:text-sm"
+              placeholder="••••••••"
+            />
+            <button 
+              type="button" 
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
+            >
+              {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
           </div>
         </div>
 
@@ -105,7 +149,7 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a0a] relative overflow-hidden p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a0a] relative overflow-hidden p-4 -mt-16">
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-[120px] pointer-events-none" />
       
       <div className="w-full max-w-md z-10">

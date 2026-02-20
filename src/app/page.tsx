@@ -30,6 +30,7 @@ interface WidgetItem {
   w: number;
   h: number;
   type: string;
+  static?: boolean;
   // Pole opcjonalne, tylko dla widgetów typu 'service'
   data?: {
     name: string;
@@ -124,6 +125,7 @@ const handleScan = async () => {
       w: 2,
       h: 2,
       type: WIDGET_TYPES.SERVICE,
+      static: false,
       data: {
         ...serviceData,
       settings: {
@@ -160,6 +162,7 @@ const handleScan = async () => {
         w: 2,
         h: 2,
         type: WIDGET_TYPES.SERVICE,
+        static: false,
         data: {
           ...data,
           settings: {
@@ -214,7 +217,8 @@ const handleScan = async () => {
       y: Infinity, // Doda na samym dole
       w: 4,
       h: 2,
-      type: type
+      type: type,
+      static: false,
     };
     const newWidgets = [...widgets, newWidget];
     setWidgets(newWidgets);
@@ -252,6 +256,21 @@ const handleScan = async () => {
     setWidgets(updatedWidgets);
     saveLayout(updatedWidgets); // Zapisujemy od razu do bazy!
     toast.success("Zapisano ustawienia widgetu");
+  };
+
+  // --- Przełączanie Kłódki ---
+  const toggleWidgetLock = (id: string) => {
+    const updatedWidgets = widgets.map(w => {
+      if (w.i === id) {
+        const isNowLocked = !w.static;
+        if (isNowLocked) toast.success("Zablokowano pozycję kafelka");
+        return { ...w, static: isNowLocked };
+      }
+      return w;
+    });
+    
+    setWidgets(updatedWidgets);
+    saveLayout(updatedWidgets); // Od razu zapisujemy układ do bazy!
   };
 
   return (
@@ -398,6 +417,7 @@ const handleScan = async () => {
              setWidgets(newLayout);
              saveLayout(newLayout);
           }}
+        onToggleLock={toggleWidgetLock}
         isEditMode={isEditMode}
         onRemove={removeWidget}
         onUpdateData={updateWidgetData}

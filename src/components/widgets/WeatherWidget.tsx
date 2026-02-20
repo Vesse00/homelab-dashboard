@@ -1,6 +1,6 @@
 'use client';
 
-import { CloudSun, Droplets, Wind, MapPin, GripHorizontal, X, ArrowDownRight, Sun, CloudRain, Cloud, ThermometerSun, Settings, Save } from 'lucide-react';
+import { CloudSun, Droplets, Wind, MapPin, GripHorizontal, X, ArrowDownRight, Sun, CloudRain, Cloud, ThermometerSun, Settings, Save, Lock, Unlock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 interface WeatherWidgetProps {
@@ -10,9 +10,11 @@ interface WeatherWidgetProps {
   className?: string;
   w?: number;
   h?: number;
+  isLocked?: boolean;
+  onToggleLock?: (id: string) => void;
 }
 
-export default function WeatherWidget({ id, isEditMode, onRemove, className, w = 2, h = 2 }: WeatherWidgetProps) {
+export default function WeatherWidget({ id, isEditMode, onRemove, className, w = 2, h = 2, isLocked, onToggleLock }: WeatherWidgetProps) {
   const [city, setCity] = useState('');
   const [inputValue, setInputValue] = useState('');
   const [isConfiguring, setIsConfiguring] = useState(false);
@@ -140,6 +142,13 @@ export default function WeatherWidget({ id, isEditMode, onRemove, className, w =
         <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center border-2 border-blue-500/50 rounded-xl cursor-move grid-drag-handle transition-all">
            <div className="absolute top-2 right-2 cursor-pointer text-slate-400 hover:text-red-500 bg-slate-800/80 p-1.5 rounded-lg z-50" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onRemove(id); }}>
              <X size={18} />
+           </div>
+           <div 
+             className={`absolute top-2 left-2 cursor-pointer p-1.5 rounded-lg z-50 transition-colors ${isLocked ? 'text-amber-400 bg-slate-800/90 shadow-[0_0_10px_rgba(251,191,36,0.2)]' : 'text-slate-400 hover:text-white bg-slate-800/80 hover:bg-slate-800'}`} 
+             onMouseDown={(e) => e.stopPropagation()} 
+             onClick={(e) => { e.stopPropagation(); onToggleLock?.(id); }}
+           >
+             {isLocked ? <Lock size={18} /> : <Unlock size={18} />}
            </div>
            <GripHorizontal className="text-blue-400 mb-2 drop-shadow-lg" size={28} />
            <span className="text-white font-bold tracking-wide">Pogoda</span>
