@@ -56,6 +56,9 @@ export default function PiholeWidget({ data, stats, isLoading, w = 2, h = 2 }: P
               <span className="text-[10px] text-slate-500 font-mono">dns-sinkhole</span>
             </div>
          </div>
+         <a href={data.clickUrl || data.url} target="_blank" rel="noopener noreferrer" onMouseDown={e => e.stopPropagation()} className={`p-1.5 bg-black/30 rounded-lg border border-white/5 transition-colors z-20 ${isOnline ? 'text-slate-400 hover:text-emerald-400' : 'text-slate-500 hover:text-slate-300'}`}>
+            <ExternalLink size={14}/>
+        </a>
       </div>
 
       <div className="flex-1 flex flex-col justify-end z-10 mt-2">
@@ -83,7 +86,7 @@ export default function PiholeWidget({ data, stats, isLoading, w = 2, h = 2 }: P
                     </div>
                     <div className="bg-black/30 border border-white/5 rounded-xl p-2.5 flex flex-col">
                        <span className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1 mb-1"><Activity size={12} className="text-emerald-400" /> Ping</span>
-                       <span className="text-sm text-white font-mono font-bold">{stats?.latency} ms</span>
+                       <span className="text-sm text-white font-mono font-bold">{stats?.processingTime || 'N/A'} ms</span>
                     </div>
                  </div>
                )}

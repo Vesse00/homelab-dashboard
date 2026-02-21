@@ -61,8 +61,16 @@ export async function POST(req: Request) {
           const totalBlocked = data.blocked_filtering ? data.blocked_filtering.reduce((a: number, b: number) => a + b, 0) : 0;
           const totalQueries = data.dns_queries ? data.dns_queries.reduce((a: number, b: number) => a + b, 0) : 0;
           const percentage = totalQueries > 0 ? ((totalBlocked / totalQueries) * 100).toFixed(1) : '0';
+          const processingMs = data.avg_processing_time ? Math.round(data.avg_processing_time * 1000) : undefined;
           
-          unifiedStats = { status: 'online', primaryText: `Zablokowano: ${totalBlocked}`, secondaryText: `${percentage}% ruchu`, queries: totalQueries, latency, chartData: [] };
+          unifiedStats = { 
+            status: 'online',
+            primaryText: `Zablokowano: ${totalBlocked}`,
+            secondaryText: `${percentage}% ruchu`,
+            queries: totalQueries,
+            latency, chartData: [],
+            processingTime: processingMs // Dodajemy średni czas przetwarzania;
+          };
         } else {
           unifiedStats = { status: 'error', primaryText: 'Błąd autoryzacji', secondaryText: `Błąd ${res.status}` };
         }
@@ -101,14 +109,17 @@ export async function POST(req: Request) {
           const endpointId = endpoints[0].Id;
 
           const res = await fetch(`${cleanUrl}/api/endpoints/${endpointId}/docker/containers/json?all=1`, { headers: apiHeaders, signal: AbortSignal.timeout(5000) });
-          const latency = Date.now() - startTime;
           if (res.ok) {
             const containers = await res.json();
             const running = containers.filter((c: any) => c.State === 'running').length;
             const stopped = containers.filter((c: any) => c.State !== 'running').length;
-            unifiedStats = { status: 'online', primaryText: `Działa: ${running}`, secondaryText: `Zatrzymane: ${stopped}`, latency, queries: containers.length };
+            unifiedStats = { 
+              status: 'online',
+              primaryText: `Działa: ${running}`,
+              secondaryText: `Zatrzymane: ${stopped}`,
+              containers: {total: containers.length, running, stopped} };
           } else {
-            unifiedStats = { status: 'error', primaryText: 'Odmowa dostępu', secondaryText: `Błąd ${res.status}`, latency };
+            unifiedStats = { status: 'error', primaryText: 'Odmowa dostępu', secondaryText: `Błąd ${res.status}` };
           }
         } catch (e: any) {
           unifiedStats = { status: 'error', primaryText: 'Brak połączenia', secondaryText: e.message || 'Błąd API' };
@@ -125,7 +136,7 @@ export async function POST(req: Request) {
           const latency = Date.now() - startTime;
           if (res.ok) {
             const activeStreams = (await res.json()).MediaContainer?.size || 0;
-            unifiedStats = { status: 'online', primaryText: activeStreams > 0 ? `Ogląda: ${activeStreams}` : 'Brak streamów', secondaryText: activeStreams > 0 ? 'Serwer obciążony' : 'W spoczynku', latency, queries: activeStreams };
+            unifiedStats = { status: 'online', primaryText: activeStreams > 0 ? `Streamy: ${activeStreams}` : 'Brak streamów', secondaryText: activeStreams > 0 ? 'Serwer obciążony' : 'W spoczynku', latency, queries: activeStreams };
           } else {
             unifiedStats = { status: 'error', primaryText: 'Odmowa dostępu', secondaryText: 'Zły X-Plex-Token' };
           }
@@ -136,12 +147,32 @@ export async function POST(req: Request) {
         const jHeaders: Record<string, string> = {};
         if (settings?.apiKey) jHeaders['Authorization'] = `MediaBrowser Token="${settings.apiKey}"`;
         try {
-          const res = await fetch(`${cleanUrl}/Sessions`, { headers: jHeaders, signal: AbortSignal.timeout(5000) });
+          // Pobieramy sesje oraz statystyki biblioteki równolegle!
+          const [sessionsRes, countsRes] = await Promise.all([
+             fetch(`${cleanUrl}/Sessions`, { headers: jHeaders, signal: AbortSignal.timeout(5000) }),
+             fetch(`${cleanUrl}/Items/Counts`, { headers: jHeaders, signal: AbortSignal.timeout(5000) }).catch(() => null)
+          ]);
+          
           const latency = Date.now() - startTime;
-          if (res.ok) {
-            const sessions = await res.json();
+          
+          if (sessionsRes.ok) {
+            const sessions = await sessionsRes.json();
             const activeStreams = sessions.filter((s: any) => s.NowPlayingItem).length;
-            unifiedStats = { status: 'online', primaryText: activeStreams > 0 ? `Ogląda: ${activeStreams}` : 'Brak streamów', secondaryText: 'Jellyfin aktywny', latency, queries: activeStreams };
+            
+            // Domyślne statystyki (zabezpieczenie)
+            let counts = { MovieCount: 0, SeriesCount: 0, EpisodeCount: 0 };
+            if (countsRes && countsRes.ok) {
+               counts = await countsRes.json();
+            }
+
+            unifiedStats = { 
+               status: 'online', 
+               primaryText: activeStreams > 0 ? `Ogląda: ${activeStreams}` : 'Brak streamów', 
+               secondaryText: 'Jellyfin aktywny', 
+               latency, 
+               queries: activeStreams,
+               mediaCounts: counts // Przekazujemy wielkość biblioteki do frontendu
+            };
           } else {
             unifiedStats = { status: 'error', primaryText: 'Odmowa dostępu', secondaryText: 'Zły klucz API' };
           }
@@ -194,12 +225,36 @@ export async function POST(req: Request) {
            unifiedStats = { status: 'error', primaryText: 'Odmowa dostępu', secondaryText: 'Brak tokenu API', latency: 0 };
         } else {
            const apiHeaders: Record<string, string> = { 'Authorization': `Bearer ${settings.apiKey}` };
-           const targetUrl = `${cleanUrl}/api/`;
-           const res = await fetch(targetUrl, { headers: apiHeaders, signal: AbortSignal.timeout(5000) });
+           const res = await fetch(`${cleanUrl}/api/`, { headers: apiHeaders, signal: AbortSignal.timeout(5000) });
            const latency = Date.now() - startTime;
            
            if (res.ok) {
-              unifiedStats = { status: 'online', primaryText: 'Hub Aktywny', secondaryText: 'Zalogowano', latency };
+              // Jeśli API działa, pobieramy stany urządzeń!
+              const statesRes = await fetch(`${cleanUrl}/api/states`, { headers: apiHeaders, signal: AbortSignal.timeout(5000) });
+              let entities = { total: 0, on: 0, off: 0, unavailable: 0 };
+              
+              if (statesRes.ok) {
+                 const statesData = await statesRes.json();
+                 // Filtrujemy tylko przełączniki, światła i sensory obecności
+                 const relevant = statesData.filter((s: any) => 
+                    s.entity_id.startsWith('light.') || 
+                    s.entity_id.startsWith('switch.') || 
+                    s.entity_id.startsWith('binary_sensor.')
+                 );
+                 
+                 entities.total = relevant.length;
+                 entities.on = relevant.filter((s: any) => s.state === 'on').length;
+                 entities.off = relevant.filter((s: any) => s.state === 'off').length;
+                 entities.unavailable = relevant.filter((s: any) => s.state === 'unavailable' || s.state === 'unknown').length;
+              }
+
+              unifiedStats = { 
+                status: 'online', 
+                primaryText: 'Hub Aktywny', 
+                secondaryText: 'Zalogowano', 
+                entities: entities, // <-- Wysyłamy nasze statystyki na frontend
+                latency 
+              };
            } else if (res.status === 401) {
               unifiedStats = { status: 'error', primaryText: 'Odmowa dostępu', secondaryText: 'Zły token API', latency };
            } else {
@@ -299,20 +354,42 @@ export async function POST(req: Request) {
     // G) TAILSCALE
     else if (widgetType === 'tailscale') {
       try {
-        if (!settings?.apiKey) {
-           unifiedStats = { status: 'error', primaryText: 'Odmowa dostępu', secondaryText: 'Brak klucza API', latency: 0 };
+        if (!settings?.apiKey || !settings?.tailnet) {
+           unifiedStats = { status: 'error', primaryText: 'Odmowa dostępu', secondaryText: 'Brak kluczy API', latency: 0 };
         } else {
-           const pingRes = await fetch(cleanUrl, { signal: AbortSignal.timeout(5000) });
+           // Oficjalne API Tailscale: GET /api/v2/tailnet/{tailnet}/devices
+           const targetUrl = `https://api.tailscale.com/api/v2/tailnet/${settings.tailnet}/devices`;
+           
+           // Tailscale używa autoryzacji Basic Auth, gdzie loginem jest API Key, a hasło jest puste
+           const authHeader = `Basic ${Buffer.from(`${settings.apiKey}:`).toString('base64')}`;
+
+           const res = await fetch(targetUrl, { 
+             headers: { 'Authorization': authHeader },
+             signal: AbortSignal.timeout(5000) 
+           });
+           
            const latency = Date.now() - startTime;
            
-           if (pingRes.ok || pingRes.status === 401) {
-              unifiedStats = { status: 'online', primaryText: 'Host widoczny', secondaryText: 'Połączono', devices: 0, latency };
+           if (res.ok) {
+              const data = await res.json();
+              // Zliczamy tylko połączone urządzenia (opcjonalnie można wyświetlić wszystkie)
+              const devicesCount = data.devices ? data.devices.length : 0;
+              
+              unifiedStats = { 
+                status: 'online', 
+                primaryText: 'Połączono', 
+                secondaryText: 'API Aktywne', 
+                devices: devicesCount, 
+                latency 
+              };
+           } else if (res.status === 401 || res.status === 403) {
+              unifiedStats = { status: 'error', primaryText: 'Błąd Autoryzacji', secondaryText: 'Zły klucz API lub Tailnet', latency };
            } else {
-              unifiedStats = { status: 'error', primaryText: 'Błąd Tailscale', secondaryText: `Kod ${pingRes.status}`, latency };
+              unifiedStats = { status: 'error', primaryText: 'Błąd Chmury', secondaryText: `Kod ${res.status}`, latency };
            }
         }
       } catch (e) {
-        unifiedStats = { status: 'error', primaryText: 'Brak połączenia', secondaryText: 'Host nie odpowiada', latency: 0 };
+        unifiedStats = { status: 'error', primaryText: 'Brak połączenia', secondaryText: 'Sprawdź sieć', latency: 0 };
       }
     }
 

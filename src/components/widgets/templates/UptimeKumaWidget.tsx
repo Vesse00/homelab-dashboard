@@ -71,7 +71,7 @@ export default function UptimeKumaWidget({ data, stats, isLoading, w = 2, h = 2 
               <span className="text-[10px] text-slate-500 font-mono">monitor-status</span>
             </div>
          </div>
-         <a href={data.url} target="_blank" rel="noopener noreferrer" onMouseDown={e => e.stopPropagation()} className="text-slate-500 hover:text-emerald-400 transition-colors p-1.5 bg-black/30 rounded-lg border border-white/5">
+         <a href={data.clickUrl} target="_blank" rel="noopener noreferrer" onMouseDown={e => e.stopPropagation()} className="text-slate-500 hover:text-emerald-400 transition-colors p-1.5 bg-black/30 rounded-lg border border-white/5">
             <ExternalLink size={14}/>
         </a>
       </div>

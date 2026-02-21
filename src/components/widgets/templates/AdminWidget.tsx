@@ -52,7 +52,7 @@ export default function AdminWidget({ data, stats, isLoading, w = 2, h = 2 }: Ad
               <span className="text-[10px] text-slate-500 font-mono">admin-panel</span>
             </div>
          </div>
-         <a href={data.url} target="_blank" rel="noopener noreferrer" onMouseDown={e => e.stopPropagation()} className="text-slate-500 hover:text-blue-400 transition-colors p-1 bg-slate-950/30 rounded-lg">
+         <a href={data.clickUrl} target="_blank" rel="noopener noreferrer" onMouseDown={e => e.stopPropagation()} className="text-slate-500 hover:text-blue-400 transition-colors p-1 bg-slate-950/30 rounded-lg">
             <ExternalLink size={14}/>
         </a>
       </div>
@@ -79,11 +79,11 @@ export default function AdminWidget({ data, stats, isLoading, w = 2, h = 2 }: Ad
                  <div className="grid grid-cols-2 gap-3 mt-auto">
                     <div className="bg-black/30 border border-white/5 rounded-xl p-2.5 flex flex-col">
                        <span className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1.5 mb-1"><Layers size={12} className="text-blue-400" /> Razem</span>
-                       <span className="text-sm text-white font-mono font-bold">{stats?.queries || 0}</span>
+                       <span className="text-sm text-white font-mono font-bold">TODO</span>
                     </div>
                     <div className="bg-black/30 border border-white/5 rounded-xl p-2.5 flex flex-col">
                        <span className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1.5 mb-1"><Activity size={12} className="text-blue-400" /> Ping</span>
-                       <span className="text-sm text-white font-mono font-bold">{stats?.latency || 0} ms</span>
+                       <span className="text-sm text-white font-mono font-bold">inne dane</span>
                     </div>
                  </div>
                )}
