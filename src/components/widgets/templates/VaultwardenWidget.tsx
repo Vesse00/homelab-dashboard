@@ -1,8 +1,8 @@
 'use client';
 
-import { Home, ShieldCheck, Loader2, ExternalLink, AlertTriangle } from 'lucide-react';
+import { Key, ShieldCheck, Loader2, ExternalLink, AlertTriangle, Lock } from 'lucide-react';
 
-interface HomeAssistantWidgetProps {
+interface VaultwardenWidgetProps {
   data: any;
   stats?: any;
   isLoading?: boolean;
@@ -10,24 +10,25 @@ interface HomeAssistantWidgetProps {
   h?: number;
 }
 
-export default function HomeAssistantWidget({ data, stats, isLoading, w = 2, h = 2 }: HomeAssistantWidgetProps) {
+export default function VaultwardenWidget({ data, stats, isLoading, w = 2, h = 2 }: VaultwardenWidgetProps) {
   const isOnline = stats?.status === 'online';
   const isError = stats?.status === 'error';
   const isExpanded = w >= 3 && h >= 3;
 
-  // Domyślne kolory
+  // Domyślne kolory (oczekiwanie)
   let bgClass = 'bg-slate-900/60 border-slate-700/50';
   let iconColor = 'text-slate-500';
   let glowClass = '';
-  let TopIcon = Home;
+  let TopIcon = Key;
 
-  // Logika żywcem wyciągnięta z Twojego PiholeWidget
   if (isOnline) {
-    bgClass = 'bg-blue-950/40 backdrop-blur-md border-blue-900/50';
-    iconColor = 'text-blue-500';
-    glowClass = 'bg-blue-500/10';
-    TopIcon = Home;
+    // Szafirowo-niebieski motyw dla bezpiecznego sejfu
+    bgClass = 'bg-sky-950/40 backdrop-blur-md border-sky-900/50';
+    iconColor = 'text-sky-500';
+    glowClass = 'bg-sky-500/10';
+    TopIcon = Lock;
   } else if (isError) {
+    // Standardowy krwisty błąd
     bgClass = 'bg-red-950/40 backdrop-blur-md border-red-900/50';
     iconColor = 'text-red-500';
     TopIcon = AlertTriangle;
@@ -35,7 +36,7 @@ export default function HomeAssistantWidget({ data, stats, isLoading, w = 2, h =
 
   return (
     <div className={`h-full w-full border flex flex-col p-5 relative overflow-hidden transition-all duration-300 shadow-2xl ${bgClass} rounded-2xl`}>
-      <Home className={`absolute -right-8 -bottom-8 w-44 h-44 opacity-[0.03] pointer-events-none transform -rotate-12 transition-all duration-500 ${iconColor}`} />
+      <Key className={`absolute -right-8 -bottom-8 w-44 h-44 opacity-[0.03] pointer-events-none transform -rotate-12 transition-all duration-500 ${iconColor}`} />
       {isOnline && glowClass && <div className={`absolute -left-10 -top-10 w-32 h-32 blur-3xl rounded-full pointer-events-none ${glowClass}`} />}
 
       <div className="flex justify-between items-start z-10 mb-2">
@@ -44,11 +45,11 @@ export default function HomeAssistantWidget({ data, stats, isLoading, w = 2, h =
                <TopIcon size={22} />
             </div>
             <div>
-              <span className="font-bold text-slate-200 text-sm block leading-tight">{data.name || 'Home Assistant'}</span>
-              <span className={`text-[10px] font-mono ${iconColor}`}>smart-home-hub</span>
+              <span className="font-bold text-slate-200 text-sm block leading-tight">{data.name || 'Vaultwarden'}</span>
+              <span className={`text-[10px] font-mono ${iconColor}`}>password-manager</span>
             </div>
          </div>
-         <a href={data.url} target="_blank" rel="noopener noreferrer" onMouseDown={e => e.stopPropagation()} className="text-slate-500 hover:text-blue-400 transition-colors p-1.5 bg-black/30 rounded-lg border border-white/5">
+         <a href={data.url} target="_blank" rel="noopener noreferrer" onMouseDown={e => e.stopPropagation()} className="text-slate-500 hover:text-sky-400 transition-colors p-1.5 bg-black/30 rounded-lg border border-white/5">
             <ExternalLink size={14}/>
         </a>
       </div>
@@ -61,35 +62,42 @@ export default function HomeAssistantWidget({ data, stats, isLoading, w = 2, h =
         ) : (
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 flex flex-col h-full justify-end">
             
-            {/* WIDOK BŁĘDU: Dokładnie jak w Pi-hole */}
+            {/* WIDOK BŁĘDU (Zgodny z AdGuardem) */}
             {isError && (
               <div className="mt-auto mb-2">
                  <div className="text-2xl font-black text-white tracking-tight leading-none drop-shadow-md">
-                   {stats?.primaryText || 'Brak danych'}
+                   {stats?.primaryText || 'Brak dostępu'}
                  </div>
                  <div className="text-xs text-slate-400 font-mono mt-1">
-                   {stats?.secondaryText || 'Wymagana konfiguracja'}
+                   {stats?.secondaryText || 'Sejf niedostępny'}
                  </div>
               </div>
             )}
 
-            {/* WIDOK NORMALNY */}
+            {/* WIDOK NORMALNY (Kompaktowy 2x2) */}
             {isOnline && !isExpanded && (
               <div className="flex justify-between items-center bg-black/20 p-2.5 rounded-xl border border-white/5 mt-auto shadow-inner">
                  <span className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1.5">
-                   <ShieldCheck size={12} className="text-blue-500"/> {stats?.primaryText || 'Status systemu'}
+                   <ShieldCheck size={12} className="text-sky-500"/> Szyfrowanie
                  </span>
-                 <span className="text-xs font-black uppercase tracking-wider text-blue-400 truncate max-w-[100px] text-right">
-                   {stats?.secondaryText || 'ONLINE'}
+                 <span className="text-xs font-black text-white font-mono tracking-wider">
+                   {stats?.primaryText || 'AKTYWNE'}
                  </span>
               </div>
             )}
 
+            {/* WIDOK NORMALNY (Rozszerzony 3x3) */}
             {isOnline && isExpanded && (
               <div className="mt-4 flex-1 flex flex-col justify-end gap-3">
-                 <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-blue-500/30 bg-blue-500/5 rounded-xl p-3 text-center">
-                   <span className="text-xs text-slate-300 mb-1">Pełna kontrola wkrótce</span>
-                   <span className="text-[10px] text-blue-400 font-bold uppercase tracking-wider">Hub Połączony</span>
+                 <div className="grid grid-cols-2 gap-3 mt-auto">
+                    <div className="bg-black/30 border border-white/5 rounded-xl p-2.5 flex flex-col items-center justify-center">
+                       <span className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1 mb-1"><Lock size={12} className="text-sky-400" /> Baza Haseł</span>
+                       <span className="text-sm text-white font-mono font-bold">Zaszyfrowana</span>
+                    </div>
+                    <div className="bg-black/30 border border-white/5 rounded-xl p-2.5 flex flex-col items-center justify-center">
+                       <span className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1 mb-1"><ShieldCheck size={12} className="text-emerald-400" /> Web Vault</span>
+                       <span className="text-sm text-white font-mono font-bold">Online</span>
+                    </div>
                  </div>
               </div>
             )}

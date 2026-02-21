@@ -4,7 +4,7 @@ export interface AppDefinition {
   icon: string;
   port: number;
   color: string;
-  widgetType: 'generic' | 'minecraft' | 'pihole' | 'dns' | 'media' | 'admin' | 'proxy' | 'home-assistant' | 'uptime-kuma' | 'tailscale';
+  widgetType: 'generic' | 'minecraft' | 'pihole' | 'dns' | 'media' | 'admin' | 'proxy' | 'home-assistant' | 'uptime-kuma' | 'tailscale' | 'vaultwarden';
   template?: string; // Zostawiamy dla kompatybilności wstecznej
   category?: string;
 }
@@ -38,10 +38,13 @@ export const KNOWN_APPS: Record<string, AppDefinition> = {
   'grafana/grafana': { name: 'Grafana', icon: 'PieChart', port: 3000, color: 'orange', widgetType: 'generic', template: 'default', category: 'monitoring' },
   'prom/prometheus': { name: 'Prometheus', icon: 'Flame', port: 9090, color: 'red', widgetType: 'generic', template: 'default', category: 'monitoring' },
   
-  // --- CHMURA I BEZPIECZEŃSTWO ---
+  // --- CHMURA ---
   'linuxserver/nextcloud': { name: 'Nextcloud', icon: 'Cloud', port: 443, color: 'blue', widgetType: 'generic', template: 'default', category: 'cloud' },
   'nextcloud': { name: 'Nextcloud', icon: 'Cloud', port: 80, color: 'blue', widgetType: 'generic', template: 'default', category: 'cloud' },
-  'vaultwarden/server': { name: 'Vaultwarden', icon: 'Key', port: 80, color: 'blue', widgetType: 'generic', template: 'default', category: 'security' },
+
+  // --- BEZPIECZEŃSTWO I ZARZĄDZANIE HASŁAMI ---
+  'vaultwarden/server': { name: 'Vaultwarden', icon: 'Key', port: 80, color: 'blue', widgetType: 'vaultwarden', template: 'default', category: 'security' },
+  'bitwardenrs/server': { name: 'Vaultwarden', icon: 'Key', port: 80, color: 'blue', widgetType: 'vaultwarden', template: 'default', category: 'security' },
   
   // --- GRY ---
   'itzg/minecraft-server': { name: 'Minecraft', icon: 'Gamepad2', port: 25565, color: 'emerald', widgetType: 'minecraft', template: 'minecraft', category: 'games' },

@@ -190,7 +190,6 @@ export async function POST(req: Request) {
     // E) HOME ASSISTANT
     else if (widgetType === 'home-assistant') {
       try {
-        // ZMIANA: Brak klucza = Natychmiastowy błąd (Czerwony kafelek)
         if (!settings?.apiKey) {
            unifiedStats = { status: 'error', primaryText: 'Odmowa dostępu', secondaryText: 'Brak tokenu API', latency: 0 };
         } else {
@@ -202,14 +201,13 @@ export async function POST(req: Request) {
            if (res.ok) {
               unifiedStats = { status: 'online', primaryText: 'Hub Aktywny', secondaryText: 'Zalogowano', latency };
            } else if (res.status === 401) {
-              // ZMIANA: Zły klucz = Błąd (Czerwony)
               unifiedStats = { status: 'error', primaryText: 'Odmowa dostępu', secondaryText: 'Zły token API', latency };
            } else {
               unifiedStats = { status: 'error', primaryText: 'Błąd Huba', secondaryText: `Kod ${res.status}`, latency };
            }
         }
       } catch (e) {
-        unifiedStats = { status: 'error', primaryText: 'Brak połączenia', secondaryText: 'Sprawdź IP serwera' };
+        unifiedStats = { status: 'error', primaryText: 'Brak połączenia', secondaryText: 'Sprawdź IP serwera', latency: 0 };
       }
     }
 
@@ -301,7 +299,6 @@ export async function POST(req: Request) {
     // G) TAILSCALE
     else if (widgetType === 'tailscale') {
       try {
-        // ZMIANA: Tailscale też wymusi błąd, jeśli nie skonfigurujesz uwierzytelniania
         if (!settings?.apiKey) {
            unifiedStats = { status: 'error', primaryText: 'Odmowa dostępu', secondaryText: 'Brak klucza API', latency: 0 };
         } else {
@@ -315,10 +312,27 @@ export async function POST(req: Request) {
            }
         }
       } catch (e) {
-        unifiedStats = { status: 'error', primaryText: 'Brak połączenia', secondaryText: 'Host nie odpowiada' };
+        unifiedStats = { status: 'error', primaryText: 'Brak połączenia', secondaryText: 'Host nie odpowiada', latency: 0 };
       }
     }
-    // H) GENERIC (Wszystkie inne, np. Vaultwarden, Blogi, Strony WWW)
+
+    // H) VAULTWARDEN / BITWARDEN
+    else if (widgetType === 'vaultwarden') {
+      try {
+        // Vaultwarden posiada endpoint /alive, który zwraca dzisiejszą datę (lub 200 OK), jeśli baza działa
+        const pingRes = await fetch(`${cleanUrl}/alive`, { signal: AbortSignal.timeout(5000) });
+        const latency = Date.now() - startTime;
+        
+        if (pingRes.ok) {
+           unifiedStats = { status: 'online', primaryText: 'Zabezpieczony', secondaryText: 'Sejf aktywny', latency };
+        } else {
+           unifiedStats = { status: 'error', primaryText: 'Błąd Sejfu', secondaryText: `Kod ${pingRes.status}`, latency };
+        }
+      } catch (e) {
+        unifiedStats = { status: 'error', primaryText: 'Brak połączenia', secondaryText: 'Sejf offline', latency: 0 };
+      }
+    }
+    // I) GENERIC (Wszystkie inne, np. Vaultwarden, Blogi, Strony WWW)
     else {
       try {
         const pingRes = await fetch(cleanUrl, { signal: AbortSignal.timeout(5000) });
@@ -327,13 +341,11 @@ export async function POST(req: Request) {
         if (pingRes.ok) {
            unifiedStats = { status: 'online', primaryText: 'Online', secondaryText: 'Usługa działa', latency };
         } else if (pingRes.status === 401 || pingRes.status === 403) {
-           // Zabezpieczone ekrany logowania
            unifiedStats = { status: 'online', primaryText: 'Zabezpieczone', secondaryText: 'Wymaga logowania', latency };
         } else {
            unifiedStats = { status: 'error', primaryText: 'Błąd Usługi', secondaryText: `Kod: ${pingRes.status}`, latency };
         }
       } catch (e) {
-        // Twardy błąd połączenia - wyrysuje czerwony kafelek na Vaultwardenie i reszcie!
         unifiedStats = { status: 'error', primaryText: 'Brak połączenia', secondaryText: 'Host offline', latency: 0 };
       }
     }

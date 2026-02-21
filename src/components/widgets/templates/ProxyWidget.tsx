@@ -1,6 +1,6 @@
 'use client';
 
-import { Globe, ShieldAlert, ExternalLink, Loader2, Activity, Link, Server } from 'lucide-react';
+import { Globe, ShieldAlert, ExternalLink, Loader2, Activity, Link, Server, Icon } from 'lucide-react';
 
 interface ProxyWidgetProps {
   data: any;

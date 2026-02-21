@@ -1,6 +1,6 @@
 'use client';
 
-import { Activity, CheckCircle2, AlertCircle, AlertTriangle, Loader2, ExternalLink, Globe } from 'lucide-react';
+import { Activity, CheckCircle2, AlertCircle, AlertTriangle, Loader2, ExternalLink, Globe, ShieldAlert } from 'lucide-react';
 
 interface UptimeKumaWidgetProps {
   data: any;
@@ -42,7 +42,7 @@ export default function UptimeKumaWidget({ data, stats, isLoading, w = 2, h = 2 
   let glowClass = '';
 
   if (isError) {
-    bgClass = 'bg-red-950/30 border-red-900/50';
+    bgClass = 'bg-red-950/40 backdrop-blur-md border-red-900/50';
     iconColor = 'text-red-500';
   } else if (isOnline) {
     if (hasData && !isAllGood) {

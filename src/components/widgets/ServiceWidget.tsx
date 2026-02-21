@@ -13,6 +13,7 @@ import ProxyWidget from './templates/ProxyWidget';
 import HomeAssistantWidget from './templates/HomeAssistantWidget';
 import UptimeKumaWidget from './templates/UptimeKumaWidget';
 import TailscaleWidget from './templates/TailscaleWidget';
+import VaultwardenWidget from './templates/VaultwardenWidget';
 
 interface ServiceWidgetProps {
   style?: React.CSSProperties;
@@ -153,6 +154,8 @@ export default function ServiceWidget(props: ServiceWidgetProps) {
         return <UptimeKumaWidget {...templateProps} />;
       case 'tailscale':
         return <TailscaleWidget {...templateProps} />;
+      case 'vaultwarden':
+        return <VaultwardenWidget {...templateProps} />;
       default:
         return <GenericTemplate data={data} stats={liveStats} />;
     }
@@ -324,8 +327,8 @@ function GenericTemplate({ data, stats }: any) {
   // @ts-ignore
   const IconComponent = LucideIcons[data.icon] || LucideIcons.Box;
   
-  const isError = stats?.status === 'error';
   const isOnline = stats?.status === 'online';
+  const isError = stats?.status === 'error';
 
   const colorMap: Record<string, string> = {
     orange: 'bg-orange-500', red: 'bg-red-500', green: 'bg-emerald-500',
@@ -333,24 +336,42 @@ function GenericTemplate({ data, stats }: any) {
     slate: 'bg-slate-500', emerald: 'bg-emerald-600',
   };
   
-  // Jeśli jest błąd, wymuszamy czerwony. Jeśli online - naturalny kolor aplikacji.
-  const bgClass = isError ? 'bg-red-500' : (colorMap[data.color] || 'bg-slate-600');
-  const containerBg = isError ? 'bg-red-950/30 border-red-500/50' : 'bg-slate-800 border-slate-700';
+  let bgClass = colorMap[data.color] || 'bg-slate-600';
+  let iconColorClass = 'text-white';
+  let containerBg = 'bg-slate-800 border-slate-700';
+
+  if (isOnline) {
+     containerBg = 'bg-slate-900/60 backdrop-blur-md border-slate-700/50';
+  } else if (isError) {
+     containerBg = 'bg-red-950/40 backdrop-blur-md border-red-900/50';
+     iconColorClass = 'text-red-500';
+     bgClass = 'bg-red-500';
+  }
 
   return (
-    <div className={`h-full w-full ${containerBg} border flex flex-col items-center justify-center p-4 relative overflow-hidden transition-colors duration-300`}>
-        <div className={`absolute inset-0 opacity-10 ${bgClass} blur-2xl rounded-full scale-150 translate-y-4`} />
+    <div className={`h-full w-full ${containerBg} border flex flex-col items-center justify-center p-4 relative overflow-hidden transition-colors duration-300 rounded-2xl`}>
+        <div className={`absolute inset-0 opacity-20 ${bgClass} blur-2xl rounded-full scale-150 translate-y-4 pointer-events-none`} />
         
-        <IconComponent size={32} className={`${isError ? 'text-red-400' : 'text-white'} z-10 drop-shadow-lg mb-2`} />
+        <IconComponent size={32} className={`z-10 drop-shadow-lg mb-2 ${iconColorClass}`} />
         <span className="text-sm font-bold text-slate-200 z-10 text-center">{data.name}</span>
         
-        {/* Dynamiczny Status prosto z API! */}
-        {stats && (
-           <div className="flex flex-col items-center mt-1 z-10">
-             <span className={`text-[10px] uppercase font-bold tracking-wider ${isError ? 'text-red-400' : 'text-emerald-400'}`}>
+        {/* WIDOK BŁĘDU (Styl Pi-hole wyśrodkowany) */}
+        {isError && stats && (
+           <div className="flex flex-col items-center mt-3 z-10 animate-in fade-in duration-500">
+             <span className="text-2xl font-black text-white tracking-tight leading-none drop-shadow-md text-center">{stats.primaryText}</span>
+             <span className="text-xs text-slate-400 font-mono mt-1 text-center" title={stats.secondaryText}>
+               {stats.secondaryText}
+             </span>
+           </div>
+        )}
+        
+        {/* WIDOK NORMALNY */}
+        {isOnline && stats && (
+           <div className="flex flex-col items-center mt-1 z-10 animate-in fade-in duration-500">
+             <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-400">
                {stats.primaryText}
              </span>
-             <span className="text-[9px] text-slate-400 max-w-[120px] text-center truncate" title={stats.secondaryText}>
+             <span className="text-[9px] max-w-[120px] text-center truncate text-slate-400" title={stats.secondaryText}>
                {stats.secondaryText}
              </span>
            </div>
@@ -363,7 +384,7 @@ function GenericTemplate({ data, stats }: any) {
             onMouseDown={e => e.stopPropagation()} 
             className={`
               mt-2 flex items-center gap-1 px-3 py-1 rounded text-[10px] font-bold text-white shadow-lg transition-transform hover:scale-105 active:scale-95 z-10
-              ${bgClass}
+              ${isError ? 'bg-red-600/50 hover:bg-red-600/70 border border-red-500/50' : (colorMap[data.color] || 'bg-slate-600')}
             `}
           >
             Otwórz <ExternalLink size={10}/>

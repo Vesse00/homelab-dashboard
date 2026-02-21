@@ -1,6 +1,6 @@
 'use client';
 
-import { Play, Clapperboard, ExternalLink, Loader2, Activity, Users } from 'lucide-react';
+import { Play, Clapperboard, ExternalLink, Loader2, Activity, Users, ShieldAlert } from 'lucide-react';
 
 interface MediaWidgetProps {
   data: any;
@@ -23,7 +23,7 @@ export default function MediaWidget({ data, stats, isLoading }: MediaWidgetProps
     bgClass = colorBase === 'orange' ? 'bg-orange-950/30 border-orange-900/50' : 'bg-purple-950/30 border-purple-900/50';
     iconColor = colorBase === 'orange' ? 'text-orange-500' : 'text-purple-500';
   } else if (isError) {
-    bgClass = 'bg-red-950/30 border-red-900/50';
+    bgClass = 'bg-red-950/40 backdrop-blur-md border-red-900/50';
     iconColor = 'text-red-500';
   }
 
@@ -50,32 +50,24 @@ export default function MediaWidget({ data, stats, isLoading }: MediaWidgetProps
               <Loader2 size={14} className="animate-spin" /> Ładowanie...
             </div>
          ) : (
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-               <div className="text-lg font-bold text-white tracking-tight leading-none">
-                 {stats?.primaryText || 'Brak danych'}
-               </div>
-               <div className="text-xs text-slate-400 font-mono mt-1 mb-3">
-                 {stats?.secondaryText || 'Wymagana konfiguracja'}
-               </div>
-
-               {isOnline && (
-                 <div className="grid grid-cols-2 gap-2 mt-auto">
-                    <div className="bg-black/20 border border-white/5 rounded-lg p-2 flex flex-col">
-                       <span className="text-[9px] text-slate-400 uppercase font-bold flex items-center gap-1 mb-0.5">
-                         <Users size={10} className={iconColor} /> Streamy
-                       </span>
-                       <span className="text-sm text-white font-mono">{stats?.queries || 0}</span>
-                    </div>
-                    <div className="bg-black/20 border border-white/5 rounded-lg p-2 flex flex-col">
-                       <span className="text-[9px] text-slate-400 uppercase font-bold flex items-center gap-1 mb-0.5">
-                         <Activity size={10} className="text-emerald-400" /> Ping
-                       </span>
-                       <span className="text-sm text-white font-mono">{stats?.latency || 0} ms</span>
-                    </div>
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 flex flex-col h-full justify-end">
+            
+            {/* WIDOK BŁĘDU */}
+            {isError && (
+              <div className="mt-auto mb-2">
+                 <div className="text-2xl font-black text-white tracking-tight leading-none drop-shadow-md">
+                   {stats?.primaryText || 'Brak danych'}
                  </div>
-               )}
-            </div>
-         )}
+                 <div className="text-xs text-slate-400 font-mono mt-1">
+                   {stats?.secondaryText || 'Wymagana konfiguracja'}
+                 </div>
+              </div>
+            )}
+
+           
+
+          </div>
+        )}
       </div>
     </div>
   );
