@@ -88,3 +88,9 @@ model PasswordResetToken {
 
   @@unique([email, token])
 }
+
+model SystemSettings {
+  id                  String   @id @default("global")
+  registrationEnabled Boolean  @default(true)
+  updatedAt           DateTime @updatedAt
+}

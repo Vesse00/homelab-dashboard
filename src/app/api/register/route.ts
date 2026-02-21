@@ -4,6 +4,12 @@ import { prisma } from "@/app/lib/prisma";
 
 export async function POST(req: Request) {
   try {
+
+    const settings = await prisma.systemSettings.findUnique({ where: { id: 'global' } });
+    if (settings && !settings.registrationEnabled) {
+      return NextResponse.json({ error: 'Rejestracja jest obecnie zamknięta przez administratora.' }, { status: 403 });
+    }
+    
     const { email, password, name } = await req.json();
 
     if (!email || !password) {
