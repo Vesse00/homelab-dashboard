@@ -1,35 +1,48 @@
-// src/app/lib/appMap.ts
-
+// Rozszerzony interfejs o nasze nowe typy widgetów
 export interface AppDefinition {
   name: string;
   icon: string;
   port: number;
   color: string;
-  // Dodajemy nowe typy do definicji
-  widgetType: 'generic' | 'minecraft' | 'pihole' | 'media' | 'admin' | 'proxy';
+  widgetType: 'generic' | 'minecraft' | 'pihole' | 'dns' | 'media' | 'admin' | 'proxy' | 'home-assistant' | 'uptime-kuma' | 'tailscale';
+  template?: string; // Zostawiamy dla kompatybilności wstecznej
+  category?: string;
 }
 
 export const KNOWN_APPS: Record<string, AppDefinition> = {
+  // --- SMART HOME ---
+  'homeassistant/home-assistant': { name: 'Home Assistant', icon: 'Home', port: 8123, color: 'blue', widgetType: 'home-assistant', template: 'home-assistant', category: 'smarthome' },
+  'ghcr.io/home-assistant/home-assistant': { name: 'Home Assistant', icon: 'Home', port: 8123, color: 'blue', widgetType: 'home-assistant', template: 'home-assistant', category: 'smarthome' },
+  
   // --- MEDIA ---
-  'plex': { name: 'Plex', icon: 'Play', port: 32400, color: 'orange', widgetType: 'media' },
-  'jellyfin': { name: 'Jellyfin', icon: 'Clapperboard', port: 8096, color: 'purple', widgetType: 'media' },
+  'linuxserver/plex': { name: 'Plex', icon: 'PlaySquare', port: 32400, color: 'amber', widgetType: 'media', template: 'media', category: 'media' },
+  'plexinc/pms-docker': { name: 'Plex', icon: 'PlaySquare', port: 32400, color: 'amber', widgetType: 'media', template: 'media', category: 'media' },
+  'linuxserver/jellyfin': { name: 'Jellyfin', icon: 'PlayCircle', port: 8096, color: 'purple', widgetType: 'media', template: 'media', category: 'media' },
+  'jellyfin/jellyfin': { name: 'Jellyfin', icon: 'PlayCircle', port: 8096, color: 'purple', widgetType: 'media', template: 'media', category: 'media' },
   
-  // --- ADMIN ---
-  'portainer': { name: 'Portainer', icon: 'Box', port: 9000, color: 'blue', widgetType: 'admin' }, // <--- ZMIANA
-  'dockge': { name: 'Dockge', icon: 'Box', port: 5001, color: 'emerald', widgetType: 'admin' },
-
-  // --- PROXY / NETWORK ---
-  'nginx': { name: 'Nginx Proxy', icon: 'Globe', port: 81, color: 'emerald', widgetType: 'proxy' }, // <--- ZMIANA (port 81 to zazwyczaj admin panel NPM)
-  'traefik': { name: 'Traefik', icon: 'Route', port: 8080, color: 'sky', widgetType: 'proxy' },
-
-  // --- BLOCKERS ---
-  'pihole': { name: 'Pi-hole', icon: 'Shield', port: 80, color: 'red', widgetType: 'pihole' },
-  'adguard': { name: 'AdGuard', icon: 'ShieldCheck', port: 80, color: 'green', widgetType: 'pihole' }, // Używamy szablonu Pihole (tarcza)
+  // --- *ARR STACK ---
+  'linuxserver/sonarr': { name: 'Sonarr', icon: 'Tv', port: 8989, color: 'cyan', widgetType: 'generic', template: 'default', category: 'media' },
+  'linuxserver/radarr': { name: 'Radarr', icon: 'Film', port: 7878, color: 'yellow', widgetType: 'generic', template: 'default', category: 'media' },
+  'linuxserver/lidarr': { name: 'Lidarr', icon: 'Music', port: 8686, color: 'emerald', widgetType: 'generic', template: 'default', category: 'media' },
+  'linuxserver/readarr': { name: 'Readarr', icon: 'Book', port: 8787, color: 'red', widgetType: 'generic', template: 'default', category: 'media' },
   
-  // --- GAMES ---
-  'minecraft': { name: 'Minecraft Server', icon: 'Gamepad2', port: 25565, color: 'green', widgetType: 'minecraft' },
+  // --- SIECI I PROXY ---
+  'jc21/nginx-proxy-manager': { name: 'Nginx Proxy Manager', icon: 'Globe', port: 81, color: 'emerald', widgetType: 'proxy', template: 'proxy', category: 'network' },
+  'pihole/pihole': { name: 'Pi-hole', icon: 'ShieldCheck', port: 80, color: 'red', widgetType: 'dns', template: 'dns', category: 'network' },
+  'adguard/adguardhome': { name: 'AdGuard Home', icon: 'Shield', port: 80, color: 'emerald', widgetType: 'dns', template: 'dns', category: 'network' },
+  'tailscale/tailscale': { name: 'Tailscale', icon: 'Network', port: 8080, color: 'slate', widgetType: 'tailscale', template: 'tailscale', category: 'network' },
   
-  // --- GENERIC ---
-  'mysql': { name: 'MySQL', icon: 'Database', port: 3306, color: 'slate', widgetType: 'generic' },
-  'postgres': { name: 'PostgreSQL', icon: 'Database', port: 5432, color: 'blue', widgetType: 'generic' },
+  // --- ZARZĄDZANIE I MONITORING ---
+  'portainer/portainer-ce': { name: 'Portainer', icon: 'Box', port: 9000, color: 'blue', widgetType: 'admin', template: 'admin', category: 'admin' },
+  'louislam/uptime-kuma': { name: 'Uptime Kuma', icon: 'Activity', port: 3001, color: 'emerald', widgetType: 'uptime-kuma', template: 'uptime-kuma', category: 'monitoring' },
+  'grafana/grafana': { name: 'Grafana', icon: 'PieChart', port: 3000, color: 'orange', widgetType: 'generic', template: 'default', category: 'monitoring' },
+  'prom/prometheus': { name: 'Prometheus', icon: 'Flame', port: 9090, color: 'red', widgetType: 'generic', template: 'default', category: 'monitoring' },
+  
+  // --- CHMURA I BEZPIECZEŃSTWO ---
+  'linuxserver/nextcloud': { name: 'Nextcloud', icon: 'Cloud', port: 443, color: 'blue', widgetType: 'generic', template: 'default', category: 'cloud' },
+  'nextcloud': { name: 'Nextcloud', icon: 'Cloud', port: 80, color: 'blue', widgetType: 'generic', template: 'default', category: 'cloud' },
+  'vaultwarden/server': { name: 'Vaultwarden', icon: 'Key', port: 80, color: 'blue', widgetType: 'generic', template: 'default', category: 'security' },
+  
+  // --- GRY ---
+  'itzg/minecraft-server': { name: 'Minecraft', icon: 'Gamepad2', port: 25565, color: 'emerald', widgetType: 'minecraft', template: 'minecraft', category: 'games' },
 };

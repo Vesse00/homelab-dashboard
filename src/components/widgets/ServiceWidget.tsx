@@ -10,6 +10,9 @@ import PiholeWidget from './templates/PiholeWidget';
 import MediaWidget from './templates/MediaWidget';
 import AdminWidget from './templates/AdminWidget';
 import ProxyWidget from './templates/ProxyWidget';
+import HomeAssistantWidget from './templates/HomeAssistantWidget';
+import UptimeKumaWidget from './templates/UptimeKumaWidget';
+import TailscaleWidget from './templates/TailscaleWidget';
 
 interface ServiceWidgetProps {
   style?: React.CSSProperties;
@@ -33,6 +36,7 @@ interface ServiceWidgetProps {
       apiKey?: string;
       username?: string;
       password?: string;
+      statusPage?: string; // Specjalne ustawienie dla Uptime Kuma
     };
   };
   w?: number; // Szerokość w gridzie
@@ -64,7 +68,8 @@ export default function ServiceWidget(props: ServiceWidgetProps) {
     authType: data.settings?.authType || 'none', // 'none', 'apikey', 'basic'
     apiKey: data.settings?.apiKey || '',
     username: data.settings?.username || '',
-    password: data.settings?.password || ''
+    password: data.settings?.password || '',
+    statusPage: data.settings?.statusPage || '' // Specjalne ustawienie dla Uptime Kuma
   });
   const [editedUrl, setEditedUrl] = useState(data.url || '');
 
@@ -142,8 +147,14 @@ export default function ServiceWidget(props: ServiceWidgetProps) {
         return <AdminWidget {...templateProps} />;
       case 'proxy':  
         return <ProxyWidget {...templateProps} />;
+      case 'home-assistant':
+        return <HomeAssistantWidget {...templateProps} />;
+      case 'uptime-kuma':
+        return <UptimeKumaWidget {...templateProps} />;
+      case 'tailscale':
+        return <TailscaleWidget {...templateProps} />;
       default:
-        return <GenericTemplate data={data} />;
+        return <GenericTemplate data={data} stats={liveStats} />;
     }
   };
 
@@ -213,6 +224,21 @@ export default function ServiceWidget(props: ServiceWidgetProps) {
                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
                  />
               </div>
+
+              {/* --- SPECJALNE POLE DLA UPTIME KUMA --- */}
+              {data.widgetType === 'uptime-kuma' && (
+                <div className="animate-in fade-in slide-in-from-top-2 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                   <label className="text-[10px] text-blue-400 font-bold uppercase tracking-wider mb-1 block">Slug Strony Statusu</label>
+                   <input 
+                     type="text" 
+                     value={settings.statusPage}
+                     onChange={(e) => handleSettingChange('statusPage', e.target.value)}
+                     placeholder="np. default albo moja-strona"
+                     className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none mb-1"
+                   />
+                   <p className="text-[9px] text-slate-400 leading-tight">Jeśli Twój adres to <span className="text-slate-300 font-mono">/status/serwery</span>, wpisz wyżej słowo <span className="text-emerald-400 font-mono font-bold">serwery</span>.</p>
+                </div>
+              )}
 
               {/* Wybór typu autoryzacji */}
               <div>
@@ -294,24 +320,41 @@ export default function ServiceWidget(props: ServiceWidgetProps) {
 }
 
 // Domyślny wygląd (taki jak miałeś wcześniej)
-function GenericTemplate({ data }: any) {
+function GenericTemplate({ data, stats }: any) {
   // @ts-ignore
   const IconComponent = LucideIcons[data.icon] || LucideIcons.Box;
   
-  // Mapowanie kolorów
+  const isError = stats?.status === 'error';
+  const isOnline = stats?.status === 'online';
+
   const colorMap: Record<string, string> = {
     orange: 'bg-orange-500', red: 'bg-red-500', green: 'bg-emerald-500',
     blue: 'bg-blue-600', sky: 'bg-sky-500', purple: 'bg-purple-600',
     slate: 'bg-slate-500', emerald: 'bg-emerald-600',
   };
-  const bgClass = colorMap[data.color] || 'bg-slate-600';
+  
+  // Jeśli jest błąd, wymuszamy czerwony. Jeśli online - naturalny kolor aplikacji.
+  const bgClass = isError ? 'bg-red-500' : (colorMap[data.color] || 'bg-slate-600');
+  const containerBg = isError ? 'bg-red-950/30 border-red-500/50' : 'bg-slate-800 border-slate-700';
 
   return (
-    <div className="h-full w-full bg-slate-800 border border-slate-700 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+    <div className={`h-full w-full ${containerBg} border flex flex-col items-center justify-center p-4 relative overflow-hidden transition-colors duration-300`}>
         <div className={`absolute inset-0 opacity-10 ${bgClass} blur-2xl rounded-full scale-150 translate-y-4`} />
         
-        <IconComponent size={32} className="text-white z-10 drop-shadow-lg mb-2" />
+        <IconComponent size={32} className={`${isError ? 'text-red-400' : 'text-white'} z-10 drop-shadow-lg mb-2`} />
         <span className="text-sm font-bold text-slate-200 z-10 text-center">{data.name}</span>
+        
+        {/* Dynamiczny Status prosto z API! */}
+        {stats && (
+           <div className="flex flex-col items-center mt-1 z-10">
+             <span className={`text-[10px] uppercase font-bold tracking-wider ${isError ? 'text-red-400' : 'text-emerald-400'}`}>
+               {stats.primaryText}
+             </span>
+             <span className="text-[9px] text-slate-400 max-w-[120px] text-center truncate" title={stats.secondaryText}>
+               {stats.secondaryText}
+             </span>
+           </div>
+        )}
         
         <a 
             href={data.url} 

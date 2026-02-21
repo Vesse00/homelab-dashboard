@@ -5,7 +5,7 @@ import { authOptions } from "@/app/lib/auth";
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 export async function POST(req: Request) {
-  // 1. Zabezpieczenie przed nieautoryzowanym dostępem (opcjonalne, ale zalecane)
+  // 1. Zabezpieczenie przed nieautoryzowanym dostępem
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -17,360 +17,339 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Brak adresu URL' }, { status: 400 });
     }
 
-    // 2. Przygotowujemy jednolity format, który zawsze otrzyma frontend
+    // 2. Przygotowujemy jednolity format
+    // DODANO: [key: string]: any - pozwala na wysyłanie specyficznych pól (up, down, devices) dla naszych nowych szablonów
     interface UnifiedStats {
       status: 'offline' | 'online' | 'error';
       primaryText: string;
       secondaryText: string;
       queries?: number;
       latency?: number;
-      chartData?: any[] // Dodatkowe dane do wykresów (jeśli potrzebne)
+      chartData?: any[];
+      [key: string]: any; 
     };
 
-    // 2. TWORZYMY OBIEKT BAZOWY (Zgodnie z naszym interfejsem)
     let unifiedStats: UnifiedStats = {
       status: 'offline', 
       primaryText: 'Brak danych', 
       secondaryText: 'Sprawdź ustawienia',      
     };
 
-    // 3. Budujemy nagłówki (Rozwiązanie dla loginu i hasła - Basic Auth)
     const headers: Record<string, string> = {
       'Content-Type': 'application/json'
     };
 
     if (settings?.authType === 'basic' && settings?.username && settings?.password) {
       const credentials = `${settings.username}:${settings.password}`;
-      // Kodujemy "login:hasło" do standardu Base64
       headers['Authorization'] = `Basic ${Buffer.from(credentials).toString('base64')}`;
     }
+
+    const startTime = Date.now();
+    const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
 
     // --------------------------------------------------------
     // TŁUMACZ API W ZALEŻNOŚCI OD TYPU WIDGETU
     // --------------------------------------------------------
-    const startTime = Date.now();
-    if (widgetType === 'pihole') {
-      
-      // A) Logika dla ADGUARD HOME
+    
+    // A) PI-HOLE / ADGUARD
+    if (widgetType === 'dns' || widgetType === 'pihole') { // Zaktualizowano warunek dla pewności
       if (appName.toLowerCase().includes('adguard')) {
-        const res = await fetch(`${url}/control/stats`, { 
-          headers,
-          signal: AbortSignal.timeout(5000) 
-        });
-
-        const latency = Date.now() - startTime; // KUNIEC POMIARU
-
+        const res = await fetch(`${cleanUrl}/control/stats`, { headers, signal: AbortSignal.timeout(5000) });
+        const latency = Date.now() - startTime;
         if (res.ok) {
           const data = await res.json();
-          // AdGuard zwraca tablice, musimy zsumować
           const totalBlocked = data.blocked_filtering ? data.blocked_filtering.reduce((a: number, b: number) => a + b, 0) : 0;
           const totalQueries = data.dns_queries ? data.dns_queries.reduce((a: number, b: number) => a + b, 0) : 0;
           const percentage = totalQueries > 0 ? ((totalBlocked / totalQueries) * 100).toFixed(1) : '0';
           
-          unifiedStats = {
-            status: 'online',
-            primaryText: `Zablokowano: ${totalBlocked}`,
-            secondaryText: `${percentage}% ruchu`,
-            queries: totalQueries,
-            latency: latency,
-            chartData: []
-          };
+          unifiedStats = { status: 'online', primaryText: `Zablokowano: ${totalBlocked}`, secondaryText: `${percentage}% ruchu`, queries: totalQueries, latency, chartData: [] };
         } else {
-          unifiedStats.status = 'error';
-          unifiedStats.primaryText = 'Błąd autoryzacji';
+          unifiedStats = { status: 'error', primaryText: 'Błąd autoryzacji', secondaryText: `Błąd ${res.status}` };
         }
-      } 
-      
-      // B) Logika dla PI-HOLE
-      else {
+      } else {
         const apiToken = settings?.apiKey ? `&auth=${settings.apiKey}` : '';
-        const res = await fetch(`${url}/admin/api.php?summaryRaw${apiToken}`, {
-          signal: AbortSignal.timeout(5000)
-        });
-
-        const latency = Date.now() - startTime; // KONIEC POMIARU
-
+        const res = await fetch(`${cleanUrl}/admin/api.php?summaryRaw${apiToken}`, { signal: AbortSignal.timeout(5000) });
+        const latency = Date.now() - startTime;
         if (res.ok) {
           const data = await res.json();
-          unifiedStats = {
-            status: data.status === 'enabled' ? 'online' : 'offline',
-            primaryText: `Zablokowano: ${data.ads_blocked_today}`,
-            secondaryText: `${data.ads_percentage_today.toFixed(1)}% ruchu`,
-            queries: data.dns_queries_today,
-            latency: latency
-          };
+          unifiedStats = { status: data.status === 'enabled' ? 'online' : 'offline', primaryText: `Zablokowano: ${data.ads_blocked_today}`, secondaryText: `${data.ads_percentage_today.toFixed(1)}% ruchu`, queries: data.dns_queries_today, latency };
         } else {
-          unifiedStats.status = 'error';
-          unifiedStats.primaryText = 'Odmowa dostępu (Zły klucz?)';
+          unifiedStats = { status: 'error', primaryText: 'Odmowa dostępu', secondaryText: 'Zły klucz API?' };
         }
       }
     }
 
-    // --------------------------------------------------------
-    // C) Logika dla ADMIN (np. Portainer)
-    // --------------------------------------------------------
-    if (widgetType === 'admin') {
-      
+    // B) ADMIN (Portainer)
+    else if (widgetType === 'admin') {
       if (appName.toLowerCase().includes('portainer')) {
         let apiHeaders: Record<string, string> = {};
-        
-        // USUWANIE UKOŚNIKA Z KOŃCA ADRESU URL
-        const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
-
         try {
           if (settings?.authType === 'apikey' && settings?.apiKey) {
             apiHeaders['X-API-Key'] = settings.apiKey;
-          } 
-          else if (settings?.authType === 'basic' && settings?.username && settings?.password) {
-            console.log(`[Portainer Auth] Próba logowania...`);
-
-            const authRes = await fetch(`${cleanUrl}/api/auth`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                Username: settings.username,
-                Password: settings.password
-              }),
-              signal: AbortSignal.timeout(5000)
-            });
-
+          } else if (settings?.authType === 'basic' && settings?.username && settings?.password) {
+            const authRes = await fetch(`${cleanUrl}/api/auth`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ Username: settings.username, Password: settings.password }), signal: AbortSignal.timeout(5000) });
             if (authRes.ok) {
-              const authData = await authRes.json();
-              apiHeaders['Authorization'] = `Bearer ${authData.jwt}`;
-              console.log("[Portainer Auth] Sukces! Mamy token.");
+              apiHeaders['Authorization'] = `Bearer ${(await authRes.json()).jwt}`;
             } else {
-              return NextResponse.json({
-                status: 'error', primaryText: 'Błąd logowania', secondaryText: `Błąd ${authRes.status}`, latency: Date.now() - startTime
-              });
+              return NextResponse.json({ status: 'error', primaryText: 'Błąd logowania', secondaryText: `Błąd ${authRes.status}`, latency: Date.now() - startTime });
             }
           }
 
-          // KROK 1: Pobieramy listę środowisk (Endpoints), żeby znaleźć poprawne ID
-          const endpointsRes = await fetch(`${cleanUrl}/api/endpoints`, {
-            headers: apiHeaders,
-            signal: AbortSignal.timeout(5000)
-          });
-
-          if (!endpointsRes.ok) {
-             console.error(`[Portainer Endpoints Error] Status: ${endpointsRes.status}`);
-             throw new Error("Nie udało się pobrać środowisk");
-          }
-
+          const endpointsRes = await fetch(`${cleanUrl}/api/endpoints`, { headers: apiHeaders, signal: AbortSignal.timeout(5000) });
+          if (!endpointsRes.ok) throw new Error("Brak środowisk");
           const endpoints = await endpointsRes.json();
-          if (!endpoints || endpoints.length === 0) {
-             throw new Error("Brak podpiętych środowisk w Portainerze");
-          }
-
-          // Wybieramy ID pierwszego dostępnego środowiska (najczęściej lokalny Docker)
           const endpointId = endpoints[0].Id;
-          console.log(`[Portainer] Wykryto środowisko o ID: ${endpointId}`);
 
-          // KROK 2: Uderzamy o kontenery używając poprawnego ID
-          const res = await fetch(`${cleanUrl}/api/endpoints/${endpointId}/docker/containers/json?all=1`, {
-            headers: apiHeaders,
-            signal: AbortSignal.timeout(5000)
-          });
-
+          const res = await fetch(`${cleanUrl}/api/endpoints/${endpointId}/docker/containers/json?all=1`, { headers: apiHeaders, signal: AbortSignal.timeout(5000) });
           const latency = Date.now() - startTime;
-
           if (res.ok) {
             const containers = await res.json();
-            
             const running = containers.filter((c: any) => c.State === 'running').length;
             const stopped = containers.filter((c: any) => c.State !== 'running').length;
-            
-            unifiedStats = {
-              status: 'online',
-              primaryText: `Działa: ${running}`,
-              secondaryText: `Zatrzymane: ${stopped}`,
-              latency: latency,
-              queries: containers.length 
-            };
+            unifiedStats = { status: 'online', primaryText: `Działa: ${running}`, secondaryText: `Zatrzymane: ${stopped}`, latency, queries: containers.length };
           } else {
-            console.error(`[Portainer Data Error] Status: ${res.status}`);
-            unifiedStats.status = 'error';
-            unifiedStats.primaryText = 'Odmowa dostępu';
-            unifiedStats.secondaryText = `Błąd ${res.status}`;
-            unifiedStats.latency = latency;
+            unifiedStats = { status: 'error', primaryText: 'Odmowa dostępu', secondaryText: `Błąd ${res.status}`, latency };
           }
-
         } catch (e: any) {
-          console.error(`[Portainer Catch]`, e.message);
-          unifiedStats.status = 'error';
-          unifiedStats.primaryText = 'Brak połączenia';
-          unifiedStats.secondaryText = e.message || 'Błąd API';
+          unifiedStats = { status: 'error', primaryText: 'Brak połączenia', secondaryText: e.message || 'Błąd API' };
         }
       }
     }
 
-    // --------------------------------------------------------
-    // D) Logika dla MEDIA (Plex / Jellyfin)
-    // --------------------------------------------------------
-    if (widgetType === 'media') {
-
-      const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
-      
-      // --- PLEX ---
+    // C) MEDIA (Plex / Jellyfin)
+    else if (widgetType === 'media') {
       if (appName.toLowerCase().includes('plex')) {
-        // Plex zazwyczaj używa tokenu przekazywanego w URL lub w nagłówku
         const apiToken = settings?.apiKey ? `?X-Plex-Token=${settings.apiKey}` : '';
-        
         try {
-          // Pobieramy aktywne sesje (kto aktualnie ogląda)
-          const res = await fetch(`${cleanUrl}/status/sessions${apiToken}`, {
-            headers: { 'Accept': 'application/json' },
-            signal: AbortSignal.timeout(5000)
-          });
-
+          const res = await fetch(`${cleanUrl}/status/sessions${apiToken}`, { headers: { 'Accept': 'application/json' }, signal: AbortSignal.timeout(5000) });
           const latency = Date.now() - startTime;
-
           if (res.ok) {
-            const data = await res.json();
-            const activeStreams = data.MediaContainer?.size || 0;
-            
-            unifiedStats = {
-              status: 'online',
-              primaryText: activeStreams > 0 ? `Ogląda: ${activeStreams}` : 'Brak streamów',
-              secondaryText: activeStreams > 0 ? 'Serwer obciążony' : 'Serwer w spoczynku',
-              latency: latency,
-              queries: activeStreams // w małym kafelku możemy pokazać liczbę streamów
-            };
+            const activeStreams = (await res.json()).MediaContainer?.size || 0;
+            unifiedStats = { status: 'online', primaryText: activeStreams > 0 ? `Ogląda: ${activeStreams}` : 'Brak streamów', secondaryText: activeStreams > 0 ? 'Serwer obciążony' : 'W spoczynku', latency, queries: activeStreams };
           } else {
-            unifiedStats.status = 'error';
-            unifiedStats.primaryText = 'Odmowa dostępu';
-            unifiedStats.secondaryText = 'Sprawdź X-Plex-Token';
+            unifiedStats = { status: 'error', primaryText: 'Odmowa dostępu', secondaryText: 'Zły X-Plex-Token' };
           }
         } catch (e) {
-          unifiedStats.status = 'error';
-          unifiedStats.primaryText = 'Brak połączenia';
+          unifiedStats = { status: 'error', primaryText: 'Brak połączenia', secondaryText: 'Błąd usługi' };
         }
-      }
-      
-      // --- JELLYFIN ---
-      else if (appName.toLowerCase().includes('jellyfin')) {
-        // Jellyfin wymaga specjalnego nagłówka z kluczem
-        const headers: Record<string, string> = {};
-        if (settings?.apiKey) {
-          headers['Authorization'] = `MediaBrowser Token="${settings.apiKey}"`;
-        }
-
+      } else if (appName.toLowerCase().includes('jellyfin')) {
+        const jHeaders: Record<string, string> = {};
+        if (settings?.apiKey) jHeaders['Authorization'] = `MediaBrowser Token="${settings.apiKey}"`;
         try {
-          const res = await fetch(`${cleanUrl}/Sessions`, {
-            headers,
-            signal: AbortSignal.timeout(5000)
-          });
-
+          const res = await fetch(`${cleanUrl}/Sessions`, { headers: jHeaders, signal: AbortSignal.timeout(5000) });
           const latency = Date.now() - startTime;
-
           if (res.ok) {
             const sessions = await res.json();
-            // Filtrujemy tylko aktywne sesje, które faktycznie coś odtwarzają
             const activeStreams = sessions.filter((s: any) => s.NowPlayingItem).length;
-            
-            unifiedStats = {
-              status: 'online',
-              primaryText: activeStreams > 0 ? `Ogląda: ${activeStreams}` : 'Brak streamów',
-              secondaryText: 'Jellyfin aktywny',
-              latency: latency,
-              queries: activeStreams
-            };
+            unifiedStats = { status: 'online', primaryText: activeStreams > 0 ? `Ogląda: ${activeStreams}` : 'Brak streamów', secondaryText: 'Jellyfin aktywny', latency, queries: activeStreams };
           } else {
-            unifiedStats.status = 'error';
-            unifiedStats.primaryText = 'Odmowa dostępu';
+            unifiedStats = { status: 'error', primaryText: 'Odmowa dostępu', secondaryText: 'Zły klucz API' };
           }
         } catch (e) {
-          unifiedStats.status = 'error';
-          unifiedStats.primaryText = 'Brak połączenia';
+          unifiedStats = { status: 'error', primaryText: 'Brak połączenia', secondaryText: 'Błąd usługi' };
         }
       }
     }
 
-    // --------------------------------------------------------
-    // E) Logika dla PROXY (Nginx Proxy Manager)
-    // --------------------------------------------------------
-    if (widgetType === 'proxy') {
-
-      const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
-      
+    // D) PROXY (Nginx Proxy Manager)
+    else if (widgetType === 'proxy') {
       if (appName.toLowerCase().includes('nginx')) {
         let apiHeaders: Record<string, string> = {};
-        
         try {
           if (settings?.authType === 'basic' && settings?.username && settings?.password) {
-            const authRes = await fetch(`${cleanUrl}/api/tokens`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                identity: settings.username,
-                secret: settings.password
-              }),
-              signal: AbortSignal.timeout(5000)
-            });
-
-            if (authRes.ok) {
-              const authData = await authRes.json();
-              apiHeaders['Authorization'] = `Bearer ${authData.token}`;
-            } else {
-              return NextResponse.json({
-                status: 'error', primaryText: 'Błąd logowania', secondaryText: `Sprawdź dane`, latency: Date.now() - startTime
-              });
-            }
+            const authRes = await fetch(`${cleanUrl}/api/tokens`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ identity: settings.username, secret: settings.password }), signal: AbortSignal.timeout(5000) });
+            if (authRes.ok) apiHeaders['Authorization'] = `Bearer ${(await authRes.json()).token}`;
+            else return NextResponse.json({ status: 'error', primaryText: 'Błąd logowania', secondaryText: `Złe dane`, latency: Date.now() - startTime });
           }
-
-          // POBIERAMY 3 ENDPOINTY JEDNOCZEŚNIE (Super szybkie!)
           const [proxyRes, redirRes, deadRes] = await Promise.all([
             fetch(`${cleanUrl}/api/nginx/proxy-hosts`, { headers: apiHeaders, signal: AbortSignal.timeout(5000) }),
             fetch(`${cleanUrl}/api/nginx/redirection-hosts`, { headers: apiHeaders, signal: AbortSignal.timeout(5000) }),
             fetch(`${cleanUrl}/api/nginx/dead-hosts`, { headers: apiHeaders, signal: AbortSignal.timeout(5000) })
           ]);
-
           const latency = Date.now() - startTime;
-
           if (proxyRes.ok && redirRes.ok && deadRes.ok) {
             const proxyHosts = await proxyRes.json();
             const redirHosts = await redirRes.json();
             const deadHosts = await deadRes.json();
-
             const enabledProxy = proxyHosts.filter((h: any) => h.enabled === 1 || h.enabled === true).length;
-            const enabledRedir = redirHosts.filter((h: any) => h.enabled === 1 || h.enabled === true).length;
-            const enabledDead = deadHosts.filter((h: any) => h.enabled === 1 || h.enabled === true).length;
-
             const totalHosts = proxyHosts.length + redirHosts.length + deadHosts.length;
-
-            unifiedStats = {
-              status: 'online',
-              primaryText: `Proxy: ${enabledProxy}`,
-              secondaryText: `Wszystkich hostów: ${totalHosts}`,
-              latency: latency,
-              queries: totalHosts,
-              // DODAJEMY DANE DO WYKRESU DLA FRONTENDU
-              chartData: [
+            unifiedStats = { status: 'online', primaryText: `Proxy: ${enabledProxy}`, secondaryText: `Hostów: ${totalHosts}`, latency, queries: totalHosts, chartData: [
                 { label: 'Proxy', count: proxyHosts.length, active: enabledProxy, color: 'bg-emerald-500' },
-                { label: 'Przekierowania', count: redirHosts.length, active: enabledRedir, color: 'bg-blue-500' },
-                { label: 'Strony 404', count: deadHosts.length, active: enabledDead, color: 'bg-red-500' }
-              ]
-            };
+                { label: 'Przekierowania', count: redirHosts.length, active: redirHosts.filter((h: any) => h.enabled).length, color: 'bg-blue-500' },
+                { label: 'Strony 404', count: deadHosts.length, active: deadHosts.filter((h: any) => h.enabled).length, color: 'bg-red-500' }
+            ]};
           } else {
-            unifiedStats.status = 'error';
-            unifiedStats.primaryText = 'Odmowa dostępu';
+            unifiedStats = { status: 'error', primaryText: 'Odmowa dostępu', secondaryText: 'Brak uprawnień' };
           }
         } catch (e) {
-          unifiedStats.status = 'error';
-          unifiedStats.primaryText = 'Brak połączenia';
+          unifiedStats = { status: 'error', primaryText: 'Brak połączenia', secondaryText: 'Usługa nie odpowiada' };
         }
       }
     }
 
+    // E) HOME ASSISTANT
+    else if (widgetType === 'home-assistant') {
+      try {
+        // ZMIANA: Brak klucza = Natychmiastowy błąd (Czerwony kafelek)
+        if (!settings?.apiKey) {
+           unifiedStats = { status: 'error', primaryText: 'Odmowa dostępu', secondaryText: 'Brak tokenu API', latency: 0 };
+        } else {
+           const apiHeaders: Record<string, string> = { 'Authorization': `Bearer ${settings.apiKey}` };
+           const targetUrl = `${cleanUrl}/api/`;
+           const res = await fetch(targetUrl, { headers: apiHeaders, signal: AbortSignal.timeout(5000) });
+           const latency = Date.now() - startTime;
+           
+           if (res.ok) {
+              unifiedStats = { status: 'online', primaryText: 'Hub Aktywny', secondaryText: 'Zalogowano', latency };
+           } else if (res.status === 401) {
+              // ZMIANA: Zły klucz = Błąd (Czerwony)
+              unifiedStats = { status: 'error', primaryText: 'Odmowa dostępu', secondaryText: 'Zły token API', latency };
+           } else {
+              unifiedStats = { status: 'error', primaryText: 'Błąd Huba', secondaryText: `Kod ${res.status}`, latency };
+           }
+        }
+      } catch (e) {
+        unifiedStats = { status: 'error', primaryText: 'Brak połączenia', secondaryText: 'Sprawdź IP serwera' };
+      }
+    }
 
-    // Zwracamy piękny, ujednolicony wynik do naszego widgetu
+    // F) UPTIME KUMA
+    else if (widgetType === 'uptime-kuma') {
+      try {
+        const slug = settings?.statusPage || 'default';
+        const pingRes = await fetch(cleanUrl, { signal: AbortSignal.timeout(5000) });
+        const latency = Date.now() - startTime;
+
+        if (pingRes.ok) {
+          try {
+            // UWAGA: Kuma rozdziela listę nazw od list statusów (heartbeats). Pobieramy oba!
+            const [statusRes, heartbeatRes] = await Promise.all([
+               fetch(`${cleanUrl}/api/status-page/${slug}`, { signal: AbortSignal.timeout(5000) }),
+               fetch(`${cleanUrl}/api/status-page/heartbeat/${slug}`, { signal: AbortSignal.timeout(5000) })
+            ]);
+            
+            if (statusRes.ok && heartbeatRes.ok) {
+              const data = await statusRes.json();
+              const heartbeats = await heartbeatRes.json();
+              
+              let up = 0;
+              let down = 0;
+              let monitorList: any[] = [];
+              
+              // Tworzymy "słownik" najświeższych statusów (ostatni heartbeat dla każdego ID monitora)
+              const latestStatuses: Record<string, number> = {};
+              
+              if (heartbeats.heartbeatList) {
+                // heartbeatList to obiekt np. { "1": [{status: 1}, {status: 0}], "2": [...] }
+                Object.entries(heartbeats.heartbeatList).forEach(([monitorId, beats]: [string, any]) => {
+                   if (Array.isArray(beats) && beats.length > 0) {
+                      const lastBeat = beats[beats.length - 1]; // Bierzemy najświeższy (ostatni w tablicy)
+                      latestStatuses[monitorId] = lastBeat.status;
+                   }
+                });
+              }
+
+              // Przechodzimy przez grupy i łączymy nazwy z naszym słownikiem statusów
+              if (data.publicGroupList) {
+                data.publicGroupList.forEach((group: any) => {
+                  if (group.monitorList) {
+                    group.monitorList.forEach((monitor: any) => {
+                      const mId = monitor.id.toString();
+                      
+                      // Pobieramy status (w Kuma v2 bierzemy z heartbeats)
+                      const currentStatus = latestStatuses[mId] !== undefined ? latestStatuses[mId] : monitor.status;
+                      
+                      // Statusy Uptime Kuma: 1 = UP, 0 = DOWN, 2 = PENDING, 3 = MAINTENANCE
+                      if (currentStatus === 1) up++;
+                      else if (currentStatus === 0 || currentStatus === 2) down++; // Pending i Down liczymy jako błąd
+                      
+                      // Zapisujemy na listę dla frontendu (tego rozwijanego widoku 3x3)
+                      monitorList.push({
+                        name: monitor.name,
+                        status: currentStatus
+                      });
+                    });
+                  }
+                });
+              }
+
+              const total = up + down;
+
+              unifiedStats = { 
+                status: 'online', 
+                primaryText: total > 0 ? `Monitory: ${total}` : 'Brak monitorów', 
+                secondaryText: total === 0 ? 'Pusta strona statusu' : (down === 0 ? 'Wszystko działa' : 'Są awarie!'), 
+                up: up,
+                down: down,
+                monitors: monitorList,
+                latency 
+              };
+            } else {
+              unifiedStats = { status: 'error', primaryText: 'Brak Strony Statusu', secondaryText: `Slug: '${slug}' nie istnieje`, latency };
+            }
+          } catch (e) {
+             unifiedStats = { status: 'error', primaryText: 'Błąd Uptime Kuma', secondaryText: 'Nie można przetworzyć JSON', latency };
+          }
+        } else {
+          unifiedStats = { status: 'error', primaryText: 'Błąd Usługi', secondaryText: `Kod ${pingRes.status}`, latency };
+        }
+      } catch (e) {
+        unifiedStats = { status: 'error', primaryText: 'Brak połączenia', secondaryText: 'Sprawdź IP/Port Kumy' };
+      }
+    }
+
+    // G) TAILSCALE
+    else if (widgetType === 'tailscale') {
+      try {
+        // ZMIANA: Tailscale też wymusi błąd, jeśli nie skonfigurujesz uwierzytelniania
+        if (!settings?.apiKey) {
+           unifiedStats = { status: 'error', primaryText: 'Odmowa dostępu', secondaryText: 'Brak klucza API', latency: 0 };
+        } else {
+           const pingRes = await fetch(cleanUrl, { signal: AbortSignal.timeout(5000) });
+           const latency = Date.now() - startTime;
+           
+           if (pingRes.ok || pingRes.status === 401) {
+              unifiedStats = { status: 'online', primaryText: 'Host widoczny', secondaryText: 'Połączono', devices: 0, latency };
+           } else {
+              unifiedStats = { status: 'error', primaryText: 'Błąd Tailscale', secondaryText: `Kod ${pingRes.status}`, latency };
+           }
+        }
+      } catch (e) {
+        unifiedStats = { status: 'error', primaryText: 'Brak połączenia', secondaryText: 'Host nie odpowiada' };
+      }
+    }
+    // H) GENERIC (Wszystkie inne, np. Vaultwarden, Blogi, Strony WWW)
+    else {
+      try {
+        const pingRes = await fetch(cleanUrl, { signal: AbortSignal.timeout(5000) });
+        const latency = Date.now() - startTime;
+        
+        if (pingRes.ok) {
+           unifiedStats = { status: 'online', primaryText: 'Online', secondaryText: 'Usługa działa', latency };
+        } else if (pingRes.status === 401 || pingRes.status === 403) {
+           // Zabezpieczone ekrany logowania
+           unifiedStats = { status: 'online', primaryText: 'Zabezpieczone', secondaryText: 'Wymaga logowania', latency };
+        } else {
+           unifiedStats = { status: 'error', primaryText: 'Błąd Usługi', secondaryText: `Kod: ${pingRes.status}`, latency };
+        }
+      } catch (e) {
+        // Twardy błąd połączenia - wyrysuje czerwony kafelek na Vaultwardenie i reszcie!
+        unifiedStats = { status: 'error', primaryText: 'Brak połączenia', secondaryText: 'Host offline', latency: 0 };
+      }
+    }
+
+    // Wyrównawcze opóźnienie, aby frontend pokazał spinner jeśli api odpowiedziało podejrzanie szybko
+    const elapsed = Date.now() - startTime;
+    if (elapsed < 300) await new Promise(r => setTimeout(r, 300));
+
     return NextResponse.json(unifiedStats);
 
   } catch (error: any) {
     console.error("Błąd API Adaptera:", error.message);
     return NextResponse.json({ 
       status: 'error', 
-      primaryText: 'Serwer nie odpowiada',
-      secondaryText: 'Sprawdź URL lub stan kontenera',
+      primaryText: 'Błąd Wewnętrzny',
+      secondaryText: 'Spróbuj ponownie później',
       queries: 0,
       latency: 0
      }, { status: 500

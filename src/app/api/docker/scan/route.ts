@@ -6,17 +6,72 @@ import { prisma } from "@/app/lib/prisma";
 import { KNOWN_APPS } from '@/app/lib/appMap';
 import { headers } from 'next/headers'; // <--- DODAJ IMPORT
 
-export async function GET() {
+export async function GET(req: Request) {
+  // 1. Sprawdzamy sesję (zabezpieczenie)
   const session = await getServerSession(authOptions);
-  if (!session || !session.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
-    select: { discoveredServices: true }
-  });
+  // 2. Automatyczne wykrywanie IP serwera z nagłówka przeglądarki
+  const hostHeader = req.headers.get('host') || 'localhost';
+  const serverIp = hostHeader.split(':')[0];
 
-  const services = user?.discoveredServices ? JSON.parse(user.discoveredServices) : [];
-  return NextResponse.json({ services });
+  try {
+    // 3. Połączenie z Dockerem przez Socket
+    const response = await fetch('http://localhost/containers/json', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      socketPath: '/var/run/docker.sock'
+    } as RequestInit & { socketPath?: string });
+
+    if (!response.ok) {
+      throw new Error(`Błąd połączenia z Dockerem: ${response.status}`);
+    }
+
+    const containers = await response.json();
+    const discoveredApps: any[] = [];
+
+    // 4. Mapowanie kontenerów na nasze widgety
+    for (const container of containers) {
+      const image = container.Image;
+      const name = container.Names[0].replace('/', '');
+
+      const appDefKey = Object.keys(KNOWN_APPS).find(key => image.includes(key));
+
+      if (appDefKey) {
+        const appConfig = KNOWN_APPS[appDefKey];
+        
+        // Wykrywanie portu (jeśli Docker go wystawił, bierzemy publiczny, jeśli nie - domyślny z mapy)
+        let publicPort = appConfig.port;
+        if (container.Ports && container.Ports.length > 0) {
+          const mappedPort = container.Ports.find((p: any) => p.PublicPort);
+          if (mappedPort) {
+            publicPort = mappedPort.PublicPort;
+          }
+        }
+
+        discoveredApps.push({
+          id: container.Id,
+          name: appConfig.name || name,
+          icon: appConfig.icon,
+          // TUTAJ NAJWAŻNIEJSZA ZMIANA - IP ZAMIAST LOCALHOST
+          url: `http://${serverIp}:${publicPort}`,
+          color: appConfig.color,
+          status: container.State,
+          widgetType: appConfig.widgetType,
+          template: appConfig.template
+        });
+      }
+    }
+
+    return NextResponse.json(discoveredApps);
+  } catch (error: any) {
+    console.error("Błąd skanowania dockera:", error.message);
+    return NextResponse.json({ error: 'Nie udało się połączyć z usługą Docker' }, { status: 500 });
+  }
 }
 
 export async function POST() {
