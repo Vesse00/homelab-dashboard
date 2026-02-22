@@ -3,7 +3,7 @@
 A modern, responsive, and highly customizable dashboard designed for centralized service management in your HomeLab. The project automates the service addition process through Docker integration and offers dedicated, intelligent widgets for the most popular self-hosted applications.
 
 ![HomeLab Dashboard Banner](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.0-blue?style=for-the-badge&logo=tailwind-css)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-blue?style=for-the-badge&logo=tailwind-css)
 ![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?style=for-the-badge&logo=prisma)
 ![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?style=for-the-badge&logo=docker)
 
