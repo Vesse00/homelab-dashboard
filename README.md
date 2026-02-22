@@ -40,6 +40,9 @@ git clone https://github.com/Vesse00/homelab-dashboard.git
 cd homelab-dashboard
 npm install
 ```
+>**Remember**:
+Do it as a Root
+
 ## ⚙️ Environment Variables (.env)
 
 To run the project correctly, create a `.env` file in the root directory and configure the following variables:
