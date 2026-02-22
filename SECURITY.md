@@ -4,10 +4,10 @@
 
 We take the security of the **HomeLab Dashboard** seriously. Below are the versions currently receiving security updates:
 
-| Version | Supported          |
-| ------- | ------------------ |
-| main    | ✅ Supported       |
-| < 1.0.0 | ❌ Not Supported   |
+| Version      | Supported          |
+| -----------  | ------------------ |
+| 0.1.0-beta   | ✅ Supported       |
+| none         | ❌ Not Supported   |
 
 ## Reporting a Vulnerability
 
