@@ -59,6 +59,7 @@ model User {
   emailVerified DateTime?
   image         String?
   dashboardLayout String? // JSON string z układem dashboardu
+  backgroundUrl   String? // URL tła dashboardu
   discoveredServices String? // JSON string z listą odkrytych usług
   password      String?   // Dla logowania hasłem (opcjonalne, bo Google tego nie ma)
   role          String    @default("USER") // "ADMIN" lub "USER"

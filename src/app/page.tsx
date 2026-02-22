@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Edit2, Save, Plus, X, LayoutGrid, HardDrive, CloudSun, Radar } from 'lucide-react';
+import { Edit2, Save, Plus, X, LayoutGrid, HardDrive, CloudSun, Radar, Settings, Image as ImageIcon } from 'lucide-react';
 import DashboardGrid from '@/components/DashboardGrid';
 import DockerWidget from '@/components/widgets/DockerWidget';
 import ContainerCard from '@/components/ContainerCard';
@@ -55,13 +55,20 @@ export default function Dashboard() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
   const [isDiscoveryOpen, setIsDiscoveryOpen] = useState(false);
+  const userName = session?.user?.name || session?.user?.email?.split('@')[0] || 'Admin'; // Fallback na nazwę użytkownika
   
   // Stan widgetów (pobieramy z localStorage lub domyślny)
   const [widgets, setWidgets] = useState<WidgetItem[]>(DEFAULT_LAYOUT);
   const [scannedServices, setScannedServices] = useState<any[]>([]);
   const [availableServices, setAvailableServices] = useState<any[]>([]);
 
-  // Zapisywanie layoutu do localStorage (prymitywne persistence)
+  
+  const [greeting, setGreeting] = useState('Dzień dobry');
+  const [bgUrl, setBgUrl] = useState('');
+  const [isBgModalOpen, setIsBgModalOpen] = useState(false);
+  const [tempBgUrl, setTempBgUrl] = useState('');
+
+  // Zapisywanie i Pobieranie Layoutu z API
 useEffect(() => {
     const fetchData = async () => {
       if (session?.user) {
@@ -82,6 +89,16 @@ useEffect(() => {
             setAvailableServices(servicesData.services);
           }
 
+          const hour = new Date().getHours();
+          if (hour >= 5 && hour < 18) setGreeting('Dzień dobry');
+          else setGreeting('Dobry wieczór');
+
+          const savedBg = localStorage.getItem('dashboardBg');
+          if (savedBg) {
+            setBgUrl(savedBg);
+            setTempBgUrl(savedBg);
+          }
+
         } catch (e) {
           console.error("Błąd pobierania danych", e);
         }
@@ -89,6 +106,12 @@ useEffect(() => {
     };
     fetchData();
   }, [session]); // Uruchom, gdy sesja się załaduje
+
+  const saveBackground = () => {
+  setBgUrl(tempBgUrl);
+  localStorage.setItem('dashboardBg', tempBgUrl);
+  setIsBgModalOpen(false);
+};
 
 const handleScan = async () => {
     const toastId = toast.loading("Skanowanie Dockera...");
@@ -278,7 +301,7 @@ const handleScan = async () => {
       
       {/* Nagłówek Dashboardu z kontrolkami */}
       <div className="flex items-center justify-between mb-8">
-        <div>
+        <div >
           <h1 className="text-3xl font-bold text-white tracking-tight">
             Dashboard
           </h1>

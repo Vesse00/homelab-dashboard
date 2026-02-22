@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { signOut, useSession } from 'next-auth/react';
-import { User, Settings, LogOut, Shield } from 'lucide-react';
+import { User, Settings, LogOut, Shield, Heart } from 'lucide-react';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -19,6 +19,7 @@ export default function Navbar() {
   const userRole = (session?.user as any)?.role;
   const userName = session?.user?.name || "Użytkownik";
   const userEmail = session?.user?.email || "user@local";
+  const sponsorLink = "https://github.com/sponsors/Vesse00"; 
 
   useEffect(() => {
     setTime(new Date());
@@ -58,6 +59,21 @@ export default function Navbar() {
 
         {/* --- PRAWA STRONA (Profil) --- */}
         <div className="flex items-center gap-2">
+
+          {/* GUZIK SPONSORA */}
+          <a 
+            href={sponsorLink} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/20 hover:border-pink-500/40 transition-all text-pink-400 text-xs font-bold shadow-[0_0_10px_rgba(236,72,153,0.1)] group"
+          >
+            <Heart size={14} className="fill-transparent group-hover:fill-pink-400 transition-all" />
+            Sponsor
+          </a>
+
+          {/* ODDZIELACZ PIONOWY */}
+          <div className="hidden sm:block w-px h-6 bg-white/10"></div>
+
           {status === 'authenticated' ? (
             <div className="relative">
               <button
