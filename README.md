@@ -22,7 +22,7 @@ A modern, responsive, and highly customizable dashboard designed for centralized
 
 ## 🛠️ Tech Stack
 
-* **Framework:** Next.js 15 (App Router)
+* **Framework:** Next.js 16 (App Router)
 * **Styling:** Tailwind CSS + Framer Motion (Animations)
 * **Database:** SQLite + Prisma ORM
 * **Communication:** Docker Engine API (via `/var/run/docker.sock`)
@@ -55,7 +55,14 @@ NEXTAUTH_SECRET="twoj_bardzo_dlugi_i_unikalny_sekret"
 # Your dashboard's URL
 NEXTAUTH_URL="http://192.168.x.x:3003"
 
+# SMTP Configuration (for password resets and notifications)
+# If you use Gmail, use an "App Password", not your regular password.
+SMTP_EMAIL="your-email@example.com"
+SMTP_PASSWORD="your-smtp-app-password"
+
 ```
+> Note on SMTP:
+If you are using Gmail, you must enable 2-Factor Authentication and generate an App Password to use in the SMTP_PASSWORD field. Regular account passwords will not work.
 ## 📦 Supported Applications
 
 The dashboard uses an intelligent mapping system (`appMap.ts`) that automatically recognizes containers based on image names. During a Docker scan, the system automatically selects the appropriate icon, color scheme, and advanced widget type.
