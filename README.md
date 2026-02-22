@@ -1,107 +1,107 @@
 # 🚀 HomeLab Dashboard
 
-Nowoczesny, responsywny i wysoce konfigurowalny dashboard przeznaczony do centralnego zarządzania usługami w domowym laboratorium (HomeLab). Projekt automatyzuje proces dodawania usług dzięki integracji z Dockerem i oferuje dedykowane, inteligentne widgety dla najpopularniejszych aplikacji.
+A modern, responsive, and highly customizable dashboard designed for centralized service management in your HomeLab. The project automates the service addition process through Docker integration and offers dedicated, intelligent widgets for the most popular self-hosted applications.
 
 ![HomeLab Dashboard Banner](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.0-blue?style=for-the-badge&logo=tailwind-css)
 ![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?style=for-the-badge&logo=prisma)
 ![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?style=for-the-badge&logo=docker)
 
-## ✨ Główne Funkcje
+## ✨ Key Features
 
-* **🔍 Autodiscovery (Docker Scan):** System automatycznie skanuje lokalny socket Dockera i rozpoznaje kontenery. Dzięki wbudowanej mapie aplikacji (`appMap.ts`), dashboard sam przypisuje ikony, kolory i porty, automatycznie wykrywając adres IP serwera.
-* **📊 Inteligentne Widgety:**
-    * **Uptime Kuma:** Dynamiczna lista monitorów, wskaźnik "zdrowia" systemu (procentowy pasek), obsługa wielu kolumn przy szerokich kafelkach i automatyczne ukrywanie nadmiaru monitorów.
-    * **AdGuard Home / Pi-hole:** Podgląd statystyk blokowania w czasie rzeczywistym.
-    * **Nginx Proxy Manager:** Monitoring aktywnych hostów proxy i przekierowań.
-    * **Home Assistant:** Status połączenia z Twoim hubem smart home.
-    * **Tailscale:** Podgląd aktywnych węzłów w sieci mesh.
-* **🧩 Interaktywny Grid:** Zarządzanie układem kafelków za pomocą przeciągania (Drag & Drop) i zmiany rozmiaru. Widgety inteligentnie adaptują swój wygląd (np. tryb rozszerzony 3x3 ujawnia więcej danych).
-* **🚨 Zaawansowany UI Statusu:** Kafelki reagują na awarie. W przypadku braku połączenia lub błędu autoryzacji (401/403), widget zmienia kolor na alarmową czerwień z poświatą, informując o problemie.
-* **🔐 Bezpieczeństwo:** System logowania oparty na NextAuth.js, wsparcie dla API Key oraz Basic Auth dla zabezpieczonych usług.
+* **🔍 Docker Autodiscovery:** The system automatically scans the local Docker socket and recognizes running containers. Using a built-in application map (`appMap.ts`), the dashboard assigns icons, colors, and ports, automatically detecting the server's IP address.
+* **📊 Intelligent Widgets:**
+    * **Uptime Kuma:** Dynamic monitor list, "system health" progress bar, multi-column support for wide tiles, and automatic overflow handling.
+    * **AdGuard Home / Pi-hole:** Real-time blocking statistics and query overview.
+    * **Nginx Proxy Manager:** Monitoring of active proxy hosts, redirections, and "dead" host status.
+    * **Home Assistant:** Connection status for your smart home hub.
+    * **Tailscale:** Overview of active nodes in your mesh network.
+* **🧩 Interactive Grid:** Manage your layout with a drag-and-drop interface and easy resizing. Widgets intelligently adapt their view (e.g., a 3x3 expanded mode reveals more detailed data).
+* **🚨 Advanced Status UI:** Tiles react to failures. In case of connection loss or authorization errors (401/403), the widget changes to an "emergency red" with a glow effect, immediately notifying you of the issue.
+* **🔐 Security:** Authentication powered by NextAuth.js, with support for API Keys and Basic Auth for protected services.
 
-## 🛠️ Stack Technologiczny
+## 🛠️ Tech Stack
 
 * **Framework:** Next.js 15 (App Router)
-* **Stylizacja:** Tailwind CSS + Framer Motion (animacje)
-* **Baza Danych:** SQLite + Prisma ORM
-* **Komunikacja:** Docker Engine API (przez `/var/run/docker.sock`)
-* **Ikony:** Lucide React
+* **Styling:** Tailwind CSS + Framer Motion (Animations)
+* **Database:** SQLite + Prisma ORM
+* **Communication:** Docker Engine API (via `/var/run/docker.sock`)
+* **Icons:** Lucide React
 
-## 🚀 Instalacja i Uruchomienie
+## 🚀 Getting Started
 
-### 1. Wymagania
-* Zainstalowany Docker oraz Node.js (v18+).
-* Dashboard wymaga dostępu do socketu Dockera, aby funkcja skanowania działała poprawnie.
+### 1. Prerequisites
+* Docker and Node.js (v18+) installed.
+* The dashboard requires access to the Docker socket for the scanning feature to function correctly.
 
-### 2. Klonowanie i konfiguracja
+### 2. Installation & Setup
 ```bash
-git clone [https://github.com/twoj-username/homelab-dashboard.git](https://github.com/twoj-username/homelab-dashboard.git)
+git clone https://github.com/Vesse00/homelab-dashboard.git
 cd homelab-dashboard
 npm install
 ```
-## ⚙️ Zmienne środowiskowe (.env)
+## ⚙️ Environment Variables (.env)
 
-Aby projekt działał poprawnie, należy utworzyć plik `.env` w głównym katalogu aplikacji i skonfigurować następujące zmienne:
+To run the project correctly, create a `.env` file in the root directory and configure the following variables:
 
 ```env
-# Ścieżka do bazy danych SQLite (używana przez Prismę)
-DATABASE_URL="file:./prisma/dev.db"
+# Path to the SQLite database (used by Prisma)
+DATABASE_URL="file:./dev.db"
 
-# Sekret dla NextAuth.js (wymagany do szyfrowania sesji)
-# Wygeneruj go komendą: openssl rand -base64 32
+# Secret for NextAuth.js (required for session encryption)
+# Generate one using: openssl rand -base64 32
 NEXTAUTH_SECRET="twoj_bardzo_dlugi_i_unikalny_sekret"
 
-# Publiczny adres URL Twojego dashboardu
-NEXTAUTH_URL="[http://192.168.1.63:3000](http://192.168.1.63:3000)"
+# Your dashboard's URL
+NEXTAUTH_URL="http://192.168.x.x:3003"
 
-# [WAŻNE] Adres IP Twojego serwera HomeLab
-# Służy jako fallback dla skanera Docker, aby kafelki nie otrzymywały adresu 'localhost'
-HOST_IP=192.168.1.63
 ```
-## 📦 Wspierane aplikacje
+## 📦 Supported Applications
 
-Dashboard wykorzystuje inteligentny system mapowania aplikacji (`appMap.ts`), który automatycznie rozpoznaje kontenery na podstawie nazwy obrazu. Dzięki temu przy skanowaniu Docker'a system sam dobiera odpowiednią ikonę, kolorystykę oraz zaawansowany typ widgetu.
+The dashboard uses an intelligent mapping system (`appMap.ts`) that automatically recognizes containers based on image names. During a Docker scan, the system automatically selects the appropriate icon, color scheme, and advanced widget type.
 
-### 🛡️ Sieć i Bezpieczeństwo
-* **AdGuard Home / Pi-hole** (`widgetType: 'dns'`) – Statystyki zapytań DNS, liczba zablokowanych reklam i procentowy udział blokowanego ruchu.
-* **Nginx Proxy Manager** (`widgetType: 'proxy'`) – Monitoring aktywnych hostów proxy, przekierowań oraz stan hostów typu "dead" (404).
-* **Tailscale** (`widgetType: 'tailscale'`) – Status połączenia z siecią mesh oraz liczba aktywnych węzłów (urządzeń).
-* **Vaultwarden** (`widgetType: 'generic'`) – Bezpieczny dostęp do menedżera haseł.
+### 🛡️ Network & Security
+* **AdGuard Home / Pi-hole** (`widgetType: 'dns'`) –DNS query stats, blocked ads count, and percentage of blocked traffic.
+* **Nginx Proxy Manager** (`widgetType: 'proxy'`) – Monitoring of active proxies, redirections, and dead hosts (404s).
+* **Tailscale** (`widgetType: 'tailscale'`) – Mesh network connection status and active node count.
+* **Vaultwarden** (`widgetType: 'generic'`) – Secure access to your password manager.
 
-### 🏠 Automatyka Domowa
-* **Home Assistant** (`widgetType: 'home-assistant'`) – Status aktywności huba oraz integracja z systemem smart home. Wymaga wygenerowania klucza API (Long-lived Access Token).
+### 🏠 Home Automation
+* **Home Assistant** (`widgetType: 'home-assistant'`) – Hub activity status and smart home integration. Requires a Long-lived Access Token.
 
-### 🎬 Media i Rozrywka
-* **Jellyfin / Plex** (`widgetType: 'media'`) – Podgląd aktywnych sesji (kto aktualnie ogląda) oraz obciążenia serwera.
-* **Sonarr / Radarr / Lidarr / Readarr** (`widgetType: 'generic'`) – Monitoring bibliotek mediów i pobierania.
-* **Minecraft Server** (`widgetType: 'minecraft'`) – Status serwera, liczba graczy online oraz wersja gry.
+### 🎬 Media & Entertainment
+* **Jellyfin / Plex** (`widgetType: 'media'`) – Active session monitoring (who is watching) and server load.
+* **Sonarr / Radarr / Lidarr / Readarr** (`widgetType: 'generic'`) – Media library and download monitoring.
+* **Minecraft Server** (`widgetType: 'minecraft'`) – Server status, online player count, and game version.
 
-### 📊 Monitoring i Narzędzia
-* **Uptime Kuma** (`widgetType: 'uptime-kuma'`) – **Zaawansowany widget:**
-    * Lista monitorów pobierana bezpośrednio ze stron statusu.
-    * Wskaźnik "zdrowia" usług w formie paska postępu.
-    * Dynamiczne skalowanie: widok 3x3 pokazuje listę monitorów w dwóch kolumnach.
-* **Portainer** (`widgetType: 'admin'`) – Szybki podgląd liczby uruchomionych i zatrzymanych kontenerów.
-* **Grafana / Prometheus** (`widgetType: 'generic'`) – Łatwy dostęp do paneli analitycznych.
+### 📊 Monitoring & Tools
+* **Uptime Kuma** (`widgetType: 'uptime-kuma'`) – **Advanced Widget:**
+    * Monitors list fetched directly from status pages.
+    * Service health indicated via progress bars.
+    * Dynamic scaling: 3x3 view displays monitors in two columns.
+* **Portainer** (`widgetType: 'admin'`) – Quick overview of running vs. stopped containers.
+* **Grafana / Prometheus** (`widgetType: 'generic'`) – Easy access to analytical panels.
 
 ---
 
-> **Wskazówka dla Deweloperów:** > Lista wspieranych obrazów jest stale rozszerzana w pliku `src/app/lib/appMap.ts`. Możesz tam łatwo dodać własne obrazy, przypisując im domyślne porty i kolory.
+> **Developer Tip:** > The list of supported images is constantly being expanded in `src/app/lib/appMap.ts`. You can easily add your own images by assigning them default ports and colors.
 
-## 🚨 System Statusów i Błędów
+## 🚨 Status & Error System
 
-Każdy z powyższych widgetów posiada ustandaryzowaną logikę obsługi błędów:
-1.  **Tryb Online:** Widget wyświetla naturalny kolor przypisany do aplikacji (np. niebieski dla HA, czerwony dla Pi-hole).
-2.  **Błąd Autoryzacji:** Jeśli klucz API jest błędny lub wygasł, kafelek zmienia kolor na **alarmową czerwień** z napisem "Odmowa dostępu".
-3.  **Host Offline:** Jeśli kontener został zatrzymany lub adres IP jest nieosiągalny, kafelek zaleje się czerwienią, informując o braku połączenia.
+Each widget features standardized error handling logic:
+1.  **Online Mode:** The widget displays its assigned application color (e.g., blue for HA, red for Pi-hole).
+2.  **Auth Error:** If an API key is incorrect or expired, the tile turns **emergency red** with an "Access Denied" label.
+3.  **Host Offline:** If a container is stopped or the IP is unreachable, the tile turns red, indicating a connection failure.
 
-# 🤝 Kontrybucja
+## 🤝 Contributing
+Thank you for your interest! Please note:
+* **Bug Reports & Feature Requests:** Please use the Issues tab.
+* **Code Contributions:** Currently, **I am NOT accepting Pull Requests** to maintain strict quality control and vision for this project.
+* **Discussions:** Feel free to join our Discussions to share your setup!
 
-Jeśli chcesz dodać nowy szablon widgetu lub poprawić obsługę konkretnej aplikacji:
+## ☕ Support the Project
+If this dashboard made your HomeLab life easier, consider supporting its development. Your support helps cover infrastructure costs and fuels late-night coding sessions!
+👉 [Become a GitHub Sponsor](https://github.com/sponsors/Vesse00)
 
-1. Sklonuj repozytorium.
-2. Dodaj definicję w `src/app/lib/appMap.ts`.
-3. Stwórz nowy komponent w `src/components/widgets/templates/`.
-4. Wyślij Pull Request!
-5. Stwórz wątek o dodanie
+**🏆 Awesome Sponsors**
+* (Your name could be here!)
