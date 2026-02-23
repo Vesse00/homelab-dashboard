@@ -4,15 +4,15 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Edit2, Save, Plus, X, LayoutGrid, HardDrive, CloudSun, Radar, Settings, Image as ImageIcon } from 'lucide-react';
-import DashboardGrid from '@/components/DashboardGrid';
-import DockerWidget from '@/components/widgets/DockerWidget';
-import ContainerCard from '@/components/ContainerCard';
-import DiskWidget from '@/components/widgets/DiskWidget';
-import WeatherWidget from '@/components/widgets/WeatherWidget';
-import ServiceDiscoveryModal from '@/components/ServiceDiscoveryModal';
+import DashboardGrid from '@/app/[locale]/components/DashboardGrid';
+import DockerWidget from '@/app/[locale]/components/widgets/DockerWidget';
+import ContainerCard from '@/app/[locale]/components/ContainerCard';
+import DiskWidget from '@/app/[locale]/components/widgets/DiskWidget';
+import WeatherWidget from '@/app/[locale]/components/widgets/WeatherWidget';
+import ServiceDiscoveryModal from '@/app/[locale]/components/ServiceDiscoveryModal';
 import { toast } from 'react-hot-toast';
-import ServiceWidget from '@/components/widgets/ServiceWidget';
-import ServerStatsWidget from '@/components/widgets/ServerStatsWidget';
+import ServiceWidget from '@/app/[locale]/components/widgets/ServiceWidget';
+import ServerStatsWidget from '@/app/[locale]/components/widgets/ServerStatsWidget';
 
 // Definicja dostępnych typów widgetów
 const WIDGET_TYPES = {

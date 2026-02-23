@@ -1,13 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { signOut, useSession } from 'next-auth/react';
 import { User, Settings, LogOut, Shield, Heart } from 'lucide-react';
+import LanguageSwitcher from './LanguageSwitcher';
 
 export default function Navbar() {
+  const t = useTranslations('Navbar');
   const pathname = usePathname();
   const { data: session, status } = useSession();
   const [time, setTime] = useState<Date | null>(null);
@@ -17,7 +20,7 @@ export default function Navbar() {
   const hiddenPaths = ['/login', '/register', '/forgot-password', '/auth/reset'];
   
   const userRole = (session?.user as any)?.role;
-  const userName = session?.user?.name || "Użytkownik";
+  const userName = session?.user?.name || t('defaultUserName');
   const userEmail = session?.user?.email || "user@local";
   const sponsorLink = "https://github.com/sponsors/Vesse00"; 
 
@@ -68,11 +71,13 @@ export default function Navbar() {
             className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/20 hover:border-pink-500/40 transition-all text-pink-400 text-xs font-bold shadow-[0_0_10px_rgba(236,72,153,0.1)] group"
           >
             <Heart size={14} className="fill-transparent group-hover:fill-pink-400 transition-all" />
-            Sponsor
+            {t('sponsor')}
           </a>
 
           {/* ODDZIELACZ PIONOWY */}
           <div className="hidden sm:block w-px h-6 bg-white/10"></div>
+
+          <LanguageSwitcher />
 
           {status === 'authenticated' ? (
             <div className="relative">
@@ -107,18 +112,18 @@ export default function Navbar() {
 
                       <div className="p-1">
                         <Link href="/user/settings" onClick={() => setIsProfileOpen(false)}>
-                          <DropdownItem icon={<Settings size={16} />} label="Ustawienia konta" />
+                          <DropdownItem icon={<Settings size={16} />} label={t('accountSettings')} />
                         </Link>
                         {userRole === 'ADMIN' && (
                           <Link href="/user/admin" onClick={() => setIsProfileOpen(false)}>
-                            <DropdownItem icon={<Shield size={16} />} label="Panel Admina" color="text-blue-400" bgHover="hover:bg-blue-500/10" />
+                            <DropdownItem icon={<Shield size={16} />} label={t('adminPanel')} color="text-blue-400" bgHover="hover:bg-blue-500/10" />
                           </Link>
                         )}
                       </div>
 
                       <div className="border-t border-white/5 mt-1 pt-1 p-1">
                         <button onClick={() => signOut({ callbackUrl: '/login' })} className="w-full">
-                          <DropdownItem icon={<LogOut size={16} />} label="Wyloguj" color="text-red-400" bgHover="hover:bg-red-500/10" />
+                          <DropdownItem icon={<LogOut size={16} />} label={t('logout')} color="text-red-400" bgHover="hover:bg-red-500/10" />
                         </button>
                       </div>
                     </motion.div>
@@ -128,7 +133,7 @@ export default function Navbar() {
             </div>
           ) : (
             <Link href="/login" className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition-colors shadow-lg">
-              Zaloguj się
+              {t('login')}
             </Link>
           )}
         </div>

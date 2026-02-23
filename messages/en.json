@@ -1,0 +1,10 @@
+{
+  "Navbar": {
+    "defaultUserName": "User",
+    "sponsor": "Sponsor",
+    "accountSettings": "Account Settings",
+    "adminPanel": "Admin Panel",
+    "logout": "Log out",
+    "login": "Sign in"
+  }
+}

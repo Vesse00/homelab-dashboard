@@ -1,0 +1,10 @@
+{
+  "Navbar": {
+    "defaultUserName": "Użytkownik",
+    "sponsor": "Sponsor",
+    "accountSettings": "Ustawienia konta",
+    "adminPanel": "Panel Admina",
+    "logout": "Wyloguj",
+    "login": "Zaloguj się"
+  }
+}

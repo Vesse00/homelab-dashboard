@@ -1,14 +1,21 @@
-import "./globals.css";
-import Navbar from "@/components/Navbar";
-import Providers from "@/components/Providers";
+import "@/app/globals.css";
+import Navbar from "@/app/[locale]/components/Navbar";
+import Providers from "@/app/[locale]/components/Providers";
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages } from 'next-intl/server';
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
+  params
 }: {
   children: React.ReactNode;
+  params: Promise<{ locale: string }>;
 }) {
+  const { locale } = await  params;
+  const messages = await getMessages();
+
   return (
-    <html lang="pl" className="h-full">
+    <html lang={locale} className="h-full">
       <body className="bg-slate-950 text-slate-200 antialiased min-h-screen relative selection:bg-blue-500/30">
 
         {/* === NOWE TŁO (Cyberpunk/Homelab Vibe) === */}
@@ -27,17 +34,18 @@ export default function RootLayout({
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-950/80 to-slate-950" />
         </div>
 
-        <Providers>
-          {/* Navbar jest fixed */}
-          <Navbar />
+        <NextIntlClientProvider messages={messages}>
+          <Providers>
+            {/* Navbar jest fixed */}
+            <Navbar />
 
-          <main className="pt-16 relative z-10">
-            {/* Usunąłem px-6, żeby wykorzystać pełną szerokość, jeśli będziesz chciał */}
-            <div className="w-full h-full">
-              {children}
-            </div>
-          </main>
-        </Providers>
+            <main className="pt-16 relative z-10">
+              <div className="w-full h-full">
+                {children}
+              </div>
+            </main>
+          </Providers>
+        </NextIntlClientProvider>
         
       </body>
     </html>
