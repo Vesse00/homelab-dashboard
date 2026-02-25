@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Edit2, Save, Plus, X, LayoutGrid, HardDrive, CloudSun, Radar, Settings, Image as ImageIcon } from 'lucide-react';
 import DashboardGrid from '@/app/[locale]/components/DashboardGrid';
@@ -13,7 +14,7 @@ import ServiceDiscoveryModal from '@/app/[locale]/components/ServiceDiscoveryMod
 import { toast } from 'react-hot-toast';
 import ServiceWidget from '@/app/[locale]/components/widgets/ServiceWidget';
 import ServerStatsWidget from '@/app/[locale]/components/widgets/ServerStatsWidget';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import WidgetGalleryModal from './components/WidgetGalleryModal';
 
 // Definicja dostępnych typów widgetów
@@ -54,6 +55,7 @@ const DEFAULT_LAYOUT = [
 
 export default function Dashboard() {
   const t = useTranslations('Dashboard');
+  const locale = useLocale();
   const { data: session } = useSession();
   const [isEditMode, setIsEditMode] = useState(false);
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
@@ -65,6 +67,10 @@ export default function Dashboard() {
   const [widgets, setWidgets] = useState<WidgetItem[]>(DEFAULT_LAYOUT);
   const [scannedServices, setScannedServices] = useState<any[]>([]);
   const [availableServices, setAvailableServices] = useState<any[]>([]);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const highlightParam = searchParams.get('highlight');
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
   
 
   
@@ -111,6 +117,32 @@ useEffect(() => {
     };
     fetchData();
   }, [session]); // Uruchom, gdy sesja się załaduje
+
+// EFEKT PODŚWIETLANIA:
+  useEffect(() => {
+    if (highlightParam && widgets.length > 0) {
+      // 1. Aktywujemy podświetlenie w React
+      setHighlightedId(highlightParam);
+      
+      // 2. Dajemy siatce chwilę i zjeżdżamy ekranem
+      const scrollTimer = setTimeout(() => {
+        document.getElementById(`widget-${highlightParam}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 150);
+
+      // 3. Po 2.5 sekundach wyłączamy podświetlenie i czyścimy URL
+      const clearTimer = setTimeout(() => {
+        setHighlightedId(null);
+        router.replace(`/${locale}`, { scroll: false });
+      }, 2500);
+
+      return () => {
+        clearTimeout(scrollTimer);
+        clearTimeout(clearTimer);
+      };
+    }
+  // Usunięto 'router' i 'locale' z tablicy zależności, aby rozwiązać błąd ESLint!
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [highlightParam, widgets]);
 
   const saveBackground = () => {
   setBgUrl(tempBgUrl);
@@ -391,53 +423,9 @@ const handleScan = async () => {
         isEditMode={isEditMode}
         onRemove={removeWidget}
         onUpdateData={updateWidgetData}
+        highlightedId={highlightedId}
       >
-        {widgets.map((widget) => (
-          <div key={widget.i} className={isEditMode ? "z-10" : "z-0"}>
-            {/* Renderowanie warunkowe na podstawie typu widgetu */}
-            {widget.type === WIDGET_TYPES.DOCKER_STATS && (
-              <DockerWidget 
-                id={widget.i}
-                isEditMode={isEditMode}
-                onRemove={() => removeWidget(widget.i)}
-                title='Docker'
-                className='h-full w-full'
-              />
-            )}
-            {widget.type === WIDGET_TYPES.DISK_STATS && (
-              <DiskWidget 
-                id={widget.i}
-                isEditMode={isEditMode}
-                onRemove={() => removeWidget(widget.i)}
-                className='h-full w-full'
-              />
-            )}
-            {widget.type === WIDGET_TYPES.WEATHER && (
-              <WeatherWidget 
-                id={widget.i}
-                isEditMode={isEditMode}
-                onRemove={() => removeWidget(widget.i)}
-                className='h-full w-full'
-              />
-            )}
-            {widget.type === WIDGET_TYPES.SERVER_STATS && (
-              <ServerStatsWidget 
-                id={widget.i}
-                isEditMode={isEditMode}
-                onRemove={() => removeWidget(widget.i)}
-                className='h-full w-full'
-              />
-            )}
-            
-            
-            {/* Jeśli typ jest nieznany */}
-            {widget.type === 'unknown' && (
-               <div className="w-full h-full bg-red-500/20 border border-red-500 rounded-xl flex items-center justify-center text-red-500">
-                 {t('widgetError')}
-               </div>
-            )}
-          </div>
-        ))}
+        
       </DashboardGrid>
 
       {/* MODAL  */}

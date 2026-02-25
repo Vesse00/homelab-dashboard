@@ -21,6 +21,7 @@ interface DashboardGridProps {
   onRemove: (id: string) => void;
   onUpdateData?: (id: string, newData: any) => void;
   onToggleLock: (id: string) => void;
+  highlightedId?: string | null; // Dodajemy opcjonalny prop dla highlight
 }
 
 export default function DashboardGrid({ 
@@ -29,7 +30,8 @@ export default function DashboardGrid({
   isEditMode, 
   onRemove,
   onUpdateData,
-  onToggleLock
+  onToggleLock,
+  highlightedId
 }: DashboardGridProps) {
 
   // Funkcja, która wybiera odpowiedni komponent widgetu
@@ -102,11 +104,37 @@ export default function DashboardGrid({
       }}
     >
       {/* Tutaj tworzymy strukturę Grid > Div > Widget */}
-      {layout.map((item: any) => (
-        <div key={item.i} data-grid={item}>
-          {renderWidget(item)}
-        </div>
-      ))}
+      {layout.map((item: any) => {
+        const isHighlighted = highlightedId === item.i;
+
+        return (
+          <div 
+            key={item.i} 
+            data-grid={item}
+            id={`widget-${item.i}`}
+            className={isEditMode ? "z-10" : "z-0"}
+          >
+             {/* 2. WEWNĘTRZNY DIV (Nasz bezpieczny kontener do animacji) */}
+             <div className={`relative w-full h-full transition-all duration-500 origin-center ${
+               isHighlighted ? 'scale-[1.02] z-50' : ''
+             }`}>
+               
+               {/* 3. WARSTWA POŚWIATY */}
+               <div
+                  className={`absolute -inset-3 bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 rounded-[30px] blur-xl transition-opacity duration-500 -z-10 ${
+                    isHighlighted ? 'opacity-60' : 'opacity-0'
+                  }`}
+                />
+
+              {/* 4. WŁAŚCIWY WIDGET */}
+              <div className="relative h-full w-full rounded-2xl overflow-hidden border border-white/10 bg-slate-950/90 backdrop-blur-md shadow-xl">
+                 {renderWidget(item)}
+              </div>
+
+            </div>
+          </div>
+        );
+      })}
     </ResponsiveGridLayout>
   );
 }

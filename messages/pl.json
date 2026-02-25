@@ -129,5 +129,18 @@
     "btnCancel": "Anuluj",
     "btnAddCount": "Dodaj {count} Widgetów",
     "portLabel": "Port"
+  },
+"CommandPalette": {
+    "placeholder": "Szukaj kontenerów, widgetów i stron...",
+    "empty": "Brak wyników dla \"{query}\"",
+    "pages": "Strony",
+    "containers": "Kontenery",
+    "widgets": "Widgety",
+    "pageDashboard": "Dashboard",
+    "pageSettings": "Ustawienia",
+    "pageAdmin": "Panel Admina",
+    "pageContainers": "Wszystkie Kontenery",
+    "actionGo": "Przejdź",
+    "actionHighlight": "Podświetl"
   }
 }

@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { signOut, useSession } from 'next-auth/react';
 import { User, Settings, LogOut, Shield, Heart } from 'lucide-react';
 import LanguageSwitcher from './LanguageSwitcher';
+import CommandPalette from './CommandPalette';
 
 export default function Navbar() {
   const t = useTranslations('Navbar');
@@ -38,6 +39,7 @@ export default function Navbar() {
   const formattedDate = time ? time.toLocaleDateString('pl-PL', { weekday: 'short', day: 'numeric', month: 'short' }) : '...';
 
   return (
+    <>
     <nav className="fixed top-0 left-0 right-0 z-[100] bg-slate-950/40 backdrop-blur-md border-b border-white/5 shadow-sm">
       <div className="w-full h-16 px-6 flex items-center justify-between">
 
@@ -139,6 +141,8 @@ export default function Navbar() {
         </div>
       </div>
     </nav>
+    <CommandPalette />
+    </>
   );
 }
 

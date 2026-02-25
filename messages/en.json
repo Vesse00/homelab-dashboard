@@ -129,5 +129,18 @@
     "btnCancel": "Cancel",
     "btnAddCount": "Add {count} Widgets",
     "portLabel": "Port"
+  },
+"CommandPalette": {
+    "placeholder": "Search containers, widgets, and pages...",
+    "empty": "No results found for \"{query}\"",
+    "pages": "Pages",
+    "containers": "Containers",
+    "widgets": "Widgets",
+    "pageDashboard": "Dashboard",
+    "pageSettings": "Settings",
+    "pageAdmin": "Admin Panel",
+    "pageContainers": "All Containers",
+    "actionGo": "Go to",
+    "actionHighlight": "Highlight"
   }
 }
