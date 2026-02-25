@@ -1,10 +1,83 @@
 {
-  "Navbar": {
+"Dashboard": {
+    "title": "My HomeLab",
+    "greeting": "Hello, {name}!"
+  },
+"ApiErrors": {
+  "REGISTRATION_DISABLED": "Registration is currently closed by the administrator.",
+  "USER_ALREADY_EXISTS": "A user with this email address already exists.",
+  "INTERNAL_ERROR": "An unexpected server error occurred.",
+  "CREATEUSERSUCCES": "Account successfully created. You can now log in.",
+  "INVALID_TOKEN": "Invalid or expired reset token.",
+  "PASSWORDS_MISMATCH": "Passwords do not match.",
+  "MISSING_TOKEN": "Missing token or password.",
+  "BAD_LINK": "Invalid or expired reset link.",
+  "OLD_LINK": "The reset link has expired. Please request a new one.",
+  "PASSWORD_RESET_SUCCESS": "Password has been successfully reset."
+},
+"ForgotPassword": {
+    "title": "Recover Access",
+    "subtitle": "Enter the email associated with your account",
+    "emailLabel": "Email Address",
+    "emailPlaceholder": "admin@homelab.local",
+    "submitBtn": "Send reset link",
+    "backToLogin": "Back to login",
+    "successMessage": "If the email exists in our database, we have sent a password reset link to it."
+  },
+  "ResetPassword": {
+    "title": "New Password",
+    "subtitle": "Enter a secure password for your account",
+    "newPasswordLabel": "New password",
+    "confirmPasswordLabel": "Confirm new password",
+    "submitBtn": "Save new password",
+    "backToLogin": "Back to login",
+    "successTitle": "Password changed successfully!",
+    "successSubtitle": "You will be redirected to the login page shortly...",
+    "missingToken": "Invalid or missing reset link.",
+    "loading": "Loading..."
+  },
+"Email": {
+    "ForgotPassword": {
+      "subject": "Password Reset for your HomeLab",
+      "title": "Password Reset",
+      "line1": "We received a request to reset the password for your account on the server.",
+      "line2": "Click the button below to set a new password. The link is valid for 1 hour.",
+      "button": "Reset password",
+      "footer": "If you did not request a password change, please ignore this message. Your account is safe."
+    }
+  },
+"Navbar": {
     "defaultUserName": "User",
     "sponsor": "Sponsor",
     "accountSettings": "Account Settings",
     "adminPanel": "Admin Panel",
     "logout": "Log out",
     "login": "Sign in"
-  }
+  },
+"Login": {
+    "title": "Welcome back",
+    "subtitle": "Log in to manage your HomeLab",
+    "emailLabel": "Email Address",
+    "emailPlaceholder": "admin@homelab.local",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "••••••••",
+    "forgotPassword": "Forgot password?",
+    "submitBtn": "Sign In",
+    "noAccount": "Don't have an account?",
+    "registerLink": "Sign Up",
+    "errorCredentials": "Invalid email or password"
+  },
+"Register": {
+    "title": "Create an account",
+    "subtitle": "Join and take control of your server",
+    "nameLabel": "Username",
+    "namePlaceholder": "jan.kowalski",
+    "emailLabel": "Email Address",
+    "passwordLabel": "Password",
+    "submitBtn": "Register",
+    "haveAccount": "Already have an account?",
+    "loginLink": "Log in",
+    "errorCredentials": "An error occurred during registration",
+    "errorConnection": "Connection error to the server"
+}
 }

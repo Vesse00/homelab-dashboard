@@ -4,11 +4,16 @@ import { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Shield, KeyRound, Loader2, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { useTranslations, useLocale } from 'next-intl';
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token');
+
+  const t = useTranslations('ResetPassword');
+  const tApi = useTranslations('ApiErrors');
+  const locale = useLocale();
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -24,19 +29,19 @@ function ResetPasswordForm() {
     setError('');
 
     if (!token) {
-      setError('Brak tokenu resetującego w adresie URL.');
+      setError(t('missingToken'));
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('Podane hasła nie są identyczne.');
+      setError(tApi('PASSWORDS_MISMATCH'));
       return;
     }
     
     setLoading(true);
 
     try {
-      const res = await fetch('/api/auth/reset-password', {
+      const res = await fetch(`/api/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, newPassword: password }),
@@ -45,13 +50,13 @@ function ResetPasswordForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || 'Wystąpił błąd podczas zmiany hasła.');
+        setError(tApi(data.error) || tApi('INTERNAL_ERROR'));
       } else {
         setSuccess(true);
-        setTimeout(() => router.push('/login'), 3000);
+        setTimeout(() => router.push(`/${locale}/login`), 3000);
       }
     } catch (err) {
-      setError('Błąd połączenia z serwerem.');
+      setError(tApi('INTERNAL_ERROR'));
     } finally {
       setLoading(false);
     }
@@ -60,9 +65,9 @@ function ResetPasswordForm() {
   if (!token) {
     return (
       <div className="text-center p-6 bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl">
-        <p className="text-red-400 mb-4">Nieprawidłowy lub brakujący link resetujący.</p>
-        <Link href="/login" className="text-blue-400 hover:text-white transition-colors text-sm font-bold flex items-center justify-center gap-2">
-          <ArrowLeft size={16}/> Wróć do logowania
+        <p className="text-red-400 mb-4">{t('missingToken')}</p>
+        <Link href={`/${locale}/login`} className="text-blue-400 hover:text-white transition-colors text-sm font-bold flex items-center justify-center gap-2">
+          <ArrowLeft size={16}/> {t('backToLogin')}
         </Link>
       </div>
     );
@@ -71,8 +76,8 @@ function ResetPasswordForm() {
   if (success) {
     return (
       <div className="text-center p-6 bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl">
-        <div className="text-emerald-400 text-xl font-bold mb-2">Hasło zostało zmienione!</div>
-        <p className="text-slate-400 text-sm mb-4">Za chwilę zostaniesz przeniesiony do logowania...</p>
+        <div className="text-emerald-400 text-xl font-bold mb-2">{t('successTitle')}</div>
+        <p className="text-slate-400 text-sm mb-4">{t('successSubtitle')}</p>
         <Loader2 size={24} className="animate-spin text-emerald-500 mx-auto" />
       </div>
     );
@@ -85,7 +90,7 @@ function ResetPasswordForm() {
         
         {/* Hasło 1 */}
         <div>
-          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Nowe hasło</label>
+          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">{t('newPasswordLabel')}</label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <KeyRound size={16} className="text-slate-500" />
@@ -111,7 +116,7 @@ function ResetPasswordForm() {
 
         {/* Hasło 2 (Potwierdzenie) */}
         <div>
-          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Potwierdź nowe hasło</label>
+          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">{t('confirmPasswordLabel')}</label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <KeyRound size={16} className="text-slate-500" />
@@ -140,7 +145,7 @@ function ResetPasswordForm() {
           disabled={loading}
           className="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 focus:ring-offset-slate-900 transition-all disabled:opacity-50 mt-2"
         >
-          {loading ? <Loader2 size={18} className="animate-spin" /> : 'Zapisz nowe hasło'}
+          {loading ? <Loader2 size={18} className="animate-spin" /> : t('submitBtn')}
         </button>
       </form>
     </div>
@@ -148,6 +153,7 @@ function ResetPasswordForm() {
 }
 
 export default function ResetPasswordPage() {
+  const t = useTranslations('ResetPassword');
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a0a] relative overflow-hidden p-4 -mt-16">
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-[120px] pointer-events-none" />
@@ -157,11 +163,11 @@ export default function ResetPasswordPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 shadow-lg shadow-emerald-500/20 mb-6">
             <Shield size={32} className="text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Nowe Hasło</h1>
-          <p className="text-slate-400 text-sm">Wprowadź bezpieczne hasło do swojego konta</p>
+          <h1 className="text-3xl font-bold text-white tracking-tight mb-2">{t('title')}</h1>
+          <p className="text-slate-400 text-sm">{t('subtitle')}</p>
         </div>
 
-        <Suspense fallback={<div className="text-center text-slate-400">Ładowanie...</div>}>
+        <Suspense fallback={<div className="text-center text-slate-400">{t('loading')}</div>}>
           <ResetPasswordForm />
         </Suspense>
       </div>

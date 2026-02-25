@@ -3,12 +3,17 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Shield, ArrowLeft, Mail, Loader2, CheckCircle2 } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+
+  const locale = useLocale(); // Pobieramy aktualny język
+  const tApi = useTranslations('ApiErrors'); // Tłumaczenia dla komunikatów API
+  const t = useTranslations('ForgotPassword'); // Tłumaczenia dla tekstów na stronie
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,19 +25,19 @@ export default function ForgotPasswordPage() {
       const res = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, locale }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || 'Wystąpił błąd. Spróbuj ponownie później.');
+        setError(tApi(data.error) || tApi('INTERNAL_ERROR'));
       } else {
-        setMessage('Jeśli podany e-mail istnieje w bazie, wysłaliśmy na niego link do resetu hasła.');
+        setMessage(t('successMessage'));
         setEmail('');
       }
     } catch (err) {
-      setError('Błąd połączenia z serwerem.');
+      setError(tApi('INTERNAL_ERROR'));
     } finally {
       setLoading(false);
     }
@@ -47,8 +52,8 @@ export default function ForgotPasswordPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg shadow-blue-500/20 mb-6">
             <Shield size={32} className="text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Odzyskaj dostęp</h1>
-          <p className="text-slate-400 text-sm">Podaj e-mail przypisany do Twojego konta</p>
+          <h1 className="text-3xl font-bold text-white tracking-tight mb-2">{t('title')}</h1>
+          <p className="text-slate-400 text-sm">{t('subtitle')}</p>
         </div>
 
         <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl">
@@ -59,7 +64,7 @@ export default function ForgotPasswordPage() {
               </div>
               <p className="text-slate-300 text-sm leading-relaxed mb-6">{message}</p>
               <Link href="/login" className="text-blue-400 hover:text-blue-300 text-sm font-bold flex items-center justify-center gap-2 transition-colors">
-                <ArrowLeft size={16} /> Powrót do logowania
+                <ArrowLeft size={16} /> {t('backToLogin')}
               </Link>
             </div>
           ) : (
@@ -67,7 +72,7 @@ export default function ForgotPasswordPage() {
               {error && <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium">{error}</div>}
               
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Adres E-mail</label>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">{t('emailLabel')}</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Mail size={16} className="text-slate-500" />
@@ -88,7 +93,7 @@ export default function ForgotPasswordPage() {
                 disabled={loading}
                 className="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-slate-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2"
               >
-                {loading ? <Loader2 size={18} className="animate-spin" /> : 'Wyślij link resetujący'}
+                {loading ? <Loader2 size={18} className="animate-spin" /> : t('submitBtn')}
               </button>
             </form>
           )}
@@ -97,7 +102,7 @@ export default function ForgotPasswordPage() {
         {!message && (
           <div className="mt-6 text-center">
             <Link href="/login" className="text-slate-400 hover:text-white text-sm font-medium transition-colors flex items-center justify-center gap-2">
-              <ArrowLeft size={14} /> Wróć do logowania
+              <ArrowLeft size={14} /> {t('backToLogin')}
             </Link>
           </div>
         )}

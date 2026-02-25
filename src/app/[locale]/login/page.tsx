@@ -5,6 +5,7 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Shield, Mail, KeyRound, Loader2, LogIn, Eye, EyeOff } from 'lucide-react';
+import { useTranslations, useLocale } from 'next-intl';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,6 +14,9 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+const t = useTranslations('Login'); 
+const locale = useLocale(); // Pobiera aktualny język (np. 'pl' lub 'en')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +30,7 @@ export default function LoginPage() {
     });
 
     if (res?.error) {
-      setError('Nieprawidłowy e-mail lub hasło');
+      setError(t('errorCredentials'));
       setLoading(false);
     } else {
       router.push('/');
@@ -44,8 +48,8 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg shadow-blue-500/20 mb-6">
             <Shield size={32} className="text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Witamy ponownie</h1>
-          <p className="text-slate-400 text-sm">Zaloguj się, aby zarządzać swoim HomeLabem</p>
+          <h1 className="text-3xl font-bold text-white tracking-tight mb-2">{t('title')}</h1>
+          <p className="text-slate-400 text-sm">{t('subtitle')}</p>
         </div>
 
         <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl animate-in fade-in duration-700">
@@ -57,7 +61,7 @@ export default function LoginPage() {
             )}
             
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Adres E-mail</label>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">{t('emailLabel')}</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Mail size={16} className="text-slate-500" />
@@ -75,9 +79,9 @@ export default function LoginPage() {
 
             <div>
               <div className="flex justify-between items-center mb-2">
-                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">Hasło</label>
+                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">{t('passwordLabel')}</label>
                  <Link href="/forgot-password" className="text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors">
-                   Zapomniałeś hasła?
+                   {t('forgotPassword')}
                  </Link>
               </div>
               <div className="relative">
@@ -107,16 +111,16 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-slate-900 transition-all disabled:opacity-50 mt-6"
             >
-              {loading ? <Loader2 size={18} className="animate-spin" /> : <><LogIn size={18} /> Zaloguj się</>}
+              {loading ? <Loader2 size={18} className="animate-spin" /> : <><LogIn size={18} /> {t('submitBtn')}</>}
             </button>
           </form>
         </div>
 
         <div className="mt-6 text-center animate-in fade-in duration-1000">
           <p className="text-slate-400 text-sm">
-            Nie masz konta?{' '}
+            {t('noAccount')}{' '}
             <Link href="/register" className="font-bold text-blue-400 hover:text-blue-300 transition-colors">
-              Zarejestruj się
+              {t('registerLink')}
             </Link>
           </p>
         </div>

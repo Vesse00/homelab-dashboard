@@ -7,7 +7,7 @@ export async function POST(req: Request) {
 
     const settings = await prisma.systemSettings.findUnique({ where: { id: 'global' } });
     if (settings && !settings.registrationEnabled) {
-      return NextResponse.json({ error: 'Rejestracja jest obecnie zamknięta przez administratora.' }, { status: 403 });
+      return NextResponse.json({ error: 'REGISTRATION_DISABLED.' }, { status: 403 });
     }
     
     const { email, password, name } = await req.json();
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-      return NextResponse.json({ message: "Użytkownik istnieje" }, { status: 409 });
+      return NextResponse.json({ error: "USER_ALREADY_EXISTS" }, { status: 409 });
     }
 
     const userCount = await prisma.user.count();
@@ -38,10 +38,10 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json({ message: "Konto utworzone" }, { status: 201 });
+    return NextResponse.json({ message: "CREATEUSERSUCCES" }, { status: 201 });
 
   } catch (error) {
     console.error("Register Error:", error);
-    return NextResponse.json({ message: "Błąd serwera" }, { status: 500 });
+    return NextResponse.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
 }
