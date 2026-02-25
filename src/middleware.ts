@@ -10,7 +10,7 @@ const publicPages = [
   '/login', 
   '/register', 
   '/forgot-password', 
-  '/auth/reset' // Obejmie też /auth/reset/cokolwiek dzięki regexowi niżej
+  '/reset' // Obejmie też /auth/reset/cokolwiek dzięki regexowi niżej
 ];
 
 const intlMiddleware = createIntlMiddleware({

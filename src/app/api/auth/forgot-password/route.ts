@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     });
 
     // 5. Budujemy link resetujący i wysyłamy e-mail
-    const resetUrl = `${process.env.NEXTAUTH_URL}/${locale}/auth/reset?token=${token}`;
+    const resetUrl = `${process.env.NEXTAUTH_URL}/${locale}/reset?token=${token}`;
     
     await transporter.sendMail({
       from: `"Command Center" <${process.env.SMTP_EMAIL}>`,
