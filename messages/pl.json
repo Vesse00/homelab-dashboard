@@ -1,7 +1,29 @@
 {
 "Dashboard": {
-    "title": "Mój HomeLab",
-    "greeting": "Cześć, {name}!"
+    "title": "Dashboard",
+    "greeting": "Witaj, {name}. Twoje centrum dowodzenia.",
+    "guest": "Gościu",
+    "goodMorning": "Dzień dobry",
+    "goodEvening": "Dobry wieczór",
+    "btnDetect": "Wykryj",
+    "btnAdd": "Dodaj",
+    "btnSaveLayout": "Zapisz układ",
+    "btnEdit": "Edytuj",
+    "menuAvailableWidgets": "Dostępne widgety",
+    "widgetDockerStats": "Docker Stats",
+    "widgetDiskStats": "Status Dysków",
+    "widgetWeather": "Pogoda",
+    "widgetServerStats": "Statystyki Serwera",
+    "menuYourApps": "Twoje Aplikacje",
+    "btnRescan": "Skanuj ponownie",
+    "widgetError": "Błąd widgetu",
+    "toastScanning": "Skanowanie Dockera...",
+    "toastScanSuccess": "Znaleziono {count} usług!",
+    "toastScanError": "Błąd skanowania",
+    "toastAddedService": "Dodano {name}",
+    "toastAddedWidgets": "Dodano {count} widgetów",
+    "toastSettingsSaved": "Zapisano ustawienia widgetu",
+    "toastLockToggled": "Zablokowano pozycję kafelka"
   },
 "ApiErrors": {
   "REGISTRATION_DISABLED": "Rejestracja jest obecnie zamknięta przez administratora.",
@@ -79,5 +101,33 @@
     "loginLink": "Zaloguj się",
     "errorCredentials": "Wystąpił błąd podczas rejestracji",
     "errorConnection": "Błąd połączenia z serwerem"
-}
+},
+"WidgetGallery": {
+    "title": "Galeria",
+    "searchPlaceholder": "Szukaj widgetów...",
+    "noWidgetsFound": "Nie znaleziono widgetów w tej kategorii",
+    "btnScan": "Skanuj Dockera",
+    "btnAdd": "Dodaj do pulpitu",
+    "defaultServiceDesc": "Zarządzanie podłączoną usługą",
+    "categories": {
+      "all": "Wszystkie",
+      "system": "System",
+      "network": "Sieć",
+      "media": "Media",
+      "apps": "Twoje Aplikacje"
+    },
+    "widgets": {
+      "docker_stats": { "name": "Docker Stats", "desc": "Monitoruj status i zasoby swoich kontenerów Docker w czasie rzeczywistym." },
+      "disk_stats": { "name": "Status Dysków", "desc": "Śledź zużycie przestrzeni dyskowej na swoim serwerze." },
+      "server_stats": { "name": "Statystyki Serwera", "desc": "Główne parametry: zużycie CPU, RAM i obciążenie systemu." },
+      "weather": { "name": "Pogoda", "desc": "Lokalna prognoza pogody na Twoim dashboardzie." }
+    }
+  },
+  "ServiceDiscovery": {
+    "title": "Wykryte Usługi",
+    "subtitle": "Znaleziono {count} usług. Zaznacz te, które chcesz dodać i upewnij się, że porty są poprawne.",
+    "btnCancel": "Anuluj",
+    "btnAddCount": "Dodaj {count} Widgetów",
+    "portLabel": "Port"
+  }
 }

@@ -1,7 +1,29 @@
 {
 "Dashboard": {
-    "title": "My HomeLab",
-    "greeting": "Hello, {name}!"
+    "title": "Dashboard",
+    "greeting": "Hello, {name}. Your command center.",
+    "guest": "Guest",
+    "goodMorning": "Good morning",
+    "goodEvening": "Good evening",
+    "btnDetect": "Detect",
+    "btnAdd": "Add",
+    "btnSaveLayout": "Save layout",
+    "btnEdit": "Edit",
+    "menuAvailableWidgets": "Available widgets",
+    "widgetDockerStats": "Docker Stats",
+    "widgetDiskStats": "Disk Status",
+    "widgetWeather": "Weather",
+    "widgetServerStats": "Server Stats",
+    "menuYourApps": "Your Applications",
+    "btnRescan": "Scan again",
+    "widgetError": "Widget error",
+    "toastScanning": "Scanning Docker...",
+    "toastScanSuccess": "Found {count} services!",
+    "toastScanError": "Scan error",
+    "toastAddedService": "Added {name}",
+    "toastAddedWidgets": "Added {count} widgets",
+    "toastSettingsSaved": "Widget settings saved",
+    "toastLockToggled": "Tile position locked"
   },
 "ApiErrors": {
   "REGISTRATION_DISABLED": "Registration is currently closed by the administrator.",
@@ -79,5 +101,33 @@
     "loginLink": "Log in",
     "errorCredentials": "An error occurred during registration",
     "errorConnection": "Connection error to the server"
-}
+},
+"WidgetGallery": {
+    "title": "Gallery",
+    "searchPlaceholder": "Search widgets...",
+    "noWidgetsFound": "No widgets found in this category",
+    "btnScan": "Scan Docker",
+    "btnAdd": "Add to dashboard",
+    "defaultServiceDesc": "Manage connected service",
+    "categories": {
+      "all": "All",
+      "system": "System",
+      "network": "Network",
+      "media": "Media",
+      "apps": "Your Applications"
+    },
+    "widgets": {
+      "docker_stats": { "name": "Docker Stats", "desc": "Monitor the status and resources of your Docker containers in real-time." },
+      "disk_stats": { "name": "Disk Status", "desc": "Track disk space usage on your server." },
+      "server_stats": { "name": "Server Stats", "desc": "Main parameters: CPU, RAM usage, and system load." },
+      "weather": { "name": "Weather", "desc": "Local weather forecast on your dashboard." }
+    }
+  },
+  "ServiceDiscovery": {
+    "title": "Discovered Services",
+    "subtitle": "Found {count} services. Select the ones you want to add and ensure the ports are correct.",
+    "btnCancel": "Cancel",
+    "btnAddCount": "Add {count} Widgets",
+    "portLabel": "Port"
+  }
 }

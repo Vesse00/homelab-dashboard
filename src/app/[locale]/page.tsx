@@ -13,6 +13,8 @@ import ServiceDiscoveryModal from '@/app/[locale]/components/ServiceDiscoveryMod
 import { toast } from 'react-hot-toast';
 import ServiceWidget from '@/app/[locale]/components/widgets/ServiceWidget';
 import ServerStatsWidget from '@/app/[locale]/components/widgets/ServerStatsWidget';
+import { useTranslations } from 'next-intl';
+import WidgetGalleryModal from './components/WidgetGalleryModal';
 
 // Definicja dostępnych typów widgetów
 const WIDGET_TYPES = {
@@ -51,9 +53,11 @@ const DEFAULT_LAYOUT = [
 ];
 
 export default function Dashboard() {
+  const t = useTranslations('Dashboard');
   const { data: session } = useSession();
   const [isEditMode, setIsEditMode] = useState(false);
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [isDiscoveryOpen, setIsDiscoveryOpen] = useState(false);
   const userName = session?.user?.name || session?.user?.email?.split('@')[0] || 'Admin'; // Fallback na nazwę użytkownika
   
@@ -61,9 +65,10 @@ export default function Dashboard() {
   const [widgets, setWidgets] = useState<WidgetItem[]>(DEFAULT_LAYOUT);
   const [scannedServices, setScannedServices] = useState<any[]>([]);
   const [availableServices, setAvailableServices] = useState<any[]>([]);
+  
 
   
-  const [greeting, setGreeting] = useState('Dzień dobry');
+  const [greeting, setGreeting] = useState(t('goodMorning'));
   const [bgUrl, setBgUrl] = useState('');
   const [isBgModalOpen, setIsBgModalOpen] = useState(false);
   const [tempBgUrl, setTempBgUrl] = useState('');
@@ -90,8 +95,8 @@ useEffect(() => {
           }
 
           const hour = new Date().getHours();
-          if (hour >= 5 && hour < 18) setGreeting('Dzień dobry');
-          else setGreeting('Dobry wieczór');
+          if (hour >= 5 && hour < 18) setGreeting(t('goodMorning'));
+          else setGreeting(t('goodEvening'));
 
           const savedBg = localStorage.getItem('dashboardBg');
           if (savedBg) {
@@ -114,7 +119,7 @@ useEffect(() => {
 };
 
 const handleScan = async () => {
-    const toastId = toast.loading("Skanowanie Dockera...");
+    const toastId = toast.loading(t('toastScanning'));
     try {
       const res = await fetch('/api/docker/scan', { method: 'POST' });
       const data = await res.json();
@@ -127,12 +132,12 @@ const handleScan = async () => {
          setScannedServices(data.services);
          setIsDiscoveryOpen(true);
          
-         toast.success(`Znaleziono ${data.count} usług!`, { id: toastId });
+         toast.success(t('toastScanSuccess', { count: data.count }), { id: toastId });
       } else {
          throw new Error(data.error);
       }
     } catch (e) {
-      toast.error("Błąd skanowania", { id: toastId });
+      toast.error(t('toastScanError'), { id: toastId });
     }
   };
 
@@ -167,7 +172,7 @@ const handleScan = async () => {
     await saveLayout(newWidgets); // Używamy Twojej funkcji saveLayout
     
     setIsAddMenuOpen(false);
-    toast.success(`Dodano ${serviceData.name}`);
+    toast.success(t('toastAddedService', { name: serviceData.name }));
   };
 
 
@@ -200,7 +205,7 @@ const handleScan = async () => {
 
     setWidgets(newWidgets);
     saveLayout(newWidgets);
-    toast.success(`Dodano ${servicesData.length} widgetów`);
+    toast.success(t('toastAddedWidgets', { count: servicesData.length }));
   };
 
   const saveLayout = async (newLayout: any[]) => {
@@ -278,7 +283,7 @@ const handleScan = async () => {
     
     setWidgets(updatedWidgets);
     saveLayout(updatedWidgets); // Zapisujemy od razu do bazy!
-    toast.success("Zapisano ustawienia widgetu");
+    toast.success(t('toastSettingsSaved'));
   };
 
   // --- Przełączanie Kłódki ---
@@ -286,7 +291,7 @@ const handleScan = async () => {
     const updatedWidgets = widgets.map(w => {
       if (w.i === id) {
         const isNowLocked = !w.static;
-        if (isNowLocked) toast.success("Zablokowano pozycję kafelka");
+        if (isNowLocked) toast.success(t('toastLockToggled'));
         return { ...w, static: isNowLocked };
       }
       return w;
@@ -303,10 +308,10 @@ const handleScan = async () => {
       <div className="flex items-center justify-between mb-8">
         <div >
           <h1 className="text-3xl font-bold text-white tracking-tight">
-            Dashboard
+            {t('title')}
           </h1>
           <p className="text-slate-400 text-sm mt-1">
-            Witaj, {session?.user?.name || 'Gościu'}. Twoje centrum dowodzenia.
+            {t('greeting', { name: userName })}
           </p>
         </div>
 
@@ -322,7 +327,7 @@ const handleScan = async () => {
                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-medium transition-colors shadow-lg shadow-purple-500/20"
                  >
                    <Radar size={18} />
-                   <span className="hidden md:inline">Wykryj</span>
+                   <span className="hidden md:inline">{t('btnDetect')}</span>
                  </motion.button>
                )}
              </AnimatePresence>
@@ -336,80 +341,22 @@ const handleScan = async () => {
                 className="relative"
               >
                 <button
-                  onClick={() => setIsAddMenuOpen(!isAddMenuOpen)}
+                  onClick={() => setIsGalleryOpen(!isGalleryOpen)}
                   className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-medium transition-colors shadow-lg shadow-blue-500/20"
                 >
                   <Plus size={18} />
-                  <span>Dodaj</span>
+                  <span>{t('btnAdd')}</span>
                 </button>
 
                 {/* Dropdown Menu Dodawania */}
-                {isAddMenuOpen && (
-                  <div className="absolute top-full right-0 mt-2 w-56 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden z-50">
-                    <div className="p-2">
-                      <p className="text-xs font-bold text-slate-500 uppercase px-3 py-2">Dostępne widgety</p>
-                      <button 
-                        onClick={() => addWidget(WIDGET_TYPES.DOCKER_STATS)}
-                        className="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors flex items-center gap-2"
-                      >
-                        <LayoutGrid size={16} className="text-blue-400"/>
-                        Docker Stats
-                      </button>
-                      <button 
-                        onClick={() => addWidget(WIDGET_TYPES.DISK_STATS)}
-                        className="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors flex items-center gap-2"
-                      >
-                        <HardDrive size={16} className="text-purple-400"/>
-                        Status Dysków
-                      </button>
-
-                      <button 
-                        onClick={() => addWidget(WIDGET_TYPES.WEATHER)}
-                        className="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors flex items-center gap-2"
-                      >
-                        <CloudSun size={16} className="text-yellow-400"/>
-                        Pogoda
-                      </button>
-                      <button
-                        onClick={() => addWidget(WIDGET_TYPES.SERVER_STATS)}
-                        className="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors flex items-center gap-2"
-                      >
-                        <LayoutGrid size={16} className="text-green-400"/>
-                        Statystyki Serwera
-
-                      </button>
-                      {/* Tu dodasz kolejne typy widgetów */}
-                    </div>
-                    {/* --- NOWA SEKCJA: TWOJE APLIKACJE --- */}
-                    {availableServices.length > 0 && (
-                      <div className="p-2 border-t border-slate-700/50 space-y-1">
-                         <p className="text-xs font-bold text-slate-500 uppercase px-3 py-2">Twoje Aplikacje</p>
-                         {availableServices.map((service, idx) => (
-                            <button 
-                              key={idx}
-                              onClick={() => addServiceWidget(service)}
-                              className="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors flex items-center gap-2"
-                            >
-                              {/* Kropka w kolorze aplikacji */}
-                              <div className={`w-2 h-2 rounded-full bg-${service.color}-500 shadow-[0_0_5px_currentColor] text-${service.color}-500`} /> 
-                              <span className="truncate">{service.name}</span>
-                            </button>
-                         ))}
-                      </div>
-                    )}
-
-                    <div className="p-2 border-t border-slate-700/50 bg-slate-900 sticky bottom-0">
-                      <button 
-                        onClick={handleScan}
-                        className="w-full text-center px-3 py-2 text-xs font-bold text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 rounded-lg border border-dashed border-purple-500/30 transition-colors flex items-center justify-center gap-2"
-                      >
-                        <Radar size={14} />
-                        Skanuj ponownie
-                      </button>
-                    </div>
-
-                  </div>
-                )}
+                <WidgetGalleryModal 
+                  isOpen={isGalleryOpen}
+                  onClose={() => setIsGalleryOpen(false)}
+                  onAddWidget={addWidget}
+                  onAddService={addServiceWidget}
+                  availableServices={availableServices}
+                  onScan={handleScan}
+                />
               </motion.div>
             )}
           </AnimatePresence>
@@ -427,7 +374,7 @@ const handleScan = async () => {
             }`}
           >
             {isEditMode ? <Save size={18} /> : <Edit2 size={18} />}
-            <span>{isEditMode ? 'Zapisz układ' : 'Edytuj'}</span>
+            <span>{isEditMode ? t('btnSaveLayout') : t('btnEdit')}</span>
           </button>
         </div>
       </div>
@@ -486,7 +433,7 @@ const handleScan = async () => {
             {/* Jeśli typ jest nieznany */}
             {widget.type === 'unknown' && (
                <div className="w-full h-full bg-red-500/20 border border-red-500 rounded-xl flex items-center justify-center text-red-500">
-                 Błąd widgetu
+                 {t('widgetError')}
                </div>
             )}
           </div>
