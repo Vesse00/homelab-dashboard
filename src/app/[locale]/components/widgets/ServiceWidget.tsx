@@ -111,7 +111,7 @@ export default function ServiceWidget(props: ServiceWidgetProps) {
 
     switch (data.widgetType) {
       case 'minecraft': return <MinecraftWidget {...templateProps} />;
-      case 'pihole': return <PiholeWidget {...templateProps} />;
+      case 'dns': return <PiholeWidget {...templateProps} />;
       case 'media': return <MediaWidget {...templateProps} />;
       case 'admin': return <AdminWidget {...templateProps} />;
       case 'proxy': return <ProxyWidget {...templateProps} />;

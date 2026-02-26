@@ -12,6 +12,7 @@ import DiskWidget from './widgets/DiskWidget';
 import WeatherWidget from './widgets/WeatherWidget';
 import ServerStatsWidget from './widgets/ServerStatsWidget';
 
+
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 interface DashboardGridProps {
@@ -51,7 +52,17 @@ export default function DashboardGrid({
     };
 
     switch (item.type) {
+      // Łączymy wszystkie typy "usługowe" w jeden case, aby obsłużył je ServiceWidget
       case 'service':
+      case 'pihole':
+      case 'adguard':
+      case 'minecraft':
+      case 'media':
+      case 'home-assistant':
+      case 'uptime-kuma':
+      case 'tailscale':
+      case 'dns':
+      case 'vaultwarden':
         return <ServiceWidget {...commonProps} />;
       
       case 'docker_stats':
@@ -67,7 +78,6 @@ export default function DashboardGrid({
         return <ServerStatsWidget {...commonProps} />;
         
       default:
-        // Fallback dla nieznanych lub starych widgetów
         return (
           <div className="h-full w-full bg-slate-800 flex items-center justify-center text-slate-500 text-xs border border-slate-700 rounded-xl">
             Nieznany typ: {item.type}

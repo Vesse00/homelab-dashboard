@@ -14,6 +14,7 @@ interface DiscoveredService {
   color: string;
   selected: boolean;
   widgetType?: string; 
+  containerId?: string; // Dodajemy containerId do typu
 }
 
 interface ServiceDiscoveryModalProps {
@@ -34,7 +35,7 @@ const COLOR_MAP: Record<string, string> = {
   orange: 'bg-orange-500/10 border-orange-500/20 text-orange-500',
 };
 
-export default function ServiceDiscoveryModal({ isOpen, onClose, onImport, initialServices }: ServiceDiscoveryModalProps) {
+export default function ServiceDiscoveryModal({ isOpen, onClose, onImport, initialServices  }: ServiceDiscoveryModalProps) {
   const [services, setServices] = useState<DiscoveredService[]>([]);
   const t = useTranslations('ServiceDiscovery');
 
@@ -58,7 +59,8 @@ export default function ServiceDiscoveryModal({ isOpen, onClose, onImport, initi
           port: port,
           color: s.color,
           selected: true,
-          widgetType: s.widgetType 
+          widgetType: s.widgetType,
+          containerId: s.containerId
         };
       });
       // @ts-ignore
@@ -75,7 +77,8 @@ export default function ServiceDiscoveryModal({ isOpen, onClose, onImport, initi
         url: `http://${s.ip}:${s.port}`,
         color: s.color,
         status: 'running',
-        widgetType: s.widgetType
+        widgetType: s.widgetType,
+        containerId: s.containerId
       }));
       
     onImport(finalData);

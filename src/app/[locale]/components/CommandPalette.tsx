@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { Search, Box, LayoutGrid, Settings, ShieldAlert, Eye, TerminalSquare, ExternalLink } from 'lucide-react';
+import { KNOWN_APPS } from '@/app/lib/appMap';
 
 interface CommandItem {
   id: string;
@@ -79,15 +80,27 @@ export default function CommandPalette() {
 
     // 1. Dodajemy KONTENERY (Tylko te z prawidłowymi nazwami)
     containers.forEach(c => {
-      const name = c.Names?.[0]?.replace('/', '');
-      if (!name || name.toLowerCase() === 'unknown') return; // Filtrujemy nieznane!
+      let displayName = c.name; 
       
-      appMap.set(name.toLowerCase(), {
-        id: `app-${c.Id}`,
-        title: name,
+      // Z appMap.ts wyciągamy ładną nazwę domyślną, ale to tylko wizualny bajer
+      if (c.image) {
+        for (const [key, config] of Object.entries(KNOWN_APPS)) {
+          if (c.image.toLowerCase().includes(key.toLowerCase())) {
+            displayName = config.name;
+            break;
+          }
+        }
+      }
+
+      if (!displayName || displayName.toLowerCase() === 'unknown') return; 
+      
+      // ZAPISUJEMY UŻYWAJĄC c.id JAKO KLUCZA
+      appMap.set(c.id, {
+        id: `app-${c.id}`,
+        title: displayName,
         icon: TerminalSquare,
         category: t('containers'),
-        url: `/${locale}/containers/${c.Id}` // Link do szczegółów kontenera
+        url: `/${locale}/containers/${c.id}` 
       });
     });
 
@@ -98,18 +111,21 @@ export default function CommandPalette() {
       if (w.type === 'disk_stats') title = 'Disk Stats';
       if (w.type === 'server_stats') title = 'Server Stats';
       if (w.type === 'weather') title = 'Weather';
-      if (w.type === 'service' && w.data) title = w.data.name;
+      if (w.type === 'service' && w.data) title = w.data.name; // Np. zmienione przez usera na "Mój AdGuard123"
 
       if (!title || title === 'unknown') return;
 
-      const key = title.toLowerCase();
-      if (appMap.has(key)) {
-        // Mamy już taki kontener! Doklejamy mu ID do podświetlenia na pulpicie
-        const existing = appMap.get(key)!;
-        existing.highlightId = w.i;
+      // Wyciągamy twarde ID, które przed chwilą dodaliśmy do systemu
+      const containerId = w.data?.containerId;
+
+      // Jeśli widget ma wpisane ID i mamy taki kontener uruchomiony w systemie:
+      if (containerId && appMap.has(containerId)) {
+        const existing = appMap.get(containerId)!;
+        existing.highlightId = w.i; 
+        existing.title = title; // Nadpisujemy nazwę na liście tym, co ustawił user! ("Mój AdGuard123")
       } else {
-        // Nie ma takiego kontenera (to tylko widget)
-        appMap.set(key, {
+        // Jeśli to czysty widget (np. Pogoda) albo dodany z palca URL bez kontenera
+        appMap.set(`widget-${w.i}`, {
           id: `widget-${w.i}`,
           title: title,
           icon: LayoutGrid,
