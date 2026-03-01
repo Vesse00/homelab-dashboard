@@ -46,6 +46,14 @@ interface WidgetItem {
   
 }
 
+// Struktura danych dla zakładek
+interface TabData {
+  id: string;
+  name: string;
+  isDeletable: boolean;
+  widgets: WidgetItem[];
+}
+
 // Domyślny layout startowy
 const DEFAULT_LAYOUT = [
   { i: '1', x: 0, y: 0, w: 4, h: 2, type: WIDGET_TYPES.DOCKER_STATS },
@@ -64,7 +72,16 @@ export default function Dashboard() {
   const userName = session?.user?.name || session?.user?.email?.split('@')[0] || 'Admin'; // Fallback na nazwę użytkownika
   
   // Stan widgetów (pobieramy z localStorage lub domyślny)
-  const [widgets, setWidgets] = useState<WidgetItem[]>(DEFAULT_LAYOUT);
+  // Domyślna struktura zakładek dla nowego użytkownika
+  const DEFAULT_TABS: TabData[] = [
+    { id: 'main', name: 'Główny', isDeletable: false, widgets: DEFAULT_LAYOUT }
+  ];
+
+  const [tabs, setTabs] = useState<TabData[]>(DEFAULT_TABS);
+  const [activeTabId, setActiveTabId] = useState<string>('main');
+  
+  // Pomocnicza zmienna, żeby kod poniżej (z gridem) wiedział, jakie widgety ma wyświetlić
+  const activeWidgets = tabs.find(t => t.id === activeTabId)?.widgets || [];
   const [scannedServices, setScannedServices] = useState<any[]>([]);
   const [availableServices, setAvailableServices] = useState<any[]>([]);
   const searchParams = useSearchParams();
@@ -72,6 +89,8 @@ export default function Dashboard() {
   const highlightParam = searchParams.get('highlight');
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   
+  const [isAddTabModalOpen, setIsAddTabModalOpen] = useState(false);
+  const [newTabName, setNewTabName] = useState('');
 
   
   const [greeting, setGreeting] = useState(t('goodMorning'));
@@ -80,56 +99,65 @@ export default function Dashboard() {
   const [tempBgUrl, setTempBgUrl] = useState('');
 
   // Zapisywanie i Pobieranie Layoutu z API
-useEffect(() => {
-    const fetchData = async () => {
-      if (session?.user) {
-        try {
-          // 1. Pobierz Layout Dashboardu
-          const layoutRes = await fetch('/api/user/layout');
-          const layoutData = await layoutRes.json();
-          if (layoutData.layout) {
-            setWidgets(layoutData.layout);
-          } else {
-            setWidgets(DEFAULT_LAYOUT);
+// 1. Ładowanie danych startowych (Layout + Usługi)
+  useEffect(() => {
+    const loadInitialData = async () => {
+      // Wykonujemy tylko, jeśli mamy sesję
+      if (!session?.user) return;
+
+      try {
+        // --- A. POBIERANIE UKŁADU (Z MIGRACJĄ ZAKŁADEK) ---
+        const layoutRes = await fetch('/api/user/layout');
+        const layoutData = await layoutRes.json();
+
+        if (layoutData.layout) {
+          // Sprawdzamy czy to stary format (bez 'widgets'), czy nowy (z zakładkami)
+          if (Array.isArray(layoutData.layout) && layoutData.layout.length > 0 && !layoutData.layout[0].widgets) {
+            setTabs([
+              { id: 'main', name: 'Główny', isDeletable: false, widgets: layoutData.layout }
+            ]);
+          } else if (Array.isArray(layoutData.layout) && layoutData.layout[0].widgets) {
+            setTabs(layoutData.layout);
           }
-
-          // 2. Pobierz Zapisane Usługi (To jest to, czego brakowało!)
-          const servicesRes = await fetch('/api/docker/scan');
-          const servicesData = await servicesRes.json();
-          if (servicesData.services) {
-            setAvailableServices(servicesData.services);
-          }
-
-          const hour = new Date().getHours();
-          if (hour >= 5 && hour < 18) setGreeting(t('goodMorning'));
-          else setGreeting(t('goodEvening'));
-
-          const savedBg = localStorage.getItem('dashboardBg');
-          if (savedBg) {
-            setBgUrl(savedBg);
-            setTempBgUrl(savedBg);
-          }
-
-        } catch (e) {
-          console.error("Błąd pobierania danych", e);
         }
+
+        // --- B. POBIERANIE ZAPISANYCH USŁUG ---
+        const servicesRes = await fetch('/api/docker/scan');
+        const servicesData = await servicesRes.json();
+        
+        if (servicesData.services) {
+          setAvailableServices(servicesData.services);
+        }
+
+      } catch (error) {
+        console.error("Błąd podczas ładowania danych startowych:", error);
       }
     };
-    fetchData();
+
+    loadInitialData();
   }, [session]); // Uruchom, gdy sesja się załaduje
 
-// EFEKT PODŚWIETLANIA:
+// --- EFEKT PODŚWIETLANIA (Z AUTOMATYCZNĄ ZMIANĄ ZAKŁADKI) ---
   useEffect(() => {
-    if (highlightParam && widgets.length > 0) {
-      // 1. Aktywujemy podświetlenie w React
+    if (highlightParam && tabs.length > 0) {
+      // 1. Szukamy, na której zakładce fizycznie znajduje się ten widget
+      const tabWithWidget = tabs.find(tab => 
+        tab.widgets.some(w => w.i === highlightParam)
+      );
+
+      // 2. Jeśli widget jest na innej zakładce niż obecna -> PRZEŁĄCZAMY!
+      if (tabWithWidget && tabWithWidget.id !== activeTabId) {
+        setActiveTabId(tabWithWidget.id);
+      }
+
+      // 3. Odpalamy podświetlenie
       setHighlightedId(highlightParam);
       
-      // 2. Dajemy siatce chwilę i zjeżdżamy ekranem
+      // Dajemy Reactowi ułamek sekundy na wyrenderowanie nowej zakładki (jeśli była zmiana)
       const scrollTimer = setTimeout(() => {
         document.getElementById(`widget-${highlightParam}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 150);
+      }, 300); // Lekko wydłużony czas na animację zmiany kart
 
-      // 3. Po 2.5 sekundach wyłączamy podświetlenie i czyścimy URL
       const clearTimer = setTimeout(() => {
         setHighlightedId(null);
         router.replace(`/${locale}`, { scroll: false });
@@ -140,9 +168,9 @@ useEffect(() => {
         clearTimeout(clearTimer);
       };
     }
-  // Usunięto 'router' i 'locale' z tablicy zależności, aby rozwiązać błąd ESLint!
+  // Ważne: Zmieniamy w zależnościach activeWidgets na tabs, bo musimy przeszukać całość
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [highlightParam, widgets]);
+  }, [highlightParam, tabs]);
 
   const saveBackground = () => {
   setBgUrl(tempBgUrl);
@@ -175,7 +203,13 @@ const handleScan = async () => {
 
 
   const addServiceWidget = async (serviceData: any) => {
-    const newId = widgets.length > 0 ? (Math.max(...widgets.map(w => parseInt(w.i))) + 1).toString() : "1";
+    // Zbieramy wszystkie widgety z całej aplikacji (ze wszystkich zakładek)
+    const allWidgets = tabs.flatMap(t => t.widgets || []);
+    
+    // Szukamy najwyższego ID globalnie
+    const newId = allWidgets.length > 0 
+      ? (Math.max(0, ...allWidgets.map(w => parseInt(w.i) || 0)) + 1).toString() 
+      : "1";
     
     // Tworzymy widget na podstawie zapisanych danych
     const newWidget: WidgetItem = {
@@ -184,7 +218,7 @@ const handleScan = async () => {
       y: Infinity, // Grid sam znajdzie miejsce na dole
       w: 2,
       h: 2,
-      type: WIDGET_TYPES.SERVICE,
+      type: serviceData.widgetType || WIDGET_TYPES.SERVICE,
       static: false,
       data: {
         ...serviceData,
@@ -197,21 +231,21 @@ const handleScan = async () => {
       }, // Przekazujemy gotowe dane (nazwa, ikona, url)
     };
 
-    const newWidgets = [...widgets, newWidget];
-    setWidgets(newWidgets);
-    
-    // Zapisz layout
-    await saveLayout(newWidgets); // Używamy Twojej funkcji saveLayout
-    
-    setIsAddMenuOpen(false);
-    toast.success(t('toastAddedService', { name: serviceData.name }));
+    const newLayout = [...activeWidgets, newWidget];
+    saveLayout(newLayout);
   };
 
 
   // 2. IMPORTOWANIE Z MODALA (dodaje widgety na pulpit)
   const handleImportServices = (servicesData: any[]) => {
-    const newWidgets: WidgetItem[] = [...widgets];
-    let lastId = widgets.length > 0 ? Math.max(...widgets.map(w => parseInt(w.i))) : 0;
+    const newWidgets: WidgetItem[] = [...activeWidgets];
+    // ZMIANA: Pobieramy absolutnie wszystkie widgety ze wszystkich zakładek
+    const allWidgets = tabs.flatMap(t => t.widgets || []);
+    
+    // ZMIANA: Szukamy najwyższego ID globalnie (zabezpieczone przez || 0 w razie NaN)
+    let lastId = allWidgets.length > 0 
+      ? Math.max(0, ...allWidgets.map(w => parseInt(w.i) || 0)) 
+      : 0;
 
     servicesData.forEach((data) => {
       lastId++;
@@ -235,102 +269,173 @@ const handleScan = async () => {
       });
     });
 
-    setWidgets(newWidgets);
-    saveLayout(newWidgets);
+    const newLayout = [...activeWidgets, ...newWidgets];
+    saveLayout(newLayout);
     toast.success(t('toastAddedWidgets', { count: servicesData.length }));
   };
 
-  const saveLayout = async (newLayout: any[]) => {
-    // Aktualizuj stan lokalny (żeby UI działało płynnie)
-    const updatedWidgets = newLayout.map(l => {
-      const existing = widgets.find(w => w.i === l.i);
-      
+  // 2. Zapisywanie układu (teraz zapisujemy całe `tabs`)
+  const saveLayout = async (newLayoutForActiveTab: any[]) => {
+    // A. Przywracamy nasze unikalne dane (type, data, static), które Grid mógł usunąć z obiektów
+    const updatedWidgets = newLayoutForActiveTab.map(l => {
+      const existing = activeWidgets.find(w => w.i === l.i);
       return { 
         ...l, 
-        // 1. Przywracamy poprawny typ
         type: l.type || existing?.type || WIDGET_TYPES.DOCKER_STATS,
-        // 2. Przywracamy dane, których Grid nas pozbawił!
         data: l.data || existing?.data 
       };
     });
-    setWidgets(updatedWidgets);
 
-    // Wyślij do bazy (w tle)
-    if (session?.user) {
-      try {
-        await fetch('/api/user/layout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ layout: updatedWidgets }),
-        });
-      } catch (e) {
-        console.error("Błąd zapisu layoutu", e);
-      }
+    // B. Tworzymy nową tablicę zakładek, podmieniając widgety TYLKO w aktywnej zakładce
+    const updatedTabs = tabs.map(tab => 
+      tab.id === activeTabId 
+        ? { ...tab, widgets: updatedWidgets } 
+        : tab
+    );
+
+    // C. Aktualizujemy stan UI, żeby nie mrygało
+    setTabs(updatedTabs);
+
+    // D. Wysyłamy do API CAŁĄ konfigurację zakładek
+    try {
+      const res = await fetch('/api/user/layout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ layout: updatedTabs })
+      });
+      if (!res.ok) throw new Error("Błąd zapisu");
+    } catch (err) {
+      console.error(err);
+      toast.error('Nie udało się zapisać układu zakładek.');
     }
   };
 
-  const addWidget = async (type: string) => {
-    const newId = widgets.length > 0 ? (Math.max(...widgets.map(w => parseInt(w.i))) + 1).toString() : "1";
-    const newWidget = {
-      i: newId,
-      x: 0,
-      y: Infinity, // Doda na samym dole
-      w: 4,
-      h: 2,
-      type: type,
-      static: false,
+// Zaktualizowana funkcja dodawania widgetu
+  const addWidget = (type: string) => {
+    // Zbieramy wszystkie widgety z całej aplikacji (ze wszystkich zakładek)
+    const allWidgets = tabs.flatMap(t => t.widgets || []);
+    
+    // Szukamy najwyższego ID globalnie
+    const newId = allWidgets.length > 0 
+      ? (Math.max(0, ...allWidgets.map(w => parseInt(w.i) || 0)) + 1).toString() 
+      : "1";
+    const newWidget: WidgetItem = { 
+      i: newId, 
+      x: 0, y: 0, w: 4, h: 2, 
+      type: type 
     };
-    const newWidgets = [...widgets, newWidget];
-    setWidgets(newWidgets);
-    if (session?.user) {
-        await fetch('/api/user/layout', {
-          method: 'POST',
-          body: JSON.stringify({ layout: newWidgets }),
-        });
-    }
-    setIsAddMenuOpen(false);
+    
+    // Dodajemy na początek aktywnej zakładki
+    const newLayout = [newWidget, ...activeWidgets];
+    saveLayout(newLayout);
   };
 
-  const removeWidget = async (id: string) => {
-    const filtered = widgets.filter(w => w.i !== id);
-    setWidgets(filtered);
-    // Zapisz do bazy
-    if (session?.user) {
-        await fetch('/api/user/layout', {
-          method: 'POST',
-          body: JSON.stringify({ layout: filtered }),
-        });
-    }
+// --- USUWANIE WIDGETU ---
+  const removeWidget = (id: string) => {
+    const newLayout = activeWidgets.filter(w => w.i !== id);
+    saveLayout(newLayout); // <--- Zapisuje do bazy
   };
 
-  // Aktualizuje dane (w tym ustawienia i hasła) wewnątrz widgetu
+// --- AKTUALIZACJA DANYCH WIDGETU (np. z modalu edycji) ---
   const updateWidgetData = (id: string, newData: any) => {
-    const updatedWidgets = widgets.map(w => {
-      if (w.i === id) {
-         // Nadpisujemy stare 'data' nowymi danymi (które zawierają nasze settings)
-        return { ...w, data: newData };
-      }
-      return w;
-    });
-    
-    setWidgets(updatedWidgets);
-    saveLayout(updatedWidgets); // Zapisujemy od razu do bazy!
-    toast.success(t('toastSettingsSaved'));
+    const newLayout = activeWidgets.map(w => 
+      w.i === id ? { ...w, data: newData } : w
+    );
+    saveLayout(newLayout); // <--- Zapisuje do bazy
   };
 
-  // --- Przełączanie Kłódki ---
+// --- BLOKOWANIE/ODBLOKOWANIE WIDGETU ---
   const toggleWidgetLock = (id: string) => {
-    const updatedWidgets = widgets.map(w => {
-      if (w.i === id) {
-        const isNowLocked = !w.static;
-        if (isNowLocked) toast.success(t('toastLockToggled'));
-        return { ...w, static: isNowLocked };
-      }
-      return w;
-    });
+    const newLayout = activeWidgets.map(w => 
+      w.i === id ? { ...w, static: !w.static } : w
+    );
+    saveLayout(newLayout); // <--- Zapisuje do bazy
+  };
+
+
+// --- DODAWANIE ZAKŁADKI ---
+  const handleAddTab = () => {
+    if (!newTabName.trim()) return;
     
-    setWidgets(updatedWidgets);
-    saveLayout(updatedWidgets); // Od razu zapisujemy układ do bazy!
+    const newTabId = `tab-${Date.now()}`;
+    const newTab: TabData = {
+      id: newTabId,
+      name: newTabName.trim(),
+      isDeletable: true,
+      widgets: [] // Nowa zakładka jest pusta na start
+    };
+
+    const updatedTabs = [...tabs, newTab];
+    setTabs(updatedTabs);
+    setActiveTabId(newTabId); // Od razu na nią przechodzimy
+    
+    fetch('/api/user/layout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ layout: updatedTabs })
+    }).catch(err => console.error("Błąd zapisu nowej zakładki", err));
+
+    setNewTabName('');
+    setIsAddTabModalOpen(false);
+  };
+
+// --- USUWANIE ZAKŁADKI (Z CUSTOMOWYM, WYBLUROWANYM TOASTEM) ---
+  const handleDeleteTab = (tabIdToDelete: string, e: React.MouseEvent) => {
+    e.stopPropagation(); 
+    
+    // ZMIANA: Używamy toast.custom(), co daje nam 100% władzy nad wyglądem
+    toast.custom((t) => (
+      <div 
+        className={`
+          ${t.visible ? 'animate-enter opacity-100 scale-100' : 'animate-leave opacity-0 scale-95'}
+          transition-all duration-300 ease-out pointer-events-auto
+          max-w-sm w-full p-5 mt-4 rounded-2xl flex flex-col gap-3
+          bg-slate-900/70 backdrop-blur-xl border border-red-500/40 
+          shadow-[0_20px_40px_-10px_rgba(239,68,68,0.25)]
+        `}
+      >
+        <span className="text-sm font-semibold text-white text-center">
+          Czy na pewno chcesz usunąć tę zakładkę i wszystkie jej widgety?
+        </span>
+        
+        <div className="flex justify-center gap-3 mt-2">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-4 py-2 text-xs font-semibold bg-slate-800/80 hover:bg-slate-700 text-slate-200 rounded-xl transition-colors border border-slate-700/50"
+          >
+            Anuluj
+          </button>
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              
+              const updatedTabs = tabs.filter(tab => tab.id !== tabIdToDelete);
+              setTabs(updatedTabs);
+              
+              if (activeTabId === tabIdToDelete) {
+                setActiveTabId('main');
+              }
+
+              fetch('/api/user/layout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ layout: updatedTabs })
+              }).catch(err => console.error("Błąd zapisu po usunięciu zakładki", err));
+              
+              toast.success('Zakładka usunięta');
+            }}
+            className="px-5 py-2 text-xs font-bold bg-red-600/80 hover:bg-red-500 text-white rounded-xl transition-all border border-red-500/50 shadow-lg shadow-red-900/30 active:scale-95"
+          >
+            Usuń
+          </button>
+        </div>
+      </div>
+    ), { 
+      duration: 8000, 
+      id: `delete-tab-${tabIdToDelete}`, 
+      position: 'top-center'
+      // Zniknął obiekt "style", wszystko robimy Tailwindem!
+    });
   };
 
   return (
@@ -411,12 +516,112 @@ const handleScan = async () => {
         </div>
       </div>
 
+      {/* --- SUB-NAVBAR (ZAKŁADKI W STYLU "PILLS" Z ANIMOWANYM X) --- */}
+      <div className="sticky top-[72px] z-40 mb-6 flex items-center gap-2 px-4 py-2 overflow-x-auto scrollbar-hide">
+        {tabs.map((tab) => {
+          const isActive = tab.id === activeTabId;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTabId(tab.id)}
+              className={`
+                group relative flex items-center px-4 py-1.5 rounded-full text-sm font-semibold transition-all whitespace-nowrap border
+                ${isActive 
+                  ? 'bg-sky-500/10 text-sky-400 border-sky-500/30 shadow-[0_0_15px_rgba(14,165,233,0.15)]' 
+                  : 'bg-slate-900/60 text-slate-400 border-slate-700/50 hover:bg-slate-800 hover:text-slate-200 hover:border-slate-600'
+                }
+              `}
+            >
+              {/* Ikona z odstępem (margin-right) */}
+              <div className="mr-2 flex items-center justify-center">
+                {tab.id === 'main' 
+                  ? <LayoutGrid size={15} className={isActive ? "text-sky-400" : "text-slate-500"} /> 
+                  : <HardDrive size={15} className={isActive ? "text-sky-400" : "text-slate-500"} />
+                }
+              </div>
+              
+              <span>{tab.name}</span>
+              
+              {/* ANIMOWANY PRZYCISK "X" (Płynnie rozwija szerokość) */}
+              {tab.isDeletable && (
+                <div 
+                  onClick={(e) => handleDeleteTab(tab.id, e)}
+                  className={`
+                    overflow-hidden transition-all duration-300 ease-out flex items-center justify-center
+                    ${isActive 
+                      ? 'w-5 opacity-100 ml-1.5' // Zawsze rozwinięty dla aktywnej
+                      : 'w-0 opacity-0 group-hover:w-5 group-hover:opacity-100 group-hover:ml-1.5' // Zwinięty do 0px, rozwija się na hover
+                    }
+                  `}
+                >
+                  <div className={`p-0.5 rounded-full transition-colors ${isActive ? 'text-sky-400/50 hover:text-red-400 hover:bg-red-500/20' : 'text-slate-500 hover:text-red-400 hover:bg-red-500/20'}`}>
+                    <X size={14} className="shrink-0" />
+                  </div>
+                </div>
+              )}
+            </button>
+          );
+        })}
+
+        {/* Przycisk "+" dodający nową zakładkę */}
+        <button
+          onClick={() => setIsAddTabModalOpen(true)}
+          className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-900/60 text-slate-400 border border-slate-700/50 hover:bg-slate-800 hover:text-sky-400 hover:border-sky-500/30 transition-all shrink-0 shadow-sm ml-1"
+        >
+          <Plus size={16} />
+        </button>
+      </div>
+
+      {/* --- MODAL DO NAZYWANIA NOWEJ ZAKŁADKI --- */}
+      <AnimatePresence>
+        {isAddTabModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm px-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-sm p-6 shadow-2xl relative overflow-hidden"
+            >
+              {/* Dekoracyjne tło */}
+              <div className="absolute -top-10 -right-10 w-32 h-32 bg-sky-500/10 blur-3xl rounded-full" />
+              
+              <h3 className="text-xl font-bold text-white mb-2 relative z-10">Nowa przestrzeń</h3>
+              <p className="text-sm text-slate-400 mb-6 relative z-10">Wpisz nazwę dla swojej nowej zakładki z widgetami.</p>
+              
+              <input
+                type="text"
+                autoFocus
+                placeholder="Np. Multimedia, Serwery..."
+                value={newTabName}
+                onChange={(e) => setNewTabName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddTab()}
+                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all mb-6 relative z-10"
+              />
+              
+              <div className="flex justify-end gap-3 relative z-10">
+                <button 
+                  onClick={() => setIsAddTabModalOpen(false)} 
+                  className="px-4 py-2 text-sm font-semibold text-slate-400 hover:text-white transition-colors"
+                >
+                  Anuluj
+                </button>
+                <button 
+                  onClick={handleAddTab} 
+                  className="px-6 py-2 text-sm font-bold bg-sky-600 hover:bg-sky-500 text-white rounded-xl shadow-[0_0_15px_rgba(14,165,233,0.3)] transition-all active:scale-95"
+                >
+                  Utwórz
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Grid z Widgetami */}
       <DashboardGrid 
-        layout={widgets} 
+        layout={activeWidgets} 
         onLayoutChange={(newLayout) => {
-             // Tutaj Twoja logika zapisywania (saveLayout lub setWidgets)
-             setWidgets(newLayout);
+            // Funkcja saveLayout zaktualizuje stan zakładek i od razu wyśle to do bazy
              saveLayout(newLayout);
           }}
         onToggleLock={toggleWidgetLock}

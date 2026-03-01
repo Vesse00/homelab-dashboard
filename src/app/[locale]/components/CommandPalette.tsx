@@ -62,7 +62,19 @@ export default function CommandPalette() {
 
       fetch('/api/user/layout')
         .then(res => res.json())
-        .then(data => setWidgets(data.layout || []))
+        .then(data => {
+          if (!data.layout) return setWidgets([]);
+          
+          if (Array.isArray(data.layout) && data.layout.length > 0 && data.layout[0].widgets) {
+            // TERAZ PRZEKAZUJEMY RÓWNIEŻ NAZWĘ ZAKŁADKI DO PALETY!
+            const allWidgetsWithTabs = data.layout.flatMap((tab: any) => 
+              (tab.widgets || []).map((w: any) => ({ ...w, tabName: tab.name }))
+            );
+            setWidgets(allWidgetsWithTabs);
+          } else {
+            setWidgets(Array.isArray(data.layout) ? data.layout : []);
+          }
+        })
         .catch(err => console.error(err));
     }
   }, [isOpen]);
@@ -115,23 +127,38 @@ export default function CommandPalette() {
 
       if (!title || title === 'unknown') return;
 
+      // Generujemy ładny tytuł z nazwą zakładki! (np. "AdGuard (Sieć)")
+      const displayTitle = w.tabName ? `${title} (${w.tabName})` : title;
       // Wyciągamy twarde ID, które przed chwilą dodaliśmy do systemu
       const containerId = w.data?.containerId;
 
-      // Jeśli widget ma wpisane ID i mamy taki kontener uruchomiony w systemie:
+      // Jeśli ten widget jest powiązany z kontenerem, który już mamy w mapie, to dodajemy highlightId do tego wpisu
       if (containerId && appMap.has(containerId)) {
         const existing = appMap.get(containerId)!;
-        existing.highlightId = w.i; 
-        existing.title = title; // Nadpisujemy nazwę na liście tym, co ustawił user! ("Mój AdGuard123")
+        
+        // Jeśli ten kontener w Palecie nie ma jeszcze funkcji "Podświetl"
+        if (!existing.highlightId) {
+          existing.highlightId = w.i; 
+          existing.title = displayTitle; 
+        } else {
+          // Jeśli to już DRUGI taki sam widget (na innej zakładce)! 
+          // Klonujemy pozycję w Palecie, by wyświetlić oba.
+          appMap.set(`widget-${w.i}`, {
+            ...existing, // Kopiujemy ikonkę Dockera i URL do kontenera
+            id: `widget-${w.i}`,
+            title: displayTitle,
+            highlightId: w.i
+          });
+        }
       } else {
-        // Jeśli to czysty widget (np. Pogoda) albo dodany z palca URL bez kontenera
+        // Czysty widget bez powiązania z Dockerem
         appMap.set(`widget-${w.i}`, {
           id: `widget-${w.i}`,
-          title: title,
+          title: displayTitle,
           icon: LayoutGrid,
           category: t('widgets'),
           highlightId: w.i,
-          url: w.type === 'service' && w.data?.url ? w.data.url : undefined
+          url: w.data?.url
         });
       }
     });
