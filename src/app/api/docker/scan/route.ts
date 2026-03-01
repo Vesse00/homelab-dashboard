@@ -72,6 +72,7 @@ export async function POST() {
                 color: config.color,
                 status: 'running',
                 widgetType: config.widgetType,
+                containerId: c.Id,
             });
             break; 
         }

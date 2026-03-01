@@ -1,0 +1,146 @@
+{
+"Dashboard": {
+    "title": "Dashboard",
+    "greeting": "Witaj, {name}. Twoje centrum dowodzenia.",
+    "guest": "Gościu",
+    "goodMorning": "Dzień dobry",
+    "goodEvening": "Dobry wieczór",
+    "btnDetect": "Wykryj",
+    "btnAdd": "Dodaj",
+    "btnSaveLayout": "Zapisz układ",
+    "btnEdit": "Edytuj",
+    "menuAvailableWidgets": "Dostępne widgety",
+    "widgetDockerStats": "Docker Stats",
+    "widgetDiskStats": "Status Dysków",
+    "widgetWeather": "Pogoda",
+    "widgetServerStats": "Statystyki Serwera",
+    "menuYourApps": "Twoje Aplikacje",
+    "btnRescan": "Skanuj ponownie",
+    "widgetError": "Błąd widgetu",
+    "toastScanning": "Skanowanie Dockera...",
+    "toastScanSuccess": "Znaleziono {count} usług!",
+    "toastScanError": "Błąd skanowania",
+    "toastAddedService": "Dodano {name}",
+    "toastAddedWidgets": "Dodano {count} widgetów",
+    "toastSettingsSaved": "Zapisano ustawienia widgetu",
+    "toastLockToggled": "Zablokowano pozycję kafelka"
+  },
+"ApiErrors": {
+  "REGISTRATION_DISABLED": "Rejestracja jest obecnie zamknięta przez administratora.",
+  "USER_ALREADY_EXISTS": "Użytkownik o tym adresie e-mail już istnieje.",
+  "INTERNAL_ERROR": "Wystąpił nieoczekiwany błąd serwera.",
+  "CREATEUSERSUCCES": "Konto zostało pomyślnie utworzone. Możesz teraz się zalogować.",
+  "INVALID_TOKEN": "Nieprawidłowy lub wygasły token resetujący.",
+  "PASSWORDS_MISMATCH": "Podane hasła nie są identyczne.",
+  "MISSING_TOKEN": "Brak tokenu lub hasła.",
+  "BAD_LINK": "Nieprawidłowy lub wygasły link resetujący.",
+  "OLD_LINK": "Link resetujący wygasł. Poproś o nowy.",
+  "PASSWORD_RESET_SUCCESS": "Hasło zostało pomyślnie zresetowane."
+},
+"ForgotPassword": {
+    "title": "Odzyskaj dostęp",
+    "subtitle": "Podaj e-mail przypisany do Twojego konta",
+    "emailLabel": "Adres E-mail",
+    "emailPlaceholder": "admin@homelab.local",
+    "submitBtn": "Wyślij link resetujący",
+    "backToLogin": "Wróć do logowania",
+    "successMessage": "Jeśli podany e-mail istnieje w bazie, wysłaliśmy na niego link do resetu hasła."
+  },
+  "ResetPassword": {
+    "title": "Nowe Hasło",
+    "subtitle": "Wprowadź bezpieczne hasło do swojego konta",
+    "newPasswordLabel": "Nowe hasło",
+    "confirmPasswordLabel": "Potwierdź nowe hasło",
+    "submitBtn": "Zapisz nowe hasło",
+    "backToLogin": "Wróć do logowania",
+    "successTitle": "Hasło zostało zmienione!",
+    "successSubtitle": "Za chwilę zostaniesz przeniesiony do logowania...",
+    "missingToken": "Nieprawidłowy lub brakujący link resetujący.",
+    "loading": "Ładowanie..."
+  },
+"Email": {
+    "ForgotPassword": {
+      "subject": "Resetowanie hasła do Twojego HomeLaba",
+      "title": "Resetowanie hasła",
+      "line1": "Otrzymaliśmy prośbę o zresetowanie hasła do Twojego konta na serwerze.",
+      "line2": "Kliknij w poniższy przycisk, aby ustawić nowe hasło. Link jest ważny przez 1 godzinę.",
+      "button": "Zresetuj hasło",
+      "footer": "Jeśli to nie Ty prosiłeś o zmianę hasła, zignoruj tę wiadomość. Twoje konto jest bezpieczne."
+    }
+  },
+"Navbar": {
+    "defaultUserName": "Użytkownik",
+    "sponsor": "Sponsor",
+    "accountSettings": "Ustawienia konta",
+    "adminPanel": "Panel Admina",
+    "logout": "Wyloguj",
+    "login": "Zaloguj się"
+  },
+"Login": {
+    "title": "Witamy ponownie",
+    "subtitle": "Zaloguj się, aby zarządzać swoim HomeLabem",
+    "emailLabel": "Adres E-mail",
+    "emailPlaceholder": "admin@homelab.local",
+    "passwordLabel": "Hasło",
+    "passwordPlaceholder": "••••••••",
+    "forgotPassword": "Zapomniałeś hasła?",
+    "submitBtn": "Zaloguj się",
+    "noAccount": "Nie masz konta?",
+    "registerLink": "Zarejestruj się",
+    "errorCredentials": "Nieprawidłowy e-mail lub hasło"
+  },
+"Register": {
+    "title": "Utwórz konto",
+    "subtitle": "Dołącz i przejmij kontrolę nad serwerem",
+    "nameLabel": "Nazwa użytkownika",
+    "namePlaceholder": "jan.kowalski",
+    "emailLabel": "Adres E-mail",
+    "passwordLabel": "Hasło",
+    "submitBtn": "Zarejestruj się",
+    "haveAccount": "Masz już konto?",
+    "loginLink": "Zaloguj się",
+    "errorCredentials": "Wystąpił błąd podczas rejestracji",
+    "errorConnection": "Błąd połączenia z serwerem"
+},
+"WidgetGallery": {
+    "title": "Galeria",
+    "searchPlaceholder": "Szukaj widgetów...",
+    "noWidgetsFound": "Nie znaleziono widgetów w tej kategorii",
+    "btnScan": "Skanuj Dockera",
+    "btnAdd": "Dodaj do pulpitu",
+    "defaultServiceDesc": "Zarządzanie podłączoną usługą",
+    "categories": {
+      "all": "Wszystkie",
+      "system": "System",
+      "network": "Sieć",
+      "media": "Media",
+      "apps": "Twoje Aplikacje"
+    },
+    "widgets": {
+      "docker_stats": { "name": "Docker Stats", "desc": "Monitoruj status i zasoby swoich kontenerów Docker w czasie rzeczywistym." },
+      "disk_stats": { "name": "Status Dysków", "desc": "Śledź zużycie przestrzeni dyskowej na swoim serwerze." },
+      "server_stats": { "name": "Statystyki Serwera", "desc": "Główne parametry: zużycie CPU, RAM i obciążenie systemu." },
+      "weather": { "name": "Pogoda", "desc": "Lokalna prognoza pogody na Twoim dashboardzie." }
+    }
+  },
+  "ServiceDiscovery": {
+    "title": "Wykryte Usługi",
+    "subtitle": "Znaleziono {count} usług. Zaznacz te, które chcesz dodać i upewnij się, że porty są poprawne.",
+    "btnCancel": "Anuluj",
+    "btnAddCount": "Dodaj {count} Widgetów",
+    "portLabel": "Port"
+  },
+"CommandPalette": {
+    "placeholder": "Szukaj kontenerów, widgetów i stron...",
+    "empty": "Brak wyników dla \"{query}\"",
+    "pages": "Strony",
+    "containers": "Kontenery",
+    "widgets": "Widgety",
+    "pageDashboard": "Dashboard",
+    "pageSettings": "Ustawienia",
+    "pageAdmin": "Panel Admina",
+    "pageContainers": "Wszystkie Kontenery",
+    "actionGo": "Przejdź",
+    "actionHighlight": "Podświetl"
+  }
+}

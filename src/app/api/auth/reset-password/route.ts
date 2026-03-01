@@ -1,13 +1,16 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { getTranslations } from 'next-intl/server';
 
 export async function POST(req: Request) {
   try {
-    const { token, newPassword } = await req.json();
+    const { token, newPassword, locale = 'en' } = await req.json();
+    const t = await getTranslations({ locale, namespace: 'ApiErrors' });
+
 
     if (!token || !newPassword) {
-      return NextResponse.json({ error: 'Brak tokenu lub hasła.' }, { status: 400 });
+      return NextResponse.json({ error: t('MISSING_TOKEN') }, { status: 400 });
     }
 
     // 1. Szukamy tokenu w bazie
@@ -16,13 +19,13 @@ export async function POST(req: Request) {
     });
 
     if (!resetRecord) {
-      return NextResponse.json({ error: 'Nieprawidłowy link resetujący.' }, { status: 400 });
+      return NextResponse.json({ error: t('BAD_LINK') }, { status: 400 });
     }
 
     // 2. Sprawdzamy czy nie wygasł
     if (resetRecord.expires < new Date()) {
       await prisma.passwordResetToken.delete({ where: { token } });
-      return NextResponse.json({ error: 'Link resetujący wygasł. Poproś o nowy.' }, { status: 400 });
+      return NextResponse.json({ error: t('OLD_LINK') }, { status: 400 });
     }
 
     // 3. Haszujemy nowe hasło
@@ -39,10 +42,10 @@ export async function POST(req: Request) {
       }),
     ]);
 
-    return NextResponse.json({ message: 'Hasło zostało pomyślnie zmienione.' });
+    return NextResponse.json({ message: t('PASSWORD_RESET_SUCCESS') });
 
   } catch (error) {
     console.error('Błąd zmiany hasła:', error);
-    return NextResponse.json({ error: 'Wystąpił błąd serwera.' }, { status: 500 });
+    return NextResponse.json({ error: 'INTERNAL_ERROR' }, { status: 500 });
   }
 }
