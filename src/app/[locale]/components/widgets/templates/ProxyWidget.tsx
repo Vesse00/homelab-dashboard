@@ -92,7 +92,9 @@ export default function ProxyWidget({ data, stats, isLoading, w = 2, h = 2 }: Pr
                        <span className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1.5 mb-1">
                          <Activity size={12} className="text-emerald-400" /> {t('ping')}
                        </span>
-                       <span className="text-sm text-white font-mono font-bold">zastąpic</span>
+                       <span className="text-sm text-white font-mono font-bold">
+                         {stats?.ping ?? t('noData')}
+                       </span>
                     </div>
                  </div>
                )}
