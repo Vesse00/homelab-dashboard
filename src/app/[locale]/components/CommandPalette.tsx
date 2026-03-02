@@ -236,7 +236,7 @@ export default function CommandPalette() {
           <div className="text-xs text-slate-500 border border-slate-700 rounded px-2 py-1 shrink-0 bg-slate-800">ESC</div>
         </div>
 
-        <div className="overflow-y-auto flex-1 p-2 bg-slate-900/50">
+        <div className="overflow-y-auto flex-1 p-2 bg-slate-900/50 custom-scrollbar">
           {filteredResults.length === 0 ? (
             <div className="p-8 text-center text-slate-500">
               {t('empty', { query })}

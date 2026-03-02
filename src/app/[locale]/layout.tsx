@@ -39,7 +39,7 @@ export default async function RootLayout({
             {/* Navbar jest fixed */}
             <Navbar />
 
-            <main className="pt-16 relative z-10">
+            <main className="pt-16 relative z-10 custom-scrollbar">
               <div className="w-full h-full">
                 {children}
               </div>
