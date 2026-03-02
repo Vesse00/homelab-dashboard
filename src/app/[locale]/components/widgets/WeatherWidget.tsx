@@ -2,6 +2,7 @@
 
 import { CloudSun, Droplets, Wind, MapPin, GripHorizontal, X, ArrowDownRight, Sun, CloudRain, Cloud, ThermometerSun, Settings, Save, Lock, Unlock } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface WeatherWidgetProps {
   id: string;
@@ -14,24 +15,37 @@ interface WeatherWidgetProps {
   onToggleLock?: (id: string) => void;
 }
 
+type WeatherType = 'sunny' | 'cloudy' | 'overcast' | 'rain';
+
 export default function WeatherWidget({ id, isEditMode, onRemove, className, w = 2, h = 2, isLocked, onToggleLock }: WeatherWidgetProps) {
+  const t = useTranslations('Widgets.Weather');
   const [city, setCity] = useState('');
   const [inputValue, setInputValue] = useState('');
   const [isConfiguring, setIsConfiguring] = useState(false);
   const [weatherData, setWeatherData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 1. Inicjalizacja: Ładowanie miasta z localStorage (lub domyślnie Warszawa)
+
+  // --- ELEGANCKIE SŁOWNIKI TŁUMACZEŃ ---
+  // Odświeżają się automatycznie w locie po zmianie języka!
+  const conditions: Record<WeatherType, { text: string; icon: any }> = {
+    sunny: { text: t('condSunny'), icon: Sun },
+    cloudy: { text: t('condCloudy'), icon: CloudSun },
+    overcast: { text: t('condOvercast'), icon: Cloud },
+    rain: { text: t('condRain'), icon: CloudRain }
+  };
+
+  const forecastDays = [
+    t('dayTomorrow'),
+    t('dayIn2Days'),
+    t('dayIn3Days')
+  ];
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedCity = localStorage.getItem(`weather_city_${id}`);
-      if (savedCity) {
-        setCity(savedCity);
-        setInputValue(savedCity);
-      } else {
-        setCity('Warszawa');
-        setInputValue('Warszawa');
-      }
+      if (savedCity) { setCity(savedCity); setInputValue(savedCity); } 
+      else { setCity('Warszawa'); setInputValue('Warszawa'); }
     }
   }, [id]);
 
@@ -55,27 +69,25 @@ export default function WeatherWidget({ id, isEditMode, onRemove, className, w =
         const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,surface_pressure,weather_code&daily=weather_code,temperature_2m_max&timezone=auto`);
         const data = await weatherRes.json();
         
-        const getCondition = (code: number) => {
-           if (code <= 1) return { text: 'Słonecznie', icon: Sun };
-           if (code <= 3) return { text: 'Zachmurzenie', icon: CloudSun };
-           if (code <= 48) return { text: 'Pochmurno', icon: Cloud };
-           return { text: 'Opady', icon: CloudRain };
+        const getType = (code: number): WeatherType => {
+           if (code <= 1) return 'sunny';
+           if (code <= 3) return 'cloudy';
+           if (code <= 48) return 'overcast';
+           return 'rain';
         };
-
-        const currentCond = getCondition(data.current.weather_code);
 
         setWeatherData({
           temp: Math.round(data.current.temperature_2m),
-          condition: currentCond.text,
+          type: getType(data.current.weather_code),
           location: name,
           humidity: data.current.relative_humidity_2m,
           wind: Math.round(data.current.wind_speed_10m),
           pressure: Math.round(data.current.surface_pressure),
           uv: 5,
           forecast: [
-            { day: 'Jutro', temp: Math.round(data.daily.temperature_2m_max[1]), icon: getCondition(data.daily.weather_code[1]).icon },
-            { day: 'Pojutrze', temp: Math.round(data.daily.temperature_2m_max[2]), icon: getCondition(data.daily.weather_code[2]).icon },
-            { day: 'Za 3 dni', temp: Math.round(data.daily.temperature_2m_max[3]), icon: getCondition(data.daily.weather_code[3]).icon }
+            { temp: Math.round(data.daily.temperature_2m_max[1]), type: getType(data.daily.weather_code[1]) },
+            { temp: Math.round(data.daily.temperature_2m_max[2]), type: getType(data.daily.weather_code[2]) },
+            { temp: Math.round(data.daily.temperature_2m_max[3]), type: getType(data.daily.weather_code[3]) }
           ]
         });
         setIsLoading(false);
@@ -97,7 +109,9 @@ export default function WeatherWidget({ id, isEditMode, onRemove, className, w =
   };
 
   const isExpanded = w >= 3 && h >= 3;
-  const CurrentForecastIcon = weatherData?.forecast?.[0]?.icon;
+  
+  const currentCondition = weatherData ? conditions[weatherData.type as WeatherType] : null;
+  const CurrentForecastIcon = currentCondition?.icon;
 
   return (
     <div className={`bg-gradient-to-br from-blue-900/80 to-slate-900/90 backdrop-blur-md rounded-xl p-5 flex flex-col h-full border border-blue-500/30 shadow-2xl relative overflow-hidden transition-all duration-300 ${className}`}>
@@ -109,13 +123,13 @@ export default function WeatherWidget({ id, isEditMode, onRemove, className, w =
       {isConfiguring && !isEditMode && (
         <div className="absolute inset-0 bg-slate-900/95 backdrop-blur-xl z-40 flex flex-col p-5 border border-blue-500/30 rounded-xl transition-all">
            <div className="flex justify-between items-center mb-4">
-             <span className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2"><MapPin size={14} className="text-blue-400"/> Lokalizacja</span>
+             <span className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2"><MapPin size={14} className="text-blue-400"/> {t('location')}</span>
              <button onClick={() => setIsConfiguring(false)} className="text-slate-400 hover:text-white"><X size={16}/></button>
            </div>
            
            <div className="flex-1 flex flex-col justify-center gap-3">
               <div>
-                 <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">Miasto / Miejscowość</label>
+                 <label className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 block">{t('cityLabel')}</label>
                  <input 
                    type="text" 
                    value={inputValue}
@@ -131,7 +145,7 @@ export default function WeatherWidget({ id, isEditMode, onRemove, className, w =
                 onClick={handleSave} 
                 className="w-full py-2.5 mt-2 text-sm bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold transition-colors shadow-lg flex items-center justify-center gap-2"
               >
-                <Save size={16} /> Zapisz
+                <Save size={16} /> {t('btnSave')}
               </button>
            </div>
         </div>
@@ -151,7 +165,7 @@ export default function WeatherWidget({ id, isEditMode, onRemove, className, w =
              {isLocked ? <Lock size={18} /> : <Unlock size={18} />}
            </div>
            <GripHorizontal className="text-blue-400 mb-2 drop-shadow-lg" size={28} />
-           <span className="text-white font-bold tracking-wide">Pogoda</span>
+           <span className="text-white font-bold tracking-wide">{t('title')}</span>
            <div className="absolute bottom-2 right-2 text-blue-400/80 pointer-events-none flex items-center justify-center p-1 bg-blue-500/20 rounded-tl-xl rounded-br-lg">
              <ArrowDownRight size={16} />
            </div>
@@ -186,12 +200,12 @@ export default function WeatherWidget({ id, isEditMode, onRemove, className, w =
 
       <div className="flex-1 flex flex-col justify-center z-10 mt-2">
         {isLoading ? (
-          <div className="text-center text-slate-400 text-sm animate-pulse">Pobieranie danych...</div>
+          <div className="text-center text-slate-400 text-sm animate-pulse">{t('fetching')}</div>
         ) : weatherData && (
           <div className="animate-in fade-in duration-500 flex flex-col h-full">
             <div className="flex items-end gap-2">
                <span className="text-5xl font-black text-white tracking-tighter drop-shadow-lg">{weatherData.temp}°</span>
-               <span className="text-lg text-blue-200 font-medium mb-1.5">{weatherData.condition}</span>
+               <span className="text-lg text-blue-200 font-medium mb-1.5">{currentCondition.text}</span>
             </div>
 
             <div className="grid grid-cols-2 gap-2 mt-auto">
@@ -212,13 +226,16 @@ export default function WeatherWidget({ id, isEditMode, onRemove, className, w =
                   <div className="flex items-center gap-1.5"><ThermometerSun size={12} className="text-orange-400"/> UV: {weatherData.uv}</div>
                   <div className="flex items-center gap-1.5"><ArrowDownRight size={12} className="text-blue-400"/> {weatherData.pressure} hPa</div>
                 </div>
-                <h4 className="text-[10px] text-blue-300 uppercase font-bold mb-2 tracking-wider">Prognoza (3 dni)</h4>
+                <h4 className="text-[10px] text-blue-300 uppercase font-bold mb-2 tracking-wider">{t('forecastTitle')}</h4>
                 <div className="flex gap-2 flex-1">
                   {weatherData.forecast.map((day: any, idx: number) => {
-                    const DayIcon = day.icon;
+                    const dayData = conditions[day.type as WeatherType];
+                    const DayIcon = dayData.icon;
                     return (
                       <div key={idx} className="flex-1 bg-black/20 border border-white/5 rounded-xl p-2 flex flex-col items-center justify-center gap-1.5 transition-colors hover:bg-black/40 shadow-inner">
-                        <span className="text-[9px] text-slate-400 uppercase font-bold">{day.day}</span>
+                        <span className="text-[9px] text-slate-400 uppercase font-bold">
+                          {forecastDays[idx]}
+                        </span>
                         <DayIcon size={18} className={day.temp > 20 ? 'text-yellow-400' : 'text-blue-400'} />
                         <span className="text-sm text-white font-bold">{day.temp}°</span>
                       </div>

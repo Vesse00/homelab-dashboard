@@ -7,6 +7,8 @@ import { useSession } from 'next-auth/react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area
 } from 'recharts';
+import { useTranslations } from 'next-intl';
+import toast from 'react-hot-toast';
 
 interface StatPoint {
   createdAt: string;
@@ -16,7 +18,8 @@ interface StatPoint {
 }
 
 export default function ContainerDetailsPage() {
-    const { data: session } = useSession();
+  const t = useTranslations('Containers');
+  const { data: session } = useSession();
   const params = useParams();
   const router = useRouter();
   const containerId = params?.containerId as string;
@@ -40,7 +43,7 @@ export default function ContainerDetailsPage() {
       setTimeout(() => fetchData(), 1000); 
     } catch (err) {
       console.error(err);
-      alert("Błąd wykonania akcji");
+      toast.error(t('controlError'));
     } finally {
       setActionLoading(false);
     }
@@ -104,7 +107,7 @@ export default function ContainerDetailsPage() {
           
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-white">Szczegóły Kontenera</h1>
+              <h1 className="text-2xl font-bold text-white">{t('detailsTitle')}</h1>
               
               {/* STATUS BADGE */}
               {!loading && (
@@ -129,7 +132,7 @@ export default function ContainerDetailsPage() {
                  className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors shadow-lg shadow-emerald-900/20"
                >
                  <Play size={16} fill="currentColor" />
-                 <span className="hidden md:inline">Start</span>
+                 <span className="hidden md:inline">{t('btnStart')}</span>
                </button>
                
                <button
@@ -138,7 +141,7 @@ export default function ContainerDetailsPage() {
                  className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors shadow-lg shadow-rose-900/20"
                >
                  <Square size={16} fill="currentColor" />
-                 <span className="hidden md:inline">Stop</span>
+                 <span className="hidden md:inline">{t('btnStop')}</span>
                </button>
     
                <button
@@ -147,14 +150,14 @@ export default function ContainerDetailsPage() {
                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors shadow-lg shadow-blue-900/20"
                >
                  <RotateCcw size={16} />
-                 <span className="hidden md:inline">Restart</span>
+                 <span className="hidden md:inline">{t('btnRestart')}</span>
                </button>
              </>
            ) : (
              /* JEŚLI NIE JEST ADMINEM */
              <div className="px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-400 text-sm font-medium flex items-center gap-2">
                <Shield size={16} />
-               <span>Tryb podglądu</span>
+               <span>{t('previewMode')}</span>
              </div>
            )}
         </div>
@@ -162,7 +165,7 @@ export default function ContainerDetailsPage() {
 
       {/* Wykresy */}
       {loading ? (
-        <div className="text-center py-20 animate-pulse text-slate-500">Ładowanie danych...</div>
+        <div className="text-center py-20 animate-pulse text-slate-500">{t('loadingData')}</div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Wykres CPU */}
@@ -173,8 +176,8 @@ export default function ContainerDetailsPage() {
             <div className="flex items-center gap-2 mb-6">
               <Cpu className="text-blue-400" />
               <div>
-                 <h2 className="text-lg font-semibold">Użycie CPU</h2>
-                 <p className="text-xs text-slate-400">Ostatnie 20 pomiarów</p>
+                 <h2 className="text-lg font-semibold">{t('cpuUsage')}</h2>
+                 <p className="text-xs text-slate-400">{t('cpuDesc')}</p>
               </div>
             </div>
             <div className="h-[300px] w-full">
@@ -204,8 +207,8 @@ export default function ContainerDetailsPage() {
             <div className="flex items-center gap-2 mb-6">
               <HardDrive className="text-purple-400" />
               <div>
-                 <h2 className="text-lg font-semibold">Użycie RAM</h2>
-                 <p className="text-xs text-slate-400">W megabajtach (MB)</p>
+                 <h2 className="text-lg font-semibold">{t('ramUsage')}</h2>
+                 <p className="text-xs text-slate-400">{t('ramDesc')}</p>
               </div>
             </div>
             <div className="h-[300px] w-full">

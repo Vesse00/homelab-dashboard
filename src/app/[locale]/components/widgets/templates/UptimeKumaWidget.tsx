@@ -1,6 +1,7 @@
 'use client';
 
 import { Activity, CheckCircle2, AlertCircle, AlertTriangle, Loader2, ExternalLink, Globe, ShieldAlert } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface UptimeKumaWidgetProps {
   data: any;
@@ -11,6 +12,7 @@ interface UptimeKumaWidgetProps {
 }
 
 export default function UptimeKumaWidget({ data, stats, isLoading, w = 2, h = 2 }: UptimeKumaWidgetProps) {
+  const t = useTranslations('WidgetTemplates');
   const isOnline = stats?.status === 'online';
   const isError = stats?.status === 'error';
   
@@ -79,7 +81,7 @@ export default function UptimeKumaWidget({ data, stats, isLoading, w = 2, h = 2 
       <div className="flex-1 flex flex-col justify-end z-10 mt-2">
         {isLoading ? (
           <div className="flex items-center gap-2 text-slate-500 text-xs font-mono h-full justify-center">
-            <Loader2 size={16} className="animate-spin" /> Ładowanie...
+            <Loader2 size={16} className="animate-spin" /> {t('loading')}
           </div>
         ) : (
           <div className="animate-in fade-in duration-500 flex flex-col h-full justify-end">
@@ -89,18 +91,18 @@ export default function UptimeKumaWidget({ data, stats, isLoading, w = 2, h = 2 
               <div className="flex justify-between items-center bg-black/20 p-2.5 rounded-xl border border-white/5 mt-auto shadow-inner">
                 {isError ? (
                   <>
-                    <span className="text-[10px] text-red-400 uppercase font-bold flex items-center gap-1.5"><AlertTriangle size={12}/> {stats?.primaryText || 'Błąd'}</span>
+                    <span className="text-[10px] text-red-400 uppercase font-bold flex items-center gap-1.5"><AlertTriangle size={12}/> {stats?.primaryText || t('error')}</span>
                     <span className="text-xs font-bold text-red-400 truncate max-w-[100px] text-right" title={stats?.secondaryText}>{stats?.secondaryText}</span>
                   </>
                 ) : !isOnline ? (
                   <>
-                    <span className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1.5"><Activity size={12}/> Offline</span>
-                    <span className="text-xs font-bold text-slate-500 truncate" title={stats?.secondaryText}>{stats?.secondaryText || 'Brak połączenia'}</span>
+                    <span className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1.5"><Activity size={12}/> {t('offline')}</span>
+                    <span className="text-xs font-bold text-slate-500 truncate" title={stats?.secondaryText}>{stats?.secondaryText || t('noConnection')}</span>
                   </>
                 ) : hasData ? (
                   <>
                     <span className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1.5">
-                      {isAllGood ? <CheckCircle2 size={12} className="text-emerald-500"/> : <AlertCircle size={12} className="text-orange-500"/>} Stan
+                      {isAllGood ? <CheckCircle2 size={12} className="text-emerald-500"/> : <AlertCircle size={12} className="text-orange-500"/>} {t('UptimeKuma.status')}
                     </span>
                     <span className="text-xs font-black text-white font-mono">
                       <span className={isAllGood ? "text-emerald-400" : "text-orange-400"}>{upCount}</span> / {total}
@@ -108,7 +110,7 @@ export default function UptimeKumaWidget({ data, stats, isLoading, w = 2, h = 2 
                   </>
                 ) : (
                   <>
-                    <span className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1.5"><Activity size={12} className="text-blue-400"/> Połączono</span>
+                    <span className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1.5"><Activity size={12} className="text-blue-400"/> {t('UptimeKuma.connected')}</span>
                     <span className="text-[10px] font-bold text-slate-300 truncate max-w-[120px] text-right" title={stats?.secondaryText}>{stats?.secondaryText}</span>
                   </>
                 )}
@@ -121,8 +123,8 @@ export default function UptimeKumaWidget({ data, stats, isLoading, w = 2, h = 2 
                 {isError || (!isOnline) ? (
                   <div className={`flex-1 flex flex-col items-center justify-center border border-dashed rounded-xl p-3 text-center ${isError ? 'border-red-500/30 bg-red-500/5' : 'border-slate-500/30 bg-slate-500/5'}`}>
                     {isError ? <AlertTriangle size={28} className="text-red-500 mb-2" /> : <Activity size={28} className="text-slate-500 mb-2" />}
-                    <span className="text-sm font-bold text-white mb-1">{stats?.primaryText || 'Brak połączenia'}</span>
-                    <span className={`text-[10px] font-bold uppercase tracking-wider ${isError ? 'text-red-400' : 'text-slate-400'}`}>{stats?.secondaryText || 'Sprawdź adres URL'}</span>
+                    <span className="text-sm font-bold text-white mb-1">{stats?.primaryText || t('noConnection')}</span>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider ${isError ? 'text-red-400' : 'text-slate-400'}`}>{stats?.secondaryText || t('UptimeKuma.checkUrl')}</span>
                   </div>
                 ) : (
                   <>
@@ -131,7 +133,7 @@ export default function UptimeKumaWidget({ data, stats, isLoading, w = 2, h = 2 
                        <div className="flex justify-between items-end">
                          <div>
                            <p className="text-2xl font-black text-white leading-none">{upCount} <span className="text-sm font-bold text-slate-500">/ {hasData ? total : '0'}</span></p>
-                           <p className="text-[10px] uppercase font-bold text-slate-400 mt-1">Usługi Online</p>
+                           <p className="text-[10px] uppercase font-bold text-slate-400 mt-1">{t('UptimeKuma.servicesOnline')}</p>
                          </div>
                          <div className="text-right">
                            <p className={`text-lg font-black leading-none ${hasData ? (isAllGood ? 'text-emerald-400' : 'text-orange-400') : 'text-slate-400'}`}>
@@ -171,7 +173,7 @@ export default function UptimeKumaWidget({ data, stats, isLoading, w = 2, h = 2 
                            {hiddenCount > 0 && (
                              <div className={`flex justify-center items-center bg-black/10 p-1.5 rounded-lg border border-dashed border-white/10 ${isMultiColumn ? 'col-span-2' : ''}`}>
                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                                 Powiększ aby zobaczyć więcej (+{hiddenCount})
+                                 {t('UptimeKuma.expandToSeeMore', { count: hiddenCount })}
                                </span>
                              </div>
                            )}
@@ -179,8 +181,8 @@ export default function UptimeKumaWidget({ data, stats, isLoading, w = 2, h = 2 
                        ) : (
                          <div className={`h-full flex flex-col items-center justify-center text-center p-2 opacity-50 ${isMultiColumn ? 'col-span-2' : ''}`}>
                             <AlertCircle size={20} className="mb-2 text-slate-400" />
-                            <span className="text-xs text-slate-300">Brak monitorów.</span>
-                            <span className="text-[9px] text-slate-400 mt-1">Dodaj monitory do grupy na stronie statusu w panelu Uptime Kuma.</span>
+                            <span className="text-xs text-slate-300">{t('UptimeKuma.noMonitors')}</span>
+                            <span className="text-[9px] text-slate-400 mt-1">{t('UptimeKuma.addMonitorsHelp')}</span>
                          </div>
                        )}
                     </div>

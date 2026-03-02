@@ -1,6 +1,7 @@
 'use client';
 
 import { Home, ShieldCheck, Loader2, ExternalLink, AlertTriangle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface HomeAssistantWidgetProps {
   data: any;
@@ -11,6 +12,7 @@ interface HomeAssistantWidgetProps {
 }
 
 export default function HomeAssistantWidget({ data, stats, isLoading, w = 2, h = 2 }: HomeAssistantWidgetProps) {
+  const t = useTranslations('WidgetTemplates');
   const isOnline = stats?.status === 'online';
   const isError = stats?.status === 'error';
   const isExpanded = w >= 3 && h >= 3;
@@ -52,7 +54,7 @@ export default function HomeAssistantWidget({ data, stats, isLoading, w = 2, h =
         </div>
         <div className="z-10 flex items-center gap-2">
           {isError ? (
-             <span className="text-xs font-bold text-red-500 bg-red-500/10 px-2 py-1 rounded-md border border-red-500/20">Błąd</span>
+             <span className="text-xs font-bold text-red-500 bg-red-500/10 px-2 py-1 rounded-md border border-red-500/20">{t('error')}</span>
           ) : (
              <div className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-lg border border-white/5">
                 <span className="w-2 h-2 rounded-full bg-emerald-950 shadow-[0_0_5px_#73fb24]"></span>
@@ -91,7 +93,7 @@ export default function HomeAssistantWidget({ data, stats, isLoading, w = 2, h =
       <div className="flex-1 flex flex-col justify-end z-10 mt-2">
         {isLoading ? (
           <div className="flex items-center gap-2 text-slate-500 text-xs font-mono h-full justify-center">
-            <Loader2 size={16} className="animate-spin" /> Ładowanie...
+            <Loader2 size={16} className="animate-spin" /> {t('loading')}
           </div>
         ) : (
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 flex flex-col h-full justify-end">
@@ -99,10 +101,10 @@ export default function HomeAssistantWidget({ data, stats, isLoading, w = 2, h =
             {isError && (
               <div className="mt-auto mb-2">
                  <div className="text-2xl font-black text-white tracking-tight leading-none drop-shadow-md">
-                   {stats?.primaryText || 'Brak danych'}
+                   {stats?.primaryText || t('noData')}
                  </div>
                  <div className="text-xs text-slate-400 font-mono mt-1">
-                   {stats?.secondaryText || 'Wymagana konfiguracja'}
+                   {stats?.secondaryText || t('Admin.requiresConfig')}
                  </div>
               </div>
             )}
@@ -111,7 +113,7 @@ export default function HomeAssistantWidget({ data, stats, isLoading, w = 2, h =
             {isOnline && (
               <div className="mt-auto">
                  <div className="flex justify-between items-end mb-2">
-                    <span className="text-2xl font-black text-white leading-none">{entities.total > 0 ? entities.total : '?'} <span className="text-xs font-bold text-slate-400">Urządzeń</span></span>
+                    <span className="text-2xl font-black text-white leading-none">{entities.total > 0 ? entities.total : '?'} <span className="text-xs font-bold text-slate-400">{t('HomeAssistant.devices')}</span></span>
                  </div>
                  
                  {/* Mini-wykres paskowy */}
@@ -128,15 +130,15 @@ export default function HomeAssistantWidget({ data, stats, isLoading, w = 2, h =
                  {isExpanded && entities.total > 0 && (
                    <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-white/10">
                       <div className="flex flex-col items-center p-2 bg-black/20 rounded-lg">
-                        <span className="text-[9px] text-slate-400 uppercase font-bold mb-1">Włączone</span>
+                        <span className="text-[9px] text-slate-400 uppercase font-bold mb-1">{t('HomeAssistant.turnedOn')}</span>
                         <span className="text-sm text-amber-400 font-black">{entities.on}</span>
                       </div>
                       <div className="flex flex-col items-center p-2 bg-black/20 rounded-lg">
-                        <span className="text-[9px] text-slate-400 uppercase font-bold mb-1">Wyłączone</span>
+                        <span className="text-[9px] text-slate-400 uppercase font-bold mb-1">{t('HomeAssistant.turnedOff')}</span>
                         <span className="text-sm text-slate-300 font-black">{entities.off}</span>
                       </div>
                       <div className="flex flex-col items-center p-2 bg-black/20 rounded-lg">
-                        <span className="text-[9px] text-slate-400 uppercase font-bold mb-1">Brak odp.</span>
+                        <span className="text-[9px] text-slate-400 uppercase font-bold mb-1">{t('HomeAssistant.noResponse')}</span>
                         <span className="text-sm text-red-400 font-black">{entities.unavailable}</span>
                       </div>
                    </div>

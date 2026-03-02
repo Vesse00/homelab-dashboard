@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { HardDrive, GripHorizontal, X, ArrowDownRight, Server, Lock, Unlock } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface DiskWidgetProps {
   style?: React.CSSProperties;
@@ -21,6 +22,7 @@ interface DiskWidgetProps {
 export default function DiskWidget({
   style, className, onMouseDown, onMouseUp, onTouchEnd, id, isEditMode, onRemove, w = 2, h = 2, isLocked, onToggleLock
 }: DiskWidgetProps) {
+  const t = useTranslations('Widgets.Disk');
   const [disks, setDisks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -71,7 +73,7 @@ export default function DiskWidget({
              {isLocked ? <Lock size={18} /> : <Unlock size={18} />}
            </div>
            <GripHorizontal className="text-blue-400 mb-2 drop-shadow-lg" size={28} />
-           <span className="text-white font-bold tracking-wide">Dyski Serwera</span>
+           <span className="text-white font-bold tracking-wide">{t('title')}</span>
            <div className="absolute bottom-2 right-2 text-blue-400/80 pointer-events-none flex items-center justify-center p-1 bg-blue-500/20 rounded-tl-xl rounded-br-lg">
              <ArrowDownRight size={16} />
            </div>
@@ -85,7 +87,7 @@ export default function DiskWidget({
              <HardDrive size={20} />
           </div>
           <div>
-             <span className="text-sm font-bold text-slate-200 block leading-tight">Przestrzeń</span>
+             <span className="text-sm font-bold text-slate-200 block leading-tight">{t('storage')}</span>
              <span className="text-[10px] text-slate-500 font-mono">system-disks</span>
           </div>
         </div>
@@ -99,7 +101,7 @@ export default function DiskWidget({
              <div className="h-10 bg-white/5 rounded-lg w-3/4"></div>
           </div>
         ) : disks.length === 0 ? (
-           <div className="flex flex-col items-center justify-center h-full text-slate-500 text-xs">Brak widocznych dysków</div>
+           <div className="flex flex-col items-center justify-center h-full text-slate-500 text-xs">{t('noDisks')}</div>
         ) : (
           <div className="animate-in fade-in duration-500 flex flex-col gap-3.5">
              {displayDisks.map((disk, idx) => (
@@ -129,7 +131,7 @@ export default function DiskWidget({
              
              {!isExpanded && disks.length > 2 && (
                <div className="text-center text-[10px] text-slate-500 mt-2 font-bold uppercase tracking-widest flex items-center justify-center gap-1">
-                 <ArrowDownRight size={12}/> Rozwiń, by zobaczyć więcej ({disks.length - 2})
+                 <ArrowDownRight size={12}/> {t('expandMore', { count: disks.length - 2 })}
                </div>
              )}
           </div>

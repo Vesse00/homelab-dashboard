@@ -156,5 +156,222 @@
     "widgetDiskStats": "Disk Status",
     "widgetServerStats": "Server Stats",
     "widgetWeather": "Weather"
+  },
+"EditWidgetModal": {
+    "title": "Widget Configuration",
+    "displayName": "Display Name",
+    "internalUrl": "Internal URL (For server stats)",
+    "publicUrl": "Public URL (Optional)",
+    "publicUrlPlaceholder": "e.g. https://vault.yourdomain.com",
+    "publicUrlHint": "This address will be opened when you click \"Open\".",
+    "statusPageSlug": "Status Page Slug",
+    "statusPagePlaceholder": "e.g. default",
+    "tailscaleApi": "Tailscale API",
+    "tailnet": "Tailnet (Organization)",
+    "tailnetPlaceholder": "e.g. user@gmail.com",
+    "apiKey": "API Key",
+    "apiKeyPlaceholder": "tskey-api-...",
+    "auth": "Authentication (For stats)",
+    "authNone": "None (Public API)",
+    "authApiKey": "Token / API Key",
+    "authBasic": "Username & Password (Basic Auth)",
+    "login": "Username",
+    "password": "Password",
+    "btnCancel": "Cancel",
+    "btnSave": "Save"
+  },
+  "Settings": {
+    "title": "Account Settings",
+    "subtitle": "Customize your details and secure your account.",
+    "tabProfile": "Profile",
+    "tabSecurity": "Security",
+    "profileInfo": "Profile Information",
+    "username": "Username",
+    "email": "Email Address",
+    "btnSaveProfile": "Save changes",
+    "toastProfileUpdated": "Profile updated!",
+    "toastError": "An error occurred",
+    "toastConnectionError": "Server connection error",
+    "changePassword": "Change Password",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "btnUpdatePassword": "Update password"
+  },
+  "AdminPanel": {
+    "title": "Admin Panel",
+    "subtitle": "Manage users and permissions in the system.",
+    "accessDenied": "Access Denied",
+    "accessDeniedDesc": "This section is reserved exclusively for system administrators.",
+    "backToDashboard": "Back to Dashboard",
+    "loading": "Loading...",
+    "loadingUsers": "Loading users...",
+    "registrationOpened": "Registration open!",
+    "registrationClosed": "Registration closed!",
+    "registrationOpenBtn": "Registration Open",
+    "registrationClosedBtn": "Registration Closed",
+    "errorSettings": "Failed to change settings",
+    "errorSelfRole": "You cannot change your own permissions!",
+    "roleChanged": "Role changed to {role}",
+    "errorRoleChange": "Error changing permissions",
+    "userDeleted": "User {name} deleted",
+    "errorDeleteUser": "Error deleting user",
+    "modalDeleteTitle": "Delete user?",
+    "modalDeleteDesc1": "Are you sure you want to permanently delete the account ",
+    "modalDeleteDesc2": "? This operation cannot be undone.",
+    "btnCancel": "Cancel",
+    "btnDelete": "Delete",
+    "tableUser": "User",
+    "tableRole": "Role",
+    "tableJoined": "Joined",
+    "tableActions": "Actions",
+    "badgeYou": "You",
+    "noActions": "No actions",
+    "titleRevokeAdmin": "Revoke Admin permissions",
+    "titleGrantAdmin": "Grant Admin permissions",
+    "titleDeleteUser": "Delete user"
+  },
+  "Widgets": {
+    "ContainerCard": {
+      "online": "Online",
+      "offline": "Offline",
+      "status": "Status",
+      "uptime": "UPTIME"
+    },
+    "ServiceWidget": {
+      "errorData": "Error loading data",
+      "btnRemoveBroken": "Remove broken widget",
+      "errorConnection": "Connection error",
+      "checkLogs": "Check logs",
+      "btnOpen": "Open"
+    },
+    "ServerStats": {
+      "title": "Server Resources",
+      "cpuLoad": "CPU Load",
+      "ramMemory": "RAM Memory"
+    },
+    "Disk": {
+      "title": "Server Disks",
+      "storage": "Storage",
+      "noDisks": "No visible disks",
+      "expandMore": "Expand to see more ({count})"
+    },
+    "Weather": {
+      "condSunny": "Sunny",
+      "condCloudy": "Cloudy",
+      "condOvercast": "Overcast",
+      "condRain": "Rain",
+      "dayTomorrow": "Tomorrow",
+      "dayIn2Days": "In 2 days",
+      "dayIn3Days": "In 3 days",
+      "location": "Location",
+      "cityLabel": "City / Town",
+      "cityPlaceholder": "e.g. London",
+      "btnSave": "Save",
+      "title": "Weather",
+      "loading": "Loading...",
+      "fetching": "Fetching data...",
+      "forecastTitle": "Forecast (3 days)"
+    },
+    "Docker": {
+      "title": "Docker",
+      "active": "Active",
+      "uptime": "Uptime",
+      "running": "Running",
+      "stopped": "Stopped",
+      "btnManage": "Manage"
+    }
+  },
+  "Containers": {
+    "title": "Your Containers",
+    "subtitle": "Manage and monitor {count} instances",
+    "searchPlaceholder": "Search container...",
+    "loading": "Loading containers list...",
+    "colName": "Name / ID",
+    "colStatus": "Status",
+    "colImage": "Image",
+    "colUptime": "Uptime",
+    "colActions": "Actions",
+    "noContainers": "No containers found matching your search.",
+    "detailsTitle": "Container Details",
+    "btnStart": "Start",
+    "btnStop": "Stop",
+    "btnRestart": "Restart",
+    "previewMode": "Preview Mode",
+    "loadingData": "Loading data...",
+    "cpuUsage": "CPU Usage",
+    "cpuDesc": "Last 20 measurements",
+    "ramUsage": "RAM Usage",
+    "ramDesc": "In megabytes (MB)",
+    "actionError": "Action execution error"
+  },
+"WidgetTemplates": {
+    "loading": "Loading...",
+    "error": "Error",
+    "ping": "Ping",
+    "total": "Total",
+    "noData": "No data",
+    "offline": "Offline",
+    "noConnection": "No connection",
+    "Admin": {
+      "requiresConfig": "Configuration required",
+      "envStatus": "Environment Status",
+      "totalCount": "Total: {count}",
+      "runningCount": "Running ({count})",
+      "stoppedCount": "Stopped ({count})"
+    },
+    "HomeAssistant": {
+      "on": "On",
+      "devices": "Devices",
+      "turnedOn": "Turned On",
+      "turnedOff": "Turned Off",
+      "noResponse": "No response"
+    },
+    "Media": {
+      "offline": "Offline",
+      "noAccess": "No access",
+      "playing": "Playing",
+      "streams": "Streams",
+      "movies": "Movies",
+      "shows": "Shows",
+      "episodes": "Episodes"
+    },
+    "Minecraft": {
+      "online": "Online",
+      "ram": "RAM:"
+    },
+    "Pihole": {
+      "queries": "Queries",
+      "blocks": "Blocks",
+      "allowed": "Allowed",
+      "blocked": "Blocked"
+    },
+    "Proxy": {
+      "hosts": "Hosts",
+      "hostsDivision": "Hosts Distribution",
+      "activeCount": "Active: {count}"
+    },
+    "Tailscale": {
+      "nodes": "Nodes",
+      "nodesLower": "nodes",
+      "devicesInNetwork": "Devices in network",
+      "connected": "Connected"
+    },
+    "UptimeKuma": {
+      "status": "Status",
+      "connected": "Connected",
+      "servicesOnline": "Services Online",
+      "expandToSeeMore": "Expand to see more (+{count})",
+      "noMonitors": "No monitors.",
+      "addMonitorsHelp": "Add monitors to the group on the status page in Uptime Kuma.",
+      "checkUrl": "Check URL"
+    },
+    "Vaultwarden": {
+      "safe": "Safe",
+      "db": "Database",
+      "encrypted": "Encrypted",
+      "api": "API",
+      "online": "Online",
+      "unavailable": "Unavailable"
+    }
   }
 }

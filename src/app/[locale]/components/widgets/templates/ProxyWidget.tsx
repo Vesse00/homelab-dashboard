@@ -1,6 +1,7 @@
 'use client';
 
 import { Globe, ShieldAlert, ExternalLink, Loader2, Activity, Link, Server, Icon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface ProxyWidgetProps {
   data: any;
@@ -11,6 +12,7 @@ interface ProxyWidgetProps {
 }
 
 export default function ProxyWidget({ data, stats, isLoading, w = 2, h = 2 }: ProxyWidgetProps) {
+   const t = useTranslations('WidgetTemplates');
   const isOnline = stats?.status === 'online';
   const isError = stats?.status === 'error';
   
@@ -61,7 +63,7 @@ export default function ProxyWidget({ data, stats, isLoading, w = 2, h = 2 }: Pr
       <div className="flex-1 flex flex-col justify-end z-10 mt-2">
          {isLoading ? (
             <div className="flex items-center gap-2 text-slate-500 text-xs font-mono h-full justify-center">
-              <Loader2 size={16} className="animate-spin" /> Ładowanie...
+              <Loader2 size={16} className="animate-spin" /> {t('loading')}
             </div>
          ) : (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 flex flex-col h-full">
@@ -69,11 +71,11 @@ export default function ProxyWidget({ data, stats, isLoading, w = 2, h = 2 }: Pr
                {/* Główne statystyki */}
                <div>
                  <div className="text-2xl font-black text-white tracking-tight leading-none drop-shadow-md">
-                   {stats?.primaryText || 'Brak danych'}
+                   {stats?.primaryText || t('noData')}
                  </div>
                  <div className="text-xs text-slate-400 font-mono mt-1 mb-4 flex items-center gap-1.5">
                    {isOnline && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />}
-                   {stats?.secondaryText || 'Wymagana konfiguracja'}
+                   {stats?.secondaryText || t('Admin.requiresConfig')}
                  </div>
                </div>
 
@@ -82,13 +84,13 @@ export default function ProxyWidget({ data, stats, isLoading, w = 2, h = 2 }: Pr
                  <div className="grid grid-cols-2 gap-3 mt-auto">
                     <div className="bg-black/30 border border-white/5 rounded-xl p-2.5 flex flex-col backdrop-blur-sm transition-colors hover:bg-black/40">
                        <span className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1.5 mb-1">
-                         <Server size={12} className="text-emerald-400" /> Hosty
+                         <Server size={12} className="text-emerald-400" /> {t('Proxy.hosts')}
                        </span>
                        <span className="text-sm text-white font-mono font-bold">{stats?.queries || 0}</span>
                     </div>
                     <div className="bg-black/30 border border-white/5 rounded-xl p-2.5 flex flex-col backdrop-blur-sm transition-colors hover:bg-black/40">
                        <span className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1.5 mb-1">
-                         <Activity size={12} className="text-emerald-400" /> Ping
+                         <Activity size={12} className="text-emerald-400" /> {t('ping')}
                        </span>
                        <span className="text-sm text-white font-mono font-bold">zastąpic</span>
                     </div>
@@ -101,7 +103,7 @@ export default function ProxyWidget({ data, stats, isLoading, w = 2, h = 2 }: Pr
                {isExpanded && isOnline && stats?.chartData && (
                  <div className="mt-4 pt-4 border-t border-white/10 flex-1 flex flex-col animate-in fade-in duration-500">
                     <h4 className="text-[10px] text-slate-500 uppercase font-bold mb-3 tracking-wider flex items-center gap-2">
-                       Podział Hostów
+                       {t('Proxy.hostsDivision')}
                     </h4>
                     
                     {/* NASZ AUTORSKI WYKRES PASKOWY */}
@@ -116,7 +118,7 @@ export default function ProxyWidget({ data, stats, isLoading, w = 2, h = 2 }: Pr
                                    <span className="flex items-center gap-1.5">
                                       <div className={`w-1.5 h-1.5 rounded-full ${item.color}`} />
                                       {item.label} 
-                                      <span className="text-slate-600 normal-case">(Aktywne: {item.active})</span>
+                                      <span className="text-slate-600 normal-case">({t('Proxy.activeCount', { count: item.active })})</span>
                                    </span>
                                    <span className="text-white bg-slate-900/50 px-1.5 py-0.5 rounded">{item.count}</span>
                                 </div>

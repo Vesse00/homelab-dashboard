@@ -1,6 +1,7 @@
 'use client';
 
 import { Box, ServerCrash, ExternalLink, Loader2, Activity, Layers, Play, Square } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface AdminWidgetProps {
   data: any;
@@ -11,6 +12,7 @@ interface AdminWidgetProps {
 }
 
 export default function AdminWidget({ data, stats, isLoading, w = 2, h = 2 }: AdminWidgetProps) {
+   const t = useTranslations('WidgetTemplates');
   const isOnline = stats?.status === 'online';
   const isError = stats?.status === 'error';
   
@@ -60,7 +62,7 @@ export default function AdminWidget({ data, stats, isLoading, w = 2, h = 2 }: Ad
       <div className="flex-1 flex flex-col justify-end z-10 mt-2">
          {isLoading ? (
             <div className="flex items-center gap-2 text-slate-500 text-xs font-mono h-full justify-center">
-              <Loader2 size={16} className="animate-spin" /> Ładowanie...
+              <Loader2 size={16} className="animate-spin" /> {t('loading')}
             </div>
          ) : (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 flex flex-col h-full">
@@ -98,7 +100,7 @@ export default function AdminWidget({ data, stats, isLoading, w = 2, h = 2 }: Ad
                           <Play size={14} className="text-blue-400" />
                           <span className="text-xl font-black text-white">{runningPercent}%</span>
                        </div>
-                       <span className="text-xs text-slate-400 font-bold font-mono">Razem: {total}</span>
+                       <span className="text-xs text-slate-400 font-bold font-mono">{t('Admin.totalCount', { count: total })}</span>
                     </div>
 
                     <div className="w-full h-4 bg-slate-800 rounded-full flex overflow-hidden border border-white/5 shadow-inner">
@@ -107,8 +109,8 @@ export default function AdminWidget({ data, stats, isLoading, w = 2, h = 2 }: Ad
                     </div>
 
                     <div className="flex justify-between mt-2 px-1 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                       <span>Działa ({running})</span>
-                       <span>Zatrzymane ({stopped})</span>
+                       <span>{t('Admin.runningCount', { count: running })}</span>
+                       <span>{t('Admin.stoppedCount', { count: stopped })}</span>
                     </div>
                  </div>
                )}
