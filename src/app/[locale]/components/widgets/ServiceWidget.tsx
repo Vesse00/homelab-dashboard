@@ -15,6 +15,7 @@ import HomeAssistantWidget from './templates/HomeAssistantWidget';
 import UptimeKumaWidget from './templates/UptimeKumaWidget';
 import TailscaleWidget from './templates/TailscaleWidget';
 import VaultwardenWidget from './templates/VaultwardenWidget';
+import { useTranslations } from 'next-intl';
 
 interface ServiceWidgetProps {
   style?: React.CSSProperties;
@@ -36,11 +37,13 @@ interface ServiceWidgetProps {
 export default function ServiceWidget(props: ServiceWidgetProps) {
   const { style, className, onMouseDown, onMouseUp, onTouchEnd, id, isEditMode, onRemove, onUpdateData, w, h, data, isLocked, onToggleLock } = props;
 
+  const t = useTranslations('Widgets.ServiceWidget');
+
   if (!data) {
     return (
       <div style={style} className={`${className} bg-red-900/50 border border-red-500 rounded-xl p-4 flex flex-col items-center justify-center`} onMouseDown={onMouseDown} onMouseUp={onMouseUp} onTouchEnd={onTouchEnd}>
-         <span className="text-white font-bold">Błąd wczytywania danych</span>
-         <button onClick={() => onRemove(id)} className="mt-2 text-xs bg-red-600 hover:bg-red-500 text-white px-2 py-1 rounded">Usuń uszkodzony widget</button>
+         <span className="text-white font-bold">{t('errorData')}</span>
+         <button onClick={() => onRemove(id)} className="mt-2 text-xs bg-red-600 hover:bg-red-500 text-white px-2 py-1 rounded">{t('btnRemoveBroken')}</button>
       </div>
     );
   }
@@ -81,7 +84,7 @@ export default function ServiceWidget(props: ServiceWidgetProps) {
         }
       } catch (err) {
         if (isMounted) {
-          setLiveStats({ status: 'error', primaryText: 'Błąd połączenia', secondaryText: 'Sprawdź logi' });
+          setLiveStats({ status: 'error', primaryText: t('errorConnection'), secondaryText: t('checkLogs') });
           setIsLoading(false);
         }
       }
@@ -94,7 +97,7 @@ export default function ServiceWidget(props: ServiceWidgetProps) {
       isMounted = false;
       clearInterval(interval);
     };
-  }, [data.url, data.settings, data.name, data.widgetType]);
+  }, [data.url, data.settings, data.name, data.widgetType, t]);
 
   const renderContent = () => {
     // 1. WALIDACJA: Jeśli publicUrl istnieje i nie jest pusty -> używamy go. W przeciwnym razie bierzemy lokalny url (IP:port).
@@ -190,6 +193,7 @@ export default function ServiceWidget(props: ServiceWidgetProps) {
 
 // Domyślny wygląd z obsługą clickUrl
 function GenericTemplate({ data, stats }: any) {
+  const t = useTranslations('Widgets.ServiceWidget');
   // @ts-ignore
   const IconComponent = LucideIcons[data.icon] || LucideIcons.Box;
   
@@ -254,7 +258,7 @@ function GenericTemplate({ data, stats }: any) {
               ${isError ? 'bg-red-600/50 hover:bg-red-600/70 border border-red-500/50' : (colorMap[data.color] || 'bg-slate-600')}
             `}
           >
-            Otwórz <ExternalLink size={10}/>
+            {t('btnOpen')} <ExternalLink size={10}/>
         </a>
     </div>
   );

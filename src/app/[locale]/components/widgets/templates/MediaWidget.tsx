@@ -1,6 +1,7 @@
 'use client';
 
 import { Play, Clapperboard, ExternalLink, Loader2, PlayCircle, Film, Tv } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface MediaWidgetProps {
   data: any;
@@ -11,6 +12,7 @@ interface MediaWidgetProps {
 }
 
 export default function MediaWidget({ data, stats, isLoading, w = 2, h = 2 }: MediaWidgetProps) {
+  const t = useTranslations('WidgetTemplates');
   const isOnline = stats?.status === 'online';
   const isError = stats?.status === 'error';
   
@@ -49,7 +51,7 @@ export default function MediaWidget({ data, stats, isLoading, w = 2, h = 2 }: Me
 
         <div className="z-10 flex items-center shrink-0 gap-3">
           {isError ? (
-             <span className="text-xs font-bold text-red-500 bg-red-500/10 px-2 py-1 rounded-md border border-red-500/20">Offline</span>
+             <span className="text-xs font-bold text-red-500 bg-red-500/10 px-2 py-1 rounded-md border border-red-500/20">{t('Media.offline')}</span>
           ) : (
              <div className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-lg border border-white/5">
                 {activeStreams > 0 ? (
@@ -57,7 +59,7 @@ export default function MediaWidget({ data, stats, isLoading, w = 2, h = 2 }: Me
                 ) : (
                    <span className="w-2 h-2 rounded-full bg-slate-500"></span>
                 )}
-                <span className="text-sm font-black text-white">{activeStreams} <span className="text-[10px] text-slate-400 font-normal hidden sm:inline">Streamów</span></span>
+                <span className="text-sm font-black text-white">{activeStreams} <span className="text-[10px] text-slate-400 font-normal hidden sm:inline">{t('Media.streams')}</span></span>
              </div>
           )}
           <div className={`text-slate-500 group-hover:${iconColor} transition-colors p-1.5 bg-black/30 rounded-lg border border-white/5`}>
@@ -93,7 +95,7 @@ export default function MediaWidget({ data, stats, isLoading, w = 2, h = 2 }: Me
       <div className="flex-1 flex flex-col justify-end z-10 mt-2">
          {isLoading ? (
             <div className="flex items-center gap-2 text-slate-500 text-xs font-mono h-full justify-center">
-              <Loader2 size={16} className="animate-spin" /> Ładowanie...
+              <Loader2 size={16} className="animate-spin" /> {t('loading')}
             </div>
          ) : (
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 flex flex-col h-full justify-end">
@@ -101,10 +103,10 @@ export default function MediaWidget({ data, stats, isLoading, w = 2, h = 2 }: Me
             {isError && (
               <div className="mt-auto mb-2">
                  <div className="text-2xl font-black text-white tracking-tight leading-none drop-shadow-md">
-                   Brak dostępu
+                   {t('Media.noAccess')}
                  </div>
                  <div className="text-xs text-slate-400 font-mono mt-1">
-                   {stats?.secondaryText || 'Wymagana konfiguracja'}
+                   {stats?.secondaryText || t('Admin.requiresConfig')}
                  </div>
               </div>
             )}
@@ -114,7 +116,7 @@ export default function MediaWidget({ data, stats, isLoading, w = 2, h = 2 }: Me
                   {/* Górny pasek: Aktywne odtwarzanie */}
                   <div className="flex items-center justify-between bg-black/20 p-2.5 rounded-xl border border-white/5 shadow-inner">
                      <span className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1.5">
-                       <PlayCircle size={12} className={colorBase === 'orange' ? 'text-orange-500' : 'text-purple-500'}/> Odtwarzanie
+                       <PlayCircle size={12} className={colorBase === 'orange' ? 'text-orange-500' : 'text-purple-500'}/> {t('Media.playing')}
                      </span>
                      <span className="text-sm font-black text-white font-mono flex items-center gap-2">
                        {activeStreams > 0 && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
@@ -125,15 +127,15 @@ export default function MediaWidget({ data, stats, isLoading, w = 2, h = 2 }: Me
                   {/* Dolny pasek: Statystyki Biblioteki */}
                   <div className="grid grid-cols-3 gap-2">
                      <div className="bg-black/30 border border-white/5 rounded-xl p-2 flex flex-col items-center justify-center text-center">
-                        <span className="text-[9px] text-slate-400 uppercase font-bold flex items-center gap-1 mb-1 truncate w-full justify-center"><Film size={10} className="text-blue-400" /> <span className="hidden sm:inline">Filmy</span></span>
+                        <span className="text-[9px] text-slate-400 uppercase font-bold flex items-center gap-1 mb-1 truncate w-full justify-center"><Film size={10} className="text-blue-400" /> <span className="hidden sm:inline">{t('Media.movies')}</span></span>
                         <span className="text-xs text-white font-mono font-bold">{counts.MovieCount}</span>
                      </div>
                      <div className="bg-black/30 border border-white/5 rounded-xl p-2 flex flex-col items-center justify-center text-center">
-                        <span className="text-[9px] text-slate-400 uppercase font-bold flex items-center gap-1 mb-1 truncate w-full justify-center"><Tv size={10} className="text-emerald-400" /> <span className="hidden sm:inline">Seriale</span></span>
+                        <span className="text-[9px] text-slate-400 uppercase font-bold flex items-center gap-1 mb-1 truncate w-full justify-center"><Tv size={10} className="text-emerald-400" /> <span className="hidden sm:inline">{t('Media.shows')}</span></span>
                         <span className="text-xs text-white font-mono font-bold">{counts.SeriesCount}</span>
                      </div>
                      <div className="bg-black/30 border border-white/5 rounded-xl p-2 flex flex-col items-center justify-center text-center">
-                        <span className="text-[9px] text-slate-400 uppercase font-bold flex items-center gap-1 mb-1 truncate w-full justify-center"><PlayCircle size={10} className="text-purple-400" /> <span className="hidden sm:inline">Odcinki</span></span>
+                        <span className="text-[9px] text-slate-400 uppercase font-bold flex items-center gap-1 mb-1 truncate w-full justify-center"><PlayCircle size={10} className="text-purple-400" /> <span className="hidden sm:inline">{t('Media.episodes')}</span></span>
                         <span className="text-xs text-white font-mono font-bold">{counts.EpisodeCount}</span>
                      </div>
                   </div>

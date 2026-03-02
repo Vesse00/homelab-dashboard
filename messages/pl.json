@@ -23,7 +23,17 @@
     "toastAddedService": "Dodano {name}",
     "toastAddedWidgets": "Dodano {count} widgetów",
     "toastSettingsSaved": "Zapisano ustawienia widgetu",
-    "toastLockToggled": "Zablokowano pozycję kafelka"
+    "toastLockToggled": "Zablokowano pozycję kafelka",
+    "defaultTabMain": "Główny",
+    "toastSaveError": "Nie udało się zapisać układu zakładek.",
+    "deleteTabConfirm": "Czy na pewno chcesz usunąć tę zakładkę i wszystkie jej widgety?",
+    "btnCancel": "Anuluj",
+    "btnDelete": "Usuń",
+    "btnCreate": "Utwórz",
+    "toastTabDeleted": "Zakładka usunięta",
+    "newTabTitle": "Nowa przestrzeń",
+    "newTabDesc": "Wpisz nazwę dla swojej nowej zakładki z widgetami.",
+    "newTabPlaceholder": "Np. Multimedia, Serwery..."
   },
 "ApiErrors": {
   "REGISTRATION_DISABLED": "Rejestracja jest obecnie zamknięta przez administratora.",
@@ -141,6 +151,227 @@
     "pageAdmin": "Panel Admina",
     "pageContainers": "Wszystkie Kontenery",
     "actionGo": "Przejdź",
-    "actionHighlight": "Podświetl"
+    "actionHighlight": "Podświetl",
+    "widgetDockerStats": "Docker Stats",
+    "widgetDiskStats": "Status Dysków",
+    "widgetServerStats": "Statystyki Serwera",
+    "widgetWeather": "Pogoda"
+  },
+  "EditWidgetModal": {
+    "title": "Konfiguracja Kafelka",
+    "displayName": "Nazwa wyświetlana",
+    "internalUrl": "Internal URL (Dla statystyk z serwera)",
+    "publicUrl": "Publiczny URL (Opcjonalnie)",
+    "publicUrlPlaceholder": "np. https://vault.twojadomena.pl",
+    "publicUrlHint": "Ten adres zostanie otwarty po kliknięciu \"Otwórz\".",
+    "statusPageSlug": "Slug Strony Statusu",
+    "statusPagePlaceholder": "np. default",
+    "tailscaleApi": "Tailscale API",
+    "tailnet": "Tailnet (Organizacja)",
+    "tailnetPlaceholder": "np. user@gmail.com",
+    "apiKey": "API Key",
+    "apiKeyPlaceholder": "tskey-api-...",
+    "auth": "Autoryzacja (Dla statystyk)",
+    "authNone": "Brak (Publiczne API)",
+    "authApiKey": "Token / API Key",
+    "authBasic": "Login i Hasło (Basic Auth)",
+    "login": "Login",
+    "password": "Hasło",
+    "btnCancel": "Anuluj",
+    "btnSave": "Zapisz"
+  },
+  "Settings": {
+    "title": "Ustawienia Konta",
+    "subtitle": "Dostosuj swoje dane i zabezpiecz konto.",
+    "tabProfile": "Profil",
+    "tabSecurity": "Bezpieczeństwo",
+    "profileInfo": "Informacje o profilu",
+    "username": "Nazwa użytkownika",
+    "email": "Adres E-mail",
+    "btnSaveProfile": "Zapisz zmiany",
+    "toastProfileUpdated": "Profil zaktualizowany!",
+    "toastError": "Wystąpił błąd",
+    "toastConnectionError": "Błąd połączenia z serwerem",
+    "changePassword": "Zmiana hasła",
+    "currentPassword": "Obecne hasło",
+    "newPassword": "Nowe hasło",
+    "btnUpdatePassword": "Zaktualizuj hasło"
+  },
+  "AdminPanel": {
+    "title": "Panel Administratora",
+    "subtitle": "Zarządzaj użytkownikami i uprawnieniami w systemie.",
+    "accessDenied": "Brak Dostępu",
+    "accessDeniedDesc": "Ta sekcja jest zarezerwowana wyłącznie dla administratorów systemu.",
+    "backToDashboard": "Powrót do Dashboardu",
+    "loading": "Ładowanie...",
+    "loadingUsers": "Wczytywanie użytkowników...",
+    "registrationOpened": "Rejestracja otwarta!",
+    "registrationClosed": "Rejestracja zamknięta!",
+    "registrationOpenBtn": "Rejestracja Otwarta",
+    "registrationClosedBtn": "Rejestracja Zamknięta",
+    "errorSettings": "Nie udało się zmienić ustawień",
+    "errorSelfRole": "Nie możesz zmienić uprawnień samemu sobie!",
+    "roleChanged": "Zmieniono rolę na {role}",
+    "errorRoleChange": "Błąd zmiany uprawnień",
+    "userDeleted": "Usunięto użytkownika {name}",
+    "errorDeleteUser": "Błąd usuwania użytkownika",
+    "modalDeleteTitle": "Usunąć użytkownika?",
+    "modalDeleteDesc1": "Czy na pewno chcesz bezpowrotnie usunąć konto ",
+    "modalDeleteDesc2": "? Tej operacji nie można cofnąć.",
+    "btnCancel": "Anuluj",
+    "btnDelete": "Usuń",
+    "tableUser": "Użytkownik",
+    "tableRole": "Rola",
+    "tableJoined": "Dołączył",
+    "tableActions": "Akcje",
+    "badgeYou": "Ty",
+    "noActions": "Brak akcji",
+    "titleRevokeAdmin": "Zabierz uprawnienia Admina",
+    "titleGrantAdmin": "Nadaj uprawnienia Admina",
+    "titleDeleteUser": "Usuń użytkownika"
+  },
+  "Widgets": {
+    "ContainerCard": {
+      "online": "Działa",
+      "offline": "Zatrzymany",
+      "status": "Status",
+      "uptime": "UPTIME"
+    },
+    "ServiceWidget": {
+      "errorData": "Błąd wczytywania danych",
+      "btnRemoveBroken": "Usuń uszkodzony widget",
+      "errorConnection": "Błąd połączenia",
+      "checkLogs": "Sprawdź logi",
+      "btnOpen": "Otwórz"
+    },
+    "ServerStats": {
+      "title": "Zasoby Serwera",
+      "cpuLoad": "Obciążenie CPU",
+      "ramMemory": "Pamięć RAM"
+    },
+    "Disk": {
+      "title": "Dyski Serwera",
+      "storage": "Przestrzeń",
+      "noDisks": "Brak widocznych dysków",
+      "expandMore": "Rozwiń, by zobaczyć więcej ({count})"
+    },
+    "Weather": {
+      "condSunny": "Słonecznie",
+      "condCloudy": "Zachmurzenie",
+      "condOvercast": "Pochmurno",
+      "condRain": "Opady",
+      "dayTomorrow": "Jutro",
+      "dayIn2Days": "Pojutrze",
+      "dayIn3Days": "Za 3 dni",
+      "location": "Lokalizacja",
+      "cityLabel": "Miasto / Miejscowość",
+      "cityPlaceholder": "np. Warszawa",
+      "btnSave": "Zapisz",
+      "title": "Pogoda",
+      "loading": "Ładowanie...",
+      "fetching": "Pobieranie danych...",
+      "forecastTitle": "Prognoza (3 dni)"
+    },
+    "Docker": {
+      "title": "Docker",
+      "active": "Aktywne",
+      "uptime": "Uptime",
+      "running": "Działa",
+      "stopped": "Zatrzymane",
+      "btnManage": "Zarządzaj"
+    }
+  },
+  "Containers": {
+    "title": "Twoje Kontenery",
+    "subtitle": "Zarządzaj i monitoruj {count} instancji",
+    "searchPlaceholder": "Szukaj kontenera...",
+    "loading": "Ładowanie listy kontenerów...",
+    "colName": "Nazwa / ID",
+    "colStatus": "Status",
+    "colImage": "Obraz",
+    "colUptime": "Uptime",
+    "colActions": "Akcje",
+    "noContainers": "Nie znaleziono kontenerów pasujących do wyszukiwania.",
+    "detailsTitle": "Szczegóły Kontenera",
+    "btnStart": "Start",
+    "btnStop": "Stop",
+    "btnRestart": "Restart",
+    "previewMode": "Tryb podglądu",
+    "loadingData": "Ładowanie danych...",
+    "cpuUsage": "Użycie CPU",
+    "cpuDesc": "Ostatnie 20 pomiarów",
+    "ramUsage": "Użycie RAM",
+    "ramDesc": "W megabajtach (MB)",
+    "actionError": "Błąd wykonania akcji"
+  },
+"WidgetTemplates": {
+    "loading": "Ładowanie...",
+    "error": "Błąd",
+    "ping": "Ping",
+    "total": "Razem",
+    "noData": "Brak danych",
+    "offline": "Offline",
+    "noConnection": "Brak połączenia",
+    "Admin": {
+      "requiresConfig": "Wymagana konfiguracja",
+      "envStatus": "Stan Środowiska",
+      "totalCount": "Razem: {count}",
+      "runningCount": "Działa ({count})",
+      "stoppedCount": "Zatrzymane ({count})"
+    },
+    "HomeAssistant": {
+      "on": "Wł.",
+      "devices": "Urządzeń",
+      "turnedOn": "Włączone",
+      "turnedOff": "Wyłączone",
+      "noResponse": "Brak odp."
+    },
+    "Media": {
+      "offline": "Offline",
+      "noAccess": "Brak dostępu",
+      "playing": "Odtwarzanie",
+      "streams": "Streamów",
+      "movies": "Filmy",
+      "shows": "Seriale",
+      "episodes": "Odcinki"
+    },
+    "Minecraft": {
+      "online": "Online",
+      "ram": "RAM:"
+    },
+    "Pihole": {
+      "queries": "Zapytania",
+      "blocks": "Bloki",
+      "allowed": "Przepuszczone",
+      "blocked": "Zablokowane"
+    },
+    "Proxy": {
+      "hosts": "Hosty",
+      "hostsDivision": "Podział Hostów",
+      "activeCount": "Aktywne: {count}"
+    },
+    "Tailscale": {
+      "nodes": "Węzły",
+      "nodesLower": "węzłów",
+      "devicesInNetwork": "Urządzenia w sieci",
+      "connected": "Połączono"
+    },
+    "UptimeKuma": {
+      "status": "Stan",
+      "connected": "Połączono",
+      "servicesOnline": "Usługi Online",
+      "expandToSeeMore": "Powiększ aby zobaczyć więcej (+{count})",
+      "noMonitors": "Brak monitorów.",
+      "addMonitorsHelp": "Dodaj monitory do grupy na stronie statusu w panelu Uptime Kuma.",
+      "checkUrl": "Sprawdź adres URL"
+    },
+    "Vaultwarden": {
+      "safe": "Safe",
+      "db": "Baza",
+      "encrypted": "Zaszyfrowana",
+      "api": "API",
+      "online": "Online",
+      "unavailable": "Niedostępny"
+    }
   }
 }

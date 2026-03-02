@@ -12,6 +12,7 @@ import {
   LayoutGrid,
   ArrowLeft
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface Container {
   id: string;
@@ -25,6 +26,7 @@ interface Container {
 
 export default function ContainersPage() {
   const router = useRouter();
+  const t = useTranslations('Containers');
   const [containers, setContainers] = useState<Container[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -73,10 +75,10 @@ export default function ContainersPage() {
           <div>
             <h1 className="text-3xl font-bold text-white flex items-center gap-3">
               <LayoutGrid className="text-blue-500" />
-              Twoje Kontenery
+              {t('title')}
             </h1>
             <p className="text-slate-400 mt-1">
-              Zarządzaj i monitoruj {containers.length} instancji
+              {t('subtitle', { count: containers.length })}
             </p>
           </div>
         </div>
@@ -86,7 +88,7 @@ export default function ContainersPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
           <input 
             type="text" 
-            placeholder="Szukaj kontenera..." 
+            placeholder={t('searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 pr-4 py-2 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-blue-500 text-slate-200 w-full md:w-64 transition-colors"
@@ -97,7 +99,7 @@ export default function ContainersPage() {
       {/* Lista / Tabela */}
       {loading ? (
         <div className="text-center py-20 animate-pulse text-slate-500">
-          Ładowanie listy kontenerów...
+          {t('loading')}
         </div>
       ) : (
         <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
@@ -105,11 +107,11 @@ export default function ContainersPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-900/80 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800">
-                  <th className="p-4 font-medium">Nazwa / ID</th>
-                  <th className="p-4 font-medium">Status</th>
-                  <th className="p-4 font-medium">Obraz</th>
-                  <th className="p-4 font-medium">Uptime</th>
-                  <th className="p-4 font-medium text-right">Akcje</th>
+                  <th className="p-4 font-medium">{t('colName')}</th>
+                  <th className="p-4 font-medium">{t('colStatus')}</th>
+                  <th className="p-4 font-medium">{t('colImage')}</th>
+                  <th className="p-4 font-medium">{t('colUptime')}</th>
+                  <th className="p-4 font-medium text-right">{t('colActions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800">
@@ -182,7 +184,7 @@ export default function ContainersPage() {
 
           {filteredContainers.length === 0 && (
             <div className="p-8 text-center text-slate-500">
-              Nie znaleziono kontenerów pasujących do wyszukiwania.
+              {t('noContainers')}
             </div>
           )}
         </div>

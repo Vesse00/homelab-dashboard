@@ -1,6 +1,7 @@
 'use client';
 
 import { Network, ShieldCheck, Loader2, ExternalLink, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface TailscaleWidgetProps {
   data: any;
@@ -11,6 +12,7 @@ interface TailscaleWidgetProps {
 }
 
 export default function TailscaleWidget({ data, stats, isLoading, w = 2, h = 2 }: TailscaleWidgetProps) {
+  const t = useTranslations('WidgetTemplates');
   const isOnline = stats?.status === 'online';
   const isError = stats?.status === 'error';
   const isExpanded = w >= 3 && h >= 3;
@@ -44,15 +46,15 @@ export default function TailscaleWidget({ data, stats, isLoading, w = 2, h = 2 }
           </div>
           <div>
             <span className="font-bold text-slate-200 text-sm block leading-tight">{data.name || 'Tailscale'}</span>
-            <span className={`text-[10px] font-mono ${isError ? 'text-red-400' : 'text-blue-400'}`}>{isError ? 'Offline' : 'Sieć Mesh'}</span>
+            <span className={`text-[10px] font-mono ${isError ? 'text-red-400' : 'text-blue-400'}`}>{isError ? 'Offline' : 'Mesh VPN'}</span>
           </div>
         </div>
         <div className="z-10 flex items-center gap-2">
           {isError ? (
-             <span className="text-xs font-bold text-red-500 bg-red-500/10 px-2 py-1 rounded-md border border-red-500/20">Błąd</span>
+             <span className="text-xs font-bold text-red-500 bg-red-500/10 px-2 py-1 rounded-md border border-red-500/20">{t('error')}</span>
           ) : (
              <div className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-lg border border-white/5">
-                <span className="text-[10px] text-slate-400 uppercase font-bold">Węzły</span>
+                <span className="text-[10px] text-slate-400 uppercase font-bold">{t('Tailscale.nodes')}</span>
                 <span className="text-sm font-black text-white">{devicesCount}</span>
              </div>
           )}
@@ -88,7 +90,7 @@ export default function TailscaleWidget({ data, stats, isLoading, w = 2, h = 2 }
       <div className="flex-1 flex flex-col justify-end z-10 mt-2">
         {isLoading ? (
           <div className="flex items-center gap-2 text-slate-500 text-xs font-mono h-full justify-center">
-            <Loader2 size={16} className="animate-spin" /> Ładowanie...
+            <Loader2 size={16} className="animate-spin" /> {t('loading')}
           </div>
         ) : (
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 flex flex-col h-full justify-end">
@@ -96,10 +98,10 @@ export default function TailscaleWidget({ data, stats, isLoading, w = 2, h = 2 }
             {isError && (
               <div className="mt-auto mb-2">
                  <div className="text-2xl font-black text-white tracking-tight leading-none drop-shadow-md">
-                   {stats?.primaryText || 'Brak danych'}
+                   {stats?.primaryText || t('noData')}
                  </div>
                  <div className="text-xs text-slate-400 font-mono mt-1">
-                   {stats?.secondaryText || 'Wymagana konfiguracja'}
+                   {stats?.secondaryText || t('Admin.requiresConfig')}
                  </div>
               </div>
             )}
@@ -107,10 +109,10 @@ export default function TailscaleWidget({ data, stats, isLoading, w = 2, h = 2 }
             {isOnline && !isExpanded && (
               <div className="flex justify-between items-center bg-black/20 p-2.5 rounded-xl border border-white/5 mt-auto shadow-inner">
                  <span className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1.5">
-                   <ShieldCheck size={12} className="text-blue-500"/> {stats?.primaryText || 'Połączono'}
+                   <ShieldCheck size={12} className="text-blue-500"/> {stats?.primaryText || t('Tailscale.connected')}
                  </span>
                  <span className="text-xs font-black text-white font-mono">
-                   {devicesCount > 0 ? devicesCount : '-' } <span className="text-slate-500">węzłów</span>
+                   {devicesCount > 0 ? devicesCount : '-' } <span className="text-slate-500">{t('Tailscale.nodesLower')}</span>
                  </span>
               </div>
             )}
@@ -118,7 +120,7 @@ export default function TailscaleWidget({ data, stats, isLoading, w = 2, h = 2 }
             {isOnline && isExpanded && (
                <div className="mt-4 flex-1 flex flex-col justify-end gap-3">
                   <div className="flex justify-between items-center px-2">
-                     <span className="text-xs text-slate-400 uppercase font-bold">Urządzenia w sieci</span>
+                     <span className="text-xs text-slate-400 uppercase font-bold">{t('Tailscale.devicesInNetwork')}</span>
                      <span className="text-2xl font-black text-white">{devicesCount}</span>
                   </div>
                </div>

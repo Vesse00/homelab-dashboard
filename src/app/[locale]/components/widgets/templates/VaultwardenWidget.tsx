@@ -1,6 +1,7 @@
 'use client';
 
 import { Key, ShieldCheck, Loader2, ExternalLink, AlertTriangle, Lock } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface VaultwardenWidgetProps {
   data: any;
@@ -11,6 +12,7 @@ interface VaultwardenWidgetProps {
 }
 
 export default function VaultwardenWidget({ data, stats, isLoading, w = 2, h = 2 }: VaultwardenWidgetProps) {
+  const t = useTranslations('WidgetTemplates');
   const isOnline = stats?.status === 'online';
   const isError = stats?.status === 'error';
 
@@ -46,7 +48,7 @@ export default function VaultwardenWidget({ data, stats, isLoading, w = 2, h = 2
           </div>
           <div className="min-w-0 flex-1">
             <span className="font-bold text-slate-200 text-sm block leading-tight truncate">{data.name || 'Vaultwarden'}</span>
-            <span className={`text-[10px] font-mono block truncate ${isError ? 'text-red-400' : 'text-sky-500'}`}>{isError ? 'Błąd' : 'Zaszyfrowany'}</span>
+            <span className={`text-[10px] font-mono block truncate ${isError ? 'text-red-400' : 'text-sky-500'}`}>{isError ? t('error') : t('Vaultwarden.encrypted')}</span>
           </div>
         </div>
 
@@ -57,7 +59,7 @@ export default function VaultwardenWidget({ data, stats, isLoading, w = 2, h = 2
           ) : (
              <span className="text-xs font-bold text-sky-400 bg-sky-500/10 px-2 py-1 rounded-md border border-sky-500/20 flex items-center gap-1 mr-2">
               <Lock size={12}/> <br/>
-              <span className="hidden sm:inline">Safe</span>
+              <span className="hidden sm:inline">{t('Vaultwarden.safe')}</span>
               </span>
           )}
           <div className="text-slate-500 group-hover:text-sky-400 transition-colors p-1.5 bg-black/30 rounded-lg border border-white/5">
@@ -95,7 +97,7 @@ export default function VaultwardenWidget({ data, stats, isLoading, w = 2, h = 2
       <div className="flex-1 flex flex-col justify-end z-10 mt-2">
         {isLoading ? (
           <div className="flex items-center gap-2 text-slate-500 text-xs font-mono h-full justify-center">
-            <Loader2 size={16} className="animate-spin" /> Ładowanie...
+            <Loader2 size={16} className="animate-spin" /> {t('loading')}
           </div>
         ) : (
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 flex flex-col h-full justify-end">
@@ -104,10 +106,10 @@ export default function VaultwardenWidget({ data, stats, isLoading, w = 2, h = 2
             {isError && (
               <div className="mt-auto mb-2">
                  <div className="text-2xl font-black text-white tracking-tight leading-none drop-shadow-md">
-                   {stats?.primaryText || 'Brak dostępu'}
+                   {stats?.primaryText || t('error')}
                  </div>
                  <div className="text-xs text-slate-400 font-mono mt-1">
-                   {stats?.secondaryText || 'Sejf niedostępny'}
+                   {stats?.secondaryText || t('Vaultwarden.unavailable')}
                  </div>
               </div>
             )}
@@ -118,11 +120,11 @@ export default function VaultwardenWidget({ data, stats, isLoading, w = 2, h = 2
                  <div className="grid grid-cols-2 gap-2 mt-auto">
                     <div className="bg-black/30 border border-white/5 rounded-xl p-2 flex flex-col items-center justify-center text-center">
                        <span className="text-[9px] text-slate-400 uppercase font-bold flex items-center gap-1 mb-1 truncate w-full justify-center"><Lock size={10} className="text-sky-400" /> Baza</span>
-                       <span className="text-[11px] sm:text-xs text-white font-mono font-bold truncate w-full">Zaszyfrowana</span>
+                       <span className="text-[11px] sm:text-xs text-white font-mono font-bold truncate w-full">{t('Vaultwarden.encrypted')}</span>
                     </div>
                     <div className="bg-black/30 border border-white/5 rounded-xl p-2 flex flex-col items-center justify-center text-center">
                        <span className="text-[9px] text-slate-400 uppercase font-bold flex items-center gap-1 mb-1 truncate w-full justify-center"><ShieldCheck size={10} className="text-emerald-400" /> API</span>
-                       <span className="text-[11px] sm:text-xs text-white font-mono font-bold truncate w-full">Online</span>
+                       <span className="text-[11px] sm:text-xs text-white font-mono font-bold truncate w-full">{t('Vaultwarden.online')}</span>
                     </div>
                  </div>
               </div>

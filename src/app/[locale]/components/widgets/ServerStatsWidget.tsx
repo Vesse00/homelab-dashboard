@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { GripHorizontal, X, ArrowDownRight, Cpu, MemoryStick, ThermometerSun, Activity, Lock, Unlock } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface ServerStatsWidgetProps {
   style?: React.CSSProperties;
@@ -21,6 +22,7 @@ interface ServerStatsWidgetProps {
 export default function ServerStatsWidget({
   style, className, onMouseDown, onMouseUp, onTouchEnd, id, isEditMode, onRemove, w = 2, h = 2, isLocked, onToggleLock
 }: ServerStatsWidgetProps) {
+  const t = useTranslations('Widgets.ServerStats');
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -74,7 +76,7 @@ export default function ServerStatsWidget({
              {isLocked ? <Lock size={18} /> : <Unlock size={18} />}
            </div>
            <GripHorizontal className="text-blue-400 mb-2" size={28} />
-           <span className="text-white font-bold tracking-wide">Zasoby Serwera</span>
+           <span className="text-white font-bold tracking-wide">{t('title')}</span>
            <div className="absolute bottom-2 right-2 text-blue-400/80 pointer-events-none flex items-center justify-center p-1 bg-blue-500/20 rounded-tl-xl rounded-br-lg">
              <ArrowDownRight size={16} />
            </div>
@@ -88,7 +90,7 @@ export default function ServerStatsWidget({
              <Cpu size={18} />
           </div>
           <div>
-             <span className="text-sm font-bold text-slate-200 block leading-tight">Zasoby Serwera</span>
+             <span className="text-sm font-bold text-slate-200 block leading-tight">{t('title')}</span>
              <span className="text-[10px] text-slate-500 font-mono">host-metrics</span>
           </div>
         </div>
@@ -144,7 +146,7 @@ export default function ServerStatsWidget({
                  
                  <div>
                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
-                     <span className="flex items-center gap-1"><Cpu size={12} className={getCpuColor(stats.cpu)} /> Obciążenie CPU</span>
+                     <span className="flex items-center gap-1"><Cpu size={12} className={getCpuColor(stats.cpu)} /> {t('cpuLoad')}</span>
                      <span className="text-white">{stats.cpu}%</span>
                    </div>
                    <div className="w-full bg-black/40 h-2.5 rounded-full overflow-hidden border border-white/5 shadow-inner">
@@ -154,7 +156,7 @@ export default function ServerStatsWidget({
 
                  <div>
                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
-                     <span className="flex items-center gap-1"><MemoryStick size={12} className={getRamColor(stats.ram)} /> Pamięć RAM</span>
+                     <span className="flex items-center gap-1"><MemoryStick size={12} className={getRamColor(stats.ram)} /> {t('ramMemory')}</span>
                      <span className="text-white">{stats.ram}%</span>
                    </div>
                    <div className="w-full bg-black/40 h-2.5 rounded-full overflow-hidden border border-white/5 shadow-inner">

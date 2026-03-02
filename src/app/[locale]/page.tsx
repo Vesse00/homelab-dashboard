@@ -11,7 +11,7 @@ import ContainerCard from '@/app/[locale]/components/ContainerCard';
 import DiskWidget from '@/app/[locale]/components/widgets/DiskWidget';
 import WeatherWidget from '@/app/[locale]/components/widgets/WeatherWidget';
 import ServiceDiscoveryModal from '@/app/[locale]/components/ServiceDiscoveryModal';
-import { toast } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import ServiceWidget from '@/app/[locale]/components/widgets/ServiceWidget';
 import ServerStatsWidget from '@/app/[locale]/components/widgets/ServerStatsWidget';
 import { useLocale, useTranslations } from 'next-intl';
@@ -74,7 +74,7 @@ export default function Dashboard() {
   // Stan widgetów (pobieramy z localStorage lub domyślny)
   // Domyślna struktura zakładek dla nowego użytkownika
   const DEFAULT_TABS: TabData[] = [
-    { id: 'main', name: 'Główny', isDeletable: false, widgets: DEFAULT_LAYOUT }
+    { id: 'main', name: t('defaultTabMain'), isDeletable: false, widgets: DEFAULT_LAYOUT }
   ];
 
   const [tabs, setTabs] = useState<TabData[]>(DEFAULT_TABS);
@@ -114,7 +114,7 @@ export default function Dashboard() {
           // Sprawdzamy czy to stary format (bez 'widgets'), czy nowy (z zakładkami)
           if (Array.isArray(layoutData.layout) && layoutData.layout.length > 0 && !layoutData.layout[0].widgets) {
             setTabs([
-              { id: 'main', name: 'Główny', isDeletable: false, widgets: layoutData.layout }
+              { id: 'main', name: t('defaultTabMain'), isDeletable: false, widgets: layoutData.layout }
             ]);
           } else if (Array.isArray(layoutData.layout) && layoutData.layout[0].widgets) {
             setTabs(layoutData.layout);
@@ -306,7 +306,7 @@ const handleScan = async () => {
       if (!res.ok) throw new Error("Błąd zapisu");
     } catch (err) {
       console.error(err);
-      toast.error('Nie udało się zapisać układu zakładek.');
+      toast.error(t('toastSaveError'));
     }
   };
 
@@ -384,10 +384,10 @@ const handleScan = async () => {
     e.stopPropagation(); 
     
     // ZMIANA: Używamy toast.custom(), co daje nam 100% władzy nad wyglądem
-    toast.custom((t) => (
+    toast.custom((toastItem) => (
       <div 
         className={`
-          ${t.visible ? 'animate-enter opacity-100 scale-100' : 'animate-leave opacity-0 scale-95'}
+          ${toastItem.visible ? 'animate-enter opacity-100 scale-100' : 'animate-leave opacity-0 scale-95'}
           transition-all duration-300 ease-out pointer-events-auto
           max-w-sm w-full p-5 mt-4 rounded-2xl flex flex-col gap-3
           bg-slate-900/70 backdrop-blur-xl border border-red-500/40 
@@ -395,19 +395,19 @@ const handleScan = async () => {
         `}
       >
         <span className="text-sm font-semibold text-white text-center">
-          Czy na pewno chcesz usunąć tę zakładkę i wszystkie jej widgety?
+          {t('deleteTabConfirm')}
         </span>
         
         <div className="flex justify-center gap-3 mt-2">
           <button
-            onClick={() => toast.dismiss(t.id)}
+            onClick={() => toast.dismiss(toastItem.id)}
             className="px-4 py-2 text-xs font-semibold bg-slate-800/80 hover:bg-slate-700 text-slate-200 rounded-xl transition-colors border border-slate-700/50"
           >
-            Anuluj
+            {t('btnCancel')}
           </button>
           <button
             onClick={() => {
-              toast.dismiss(t.id);
+              toast.dismiss(toastItem.id);
               
               const updatedTabs = tabs.filter(tab => tab.id !== tabIdToDelete);
               setTabs(updatedTabs);
@@ -422,7 +422,7 @@ const handleScan = async () => {
                 body: JSON.stringify({ layout: updatedTabs })
               }).catch(err => console.error("Błąd zapisu po usunięciu zakładki", err));
               
-              toast.success('Zakładka usunięta');
+              toast.success(t('toastTabDeleted'));
             }}
             className="px-5 py-2 text-xs font-bold bg-red-600/80 hover:bg-red-500 text-white rounded-xl transition-all border border-red-500/50 shadow-lg shadow-red-900/30 active:scale-95"
           >
@@ -585,13 +585,13 @@ const handleScan = async () => {
               {/* Dekoracyjne tło */}
               <div className="absolute -top-10 -right-10 w-32 h-32 bg-sky-500/10 blur-3xl rounded-full" />
               
-              <h3 className="text-xl font-bold text-white mb-2 relative z-10">Nowa przestrzeń</h3>
-              <p className="text-sm text-slate-400 mb-6 relative z-10">Wpisz nazwę dla swojej nowej zakładki z widgetami.</p>
+              <h3 className="text-xl font-bold text-white mb-2 relative z-10">{t('newTabTitle')}</h3>
+              <p className="text-sm text-slate-400 mb-6 relative z-10">{t('newTabDesc')}</p>
               
               <input
                 type="text"
                 autoFocus
-                placeholder="Np. Multimedia, Serwery..."
+                placeholder={t('newTabPlaceholder')}
                 value={newTabName}
                 onChange={(e) => setNewTabName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddTab()}
@@ -603,13 +603,13 @@ const handleScan = async () => {
                   onClick={() => setIsAddTabModalOpen(false)} 
                   className="px-4 py-2 text-sm font-semibold text-slate-400 hover:text-white transition-colors"
                 >
-                  Anuluj
+                  {t('btnCancel')}
                 </button>
                 <button 
                   onClick={handleAddTab} 
                   className="px-6 py-2 text-sm font-bold bg-sky-600 hover:bg-sky-500 text-white rounded-xl shadow-[0_0_15px_rgba(14,165,233,0.3)] transition-all active:scale-95"
                 >
-                  Utwórz
+                  {t('btnCreate')}
                 </button>
               </div>
             </motion.div>

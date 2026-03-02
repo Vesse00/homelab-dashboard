@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { X, GripHorizontal, Activity, Server, ExternalLink, ArrowDownRight, Play, Square, Lock, Unlock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface DockerWidgetProps {
   style?: React.CSSProperties;
@@ -25,6 +26,7 @@ interface DockerWidgetProps {
 export default function DockerWidget({
   style, className, onMouseDown, onMouseUp, onTouchEnd, id, title, isEditMode, onRemove, w = 2, h = 2,isLocked, onToggleLock
 }: DockerWidgetProps) {
+  const t = useTranslations('Widgets.Docker');
   const router = useRouter();
   const [data, setData] = useState({ running: 0, total: 0, uptime: '0.00' });
   const [loading, setLoading] = useState(true);
@@ -75,7 +77,7 @@ export default function DockerWidget({
              {isLocked ? <Lock size={18} /> : <Unlock size={18} />}
            </div>
            <GripHorizontal className="text-blue-400 mb-2 drop-shadow-lg" size={28} />
-           <span className="text-white font-bold tracking-wide">Docker</span>
+           <span className="text-white font-bold tracking-wide">{t('title')}</span>
            <div className="absolute bottom-2 right-2 text-blue-400/80 pointer-events-none flex items-center justify-center p-1 bg-blue-500/20 rounded-tl-xl rounded-br-lg">
              <ArrowDownRight size={16} />
            </div>
@@ -111,13 +113,13 @@ export default function DockerWidget({
                   <div className="text-3xl font-black text-white flex items-baseline gap-1 drop-shadow-md">
                     {data.running} <span className="text-slate-500 text-lg font-bold">/ {data.total}</span>
                   </div>
-                  <p className="text-slate-400 text-[10px] uppercase font-bold tracking-wider mt-0.5">Aktywne</p>
+                  <p className="text-slate-400 text-[10px] uppercase font-bold tracking-wider mt-0.5">{t('active')}</p>
                 </div>
                 <div className="text-right">
                   <div className="text-lg font-mono font-bold text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]">
                     {data.uptime}%
                   </div>
-                  <p className="text-slate-400 text-[10px] uppercase font-bold tracking-wider mt-0.5">Uptime</p>
+                  <p className="text-slate-400 text-[10px] uppercase font-bold tracking-wider mt-0.5">{t('uptime')}</p>
                 </div>
               </div>
             )}
@@ -140,11 +142,11 @@ export default function DockerWidget({
                      </div>
                      <div className="flex flex-col gap-3 flex-1">
                         <div className="bg-black/20 p-2.5 rounded-xl border border-white/5">
-                           <span className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1.5 mb-1"><Play size={10} className="text-emerald-500"/> Działa</span>
+                           <span className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1.5 mb-1"><Play size={10} className="text-emerald-500"/> {t('running')}</span>
                            <span className="text-lg text-white font-mono font-black">{data.running}</span>
                         </div>
                         <div className="bg-black/20 p-2.5 rounded-xl border border-white/5">
-                           <span className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1.5 mb-1"><Square size={10} className="text-slate-500"/> Zatrzymane</span>
+                           <span className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1.5 mb-1"><Square size={10} className="text-slate-500"/> {t('stopped')}</span>
                            <span className="text-lg text-white font-mono font-black">{stopped}</span>
                         </div>
                      </div>
@@ -157,7 +159,7 @@ export default function DockerWidget({
                <button onMouseDown={(e) => e.stopPropagation()} onClick={() => !isEditMode && router.push('/containers')}
                   className={`flex items-center gap-2 text-xs font-bold px-4 py-1.5 rounded-lg border transition-all shadow-lg ${isEditMode ? 'opacity-50 cursor-default border-white/5 text-slate-500 bg-black/20' : 'border-white/10 text-blue-400 hover:text-white hover:bg-blue-600 hover:border-blue-500 bg-blue-500/10 cursor-pointer'}`}
                >
-                 <span>Zarządzaj</span>
+                 <span>{t('btnManage')}</span>
                  <ExternalLink size={14} />
                </button>
             </div>

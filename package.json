@@ -43,5 +43,8 @@
     "prisma": "^5.18.0-integration-fix-config-dir-client.5",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "minimatch": "^9.0.7"
   }
 }
