@@ -43,7 +43,7 @@ export default function ContainerDetailsPage() {
       setTimeout(() => fetchData(), 1000); 
     } catch (err) {
       console.error(err);
-      toast.error(t('controlError'));
+      toast.error(t('actionError'));
     } finally {
       setActionLoading(false);
     }
