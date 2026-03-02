@@ -23,7 +23,17 @@
     "toastAddedService": "Added {name}",
     "toastAddedWidgets": "Added {count} widgets",
     "toastSettingsSaved": "Widget settings saved",
-    "toastLockToggled": "Tile position locked"
+    "toastLockToggled": "Tile position locked",
+    "defaultTabMain": "Main",
+    "toastSaveError": "Failed to save layout.",
+    "deleteTabConfirm": "Are you sure you want to delete this tab and all its widgets?",
+    "btnCancel": "Cancel",
+    "btnDelete": "Delete",
+    "btnCreate": "Create",
+    "toastTabDeleted": "Tab deleted",
+    "newTabTitle": "New Workspace",
+    "newTabDesc": "Enter a name for your new widget tab.",
+    "newTabPlaceholder": "e.g. Media, Servers..."
   },
 "ApiErrors": {
   "REGISTRATION_DISABLED": "Registration is currently closed by the administrator.",
@@ -141,6 +151,10 @@
     "pageAdmin": "Admin Panel",
     "pageContainers": "All Containers",
     "actionGo": "Go to",
-    "actionHighlight": "Highlight"
+    "actionHighlight": "Highlight",
+    "widgetDockerStats": "Docker Stats",
+    "widgetDiskStats": "Disk Status",
+    "widgetServerStats": "Server Stats",
+    "widgetWeather": "Weather"
   }
 }

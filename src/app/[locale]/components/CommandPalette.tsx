@@ -119,10 +119,10 @@ export default function CommandPalette() {
     // 2. Dodajemy WIDGETY (lub doklejamy highlight, jeśli taki kontener już istnieje w mapie)
     widgets.forEach(w => {
       let title = w.type;
-      if (w.type === 'docker_stats') title = 'Docker Stats';
-      if (w.type === 'disk_stats') title = 'Disk Stats';
-      if (w.type === 'server_stats') title = 'Server Stats';
-      if (w.type === 'weather') title = 'Weather';
+      if (w.type === 'docker_stats') title = t('widgetDockerStats');
+      if (w.type === 'disk_stats') title = t('widgetDiskStats');
+      if (w.type === 'server_stats') title = t('widgetServerStats');
+      if (w.type === 'weather') title = t('widgetWeather');
       if (w.type === 'service' && w.data) title = w.data.name; // Np. zmienione przez usera na "Mój AdGuard123"
 
       if (!title || title === 'unknown') return;

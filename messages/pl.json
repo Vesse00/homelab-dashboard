@@ -23,7 +23,17 @@
     "toastAddedService": "Dodano {name}",
     "toastAddedWidgets": "Dodano {count} widgetów",
     "toastSettingsSaved": "Zapisano ustawienia widgetu",
-    "toastLockToggled": "Zablokowano pozycję kafelka"
+    "toastLockToggled": "Zablokowano pozycję kafelka",
+    "defaultTabMain": "Główny",
+    "toastSaveError": "Nie udało się zapisać układu zakładek.",
+    "deleteTabConfirm": "Czy na pewno chcesz usunąć tę zakładkę i wszystkie jej widgety?",
+    "btnCancel": "Anuluj",
+    "btnDelete": "Usuń",
+    "btnCreate": "Utwórz",
+    "toastTabDeleted": "Zakładka usunięta",
+    "newTabTitle": "Nowa przestrzeń",
+    "newTabDesc": "Wpisz nazwę dla swojej nowej zakładki z widgetami.",
+    "newTabPlaceholder": "Np. Multimedia, Serwery..."
   },
 "ApiErrors": {
   "REGISTRATION_DISABLED": "Rejestracja jest obecnie zamknięta przez administratora.",
@@ -141,6 +151,10 @@
     "pageAdmin": "Panel Admina",
     "pageContainers": "Wszystkie Kontenery",
     "actionGo": "Przejdź",
-    "actionHighlight": "Podświetl"
+    "actionHighlight": "Podświetl",
+    "widgetDockerStats": "Docker Stats",
+    "widgetDiskStats": "Status Dysków",
+    "widgetServerStats": "Statystyki Serwera",
+    "widgetWeather": "Pogoda"
   }
 }
