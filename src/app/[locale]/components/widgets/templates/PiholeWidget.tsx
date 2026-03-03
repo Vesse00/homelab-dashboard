@@ -1,6 +1,7 @@
 'use client';
 
 import { Shield, ShieldAlert, ShieldCheck, ExternalLink, Loader2, Activity, Globe, CheckCircle2, Ban } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface PiholeWidgetProps {
   data: any;
@@ -11,6 +12,7 @@ interface PiholeWidgetProps {
 }
 
 export default function PiholeWidget({ data, stats, isLoading, w = 2, h = 2 }: PiholeWidgetProps) {
+   const t = useTranslations('WidgetTemplates');
   const isOnline = stats?.status === 'online';
   const isError = stats?.status === 'error';
   
@@ -64,28 +66,28 @@ export default function PiholeWidget({ data, stats, isLoading, w = 2, h = 2 }: P
       <div className="flex-1 flex flex-col justify-end z-10 mt-2">
          {isLoading ? (
             <div className="flex items-center gap-2 text-slate-500 text-xs font-mono h-full justify-center">
-              <Loader2 size={16} className="animate-spin" /> Ładowanie...
+              <Loader2 size={16} className="animate-spin" /> {t('loading')}
             </div>
          ) : (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 flex flex-col h-full">
                
                <div>
                  <div className="text-2xl font-black text-white tracking-tight leading-none drop-shadow-md">
-                   {stats?.primaryText || 'Brak danych'}
+                   {stats?.primaryText || t('noData')}
                  </div>
                  <div className="text-xs text-slate-400 font-mono mt-1 mb-4">
-                   {stats?.secondaryText || 'Wymagana konfiguracja'}
+                   {stats?.secondaryText || t('Admin.requiresConfig')}
                  </div>
                </div>
 
                {isOnline && !isExpanded && (
                  <div className="grid grid-cols-2 gap-3 mt-auto">
                     <div className="bg-black/30 border border-white/5 rounded-xl p-2.5 flex flex-col">
-                       <span className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1 mb-1"><Globe size={12} className="text-blue-400" /> Zapytania</span>
+                       <span className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1 mb-1"><Globe size={12} className="text-blue-400" /> {t('Pihole.queries')}</span>
                        <span className="text-sm text-white font-mono font-bold">{stats?.queries?.toLocaleString()}</span>
                     </div>
                     <div className="bg-black/30 border border-white/5 rounded-xl p-2.5 flex flex-col">
-                       <span className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1 mb-1"><Activity size={12} className="text-emerald-400" /> Ping</span>
+                       <span className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1 mb-1"><Activity size={12} className="text-emerald-400" /> {t('ping')}</span>
                        <span className="text-sm text-white font-mono font-bold">{stats?.processingTime || 'N/A'} ms</span>
                     </div>
                  </div>
@@ -102,7 +104,7 @@ export default function PiholeWidget({ data, stats, isLoading, w = 2, h = 2 }: P
                        <div className="relative w-28 h-28 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(0,0,0,0.5)]" style={{ background: chartGradient }}>
                           {/* Wewnętrzne koło (tworzy dziurę w pączku) */}
                           <div className="w-20 h-20 bg-slate-900 rounded-full flex flex-col items-center justify-center shadow-inner">
-                             <span className="text-xs text-slate-400 font-bold">Bloki</span>
+                             <span className="text-xs text-slate-400 font-bold">{t('Pihole.blocks')}</span>
                              <span className="text-lg font-black text-white">{blockedPercent}%</span>
                           </div>
                        </div>
@@ -110,11 +112,11 @@ export default function PiholeWidget({ data, stats, isLoading, w = 2, h = 2 }: P
                        {/* PRAWA STRONA: Legenda */}
                        <div className="flex flex-col gap-3 flex-1">
                           <div className="bg-black/20 p-2 rounded-lg border border-white/5">
-                             <span className="text-[9px] text-slate-400 uppercase font-bold flex items-center gap-1 mb-0.5"><CheckCircle2 size={10} className="text-emerald-500"/> Przepuszczone</span>
+                             <span className="text-[9px] text-slate-400 uppercase font-bold flex items-center gap-1 mb-0.5"><CheckCircle2 size={10} className="text-emerald-500"/> {t('Pihole.allowed')}</span>
                              <span className="text-sm text-white font-mono font-bold">{allowedCount.toLocaleString()}</span>
                           </div>
                           <div className="bg-black/20 p-2 rounded-lg border border-white/5">
-                             <span className="text-[9px] text-slate-400 uppercase font-bold flex items-center gap-1 mb-0.5"><Ban size={10} className="text-red-500"/> Zablokowane</span>
+                             <span className="text-[9px] text-slate-400 uppercase font-bold flex items-center gap-1 mb-0.5"><Ban size={10} className="text-red-500"/> {t('Pihole.blocked')}</span>
                              <span className="text-sm text-white font-mono font-bold">{blockedCount.toLocaleString()}</span>
                           </div>
                        </div>

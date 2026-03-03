@@ -39,32 +39,39 @@ export default function ServiceDiscoveryModal({ isOpen, onClose, onImport, initi
   const [services, setServices] = useState<DiscoveredService[]>([]);
   const t = useTranslations('ServiceDiscovery');
 
-  useEffect(() => {
+useEffect(() => {
     if (isOpen && initialServices.length > 0) {
-      const mapped = initialServices.map((s: any, idx: number) => {
-        let ip = 'localhost';
-        let port = 80;
+      setServices(prev => {
+        // Jeśli mamy już usługi w stanie i ich liczba się zgadza, 
+        // to znaczy, że użytkownik mógł już coś edytować. NIE NADPISUJEMY!
+        if (prev.length > 0 && prev.length === initialServices.length) {
+          return prev;
+        }
 
-        try {
-          const urlObj = new URL(s.url);
-          ip = urlObj.hostname;
-          port = parseInt(urlObj.port) || 80;
-        } catch (e) {}
+        // W przeciwnym razie ładujemy nowe dane (pierwsze otwarcie lub nowe skanowanie)
+        return initialServices.map((s: any, idx: number) => {
+          let ip = 'localhost';
+          let port = 80;
 
-        return {
-          id: `scan-${idx}-${Date.now()}`,
-          name: s.name,
-          icon: s.icon,
-          ip: ip,
-          port: port,
-          color: s.color,
-          selected: true,
-          widgetType: s.widgetType,
-          containerId: s.containerId
-        };
+          try {
+            const urlObj = new URL(s.url);
+            ip = urlObj.hostname;
+            port = parseInt(urlObj.port) || 80;
+          } catch (e) {}
+
+          return {
+            id: `scan-${idx}-${Date.now()}`,
+            name: s.name,
+            icon: s.icon,
+            ip: ip,
+            port: port,
+            color: s.color,
+            selected: true,
+            widgetType: s.widgetType,
+            containerId: s.containerId
+          };
+        });
       });
-      // @ts-ignore
-      setServices(mapped);
     }
   }, [isOpen, initialServices]);
 
