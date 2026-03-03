@@ -103,44 +103,52 @@ export default function Dashboard() {
     return `widget-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   };
 
-  // Zapisywanie i Pobieranie Layoutu z API
-// 1. Ładowanie danych startowych (Layout + Usługi)
-  useEffect(() => {
+  // Ładowanie danych startowych (układ, tło, dostępne usługi)
+useEffect(() => {
     const loadInitialData = async () => {
-      // Wykonujemy tylko, jeśli mamy sesję
       if (!session?.user) return;
 
       try {
-        // --- A. POBIERANIE UKŁADU (Z MIGRACJĄ ZAKŁADEK) ---
         const layoutRes = await fetch('/api/user/layout');
-        const layoutData = await layoutRes.json();
+        
+        // ZABEZPIECZENIE: Sprawdzamy czy odpowiedź jest OK
+        if (layoutRes.ok) {
+          const layoutData = await layoutRes.json();
 
-        if (layoutData.layout) {
-          // Sprawdzamy czy to stary format (bez 'widgets'), czy nowy (z zakładkami)
-          if (Array.isArray(layoutData.layout) && layoutData.layout.length > 0 && !layoutData.layout[0].widgets) {
-            setTabs([
-              { id: 'main', name: t('defaultTabMain'), isDeletable: false, widgets: layoutData.layout }
-            ]);
-          } else if (Array.isArray(layoutData.layout) && layoutData.layout[0].widgets) {
-            setTabs(layoutData.layout);
+          // ZABEZPIECZENIE: Sprawdzamy czy layoutData.layout w ogóle istnieje
+          if (layoutData && layoutData.layout) {
+            
+            // Przypadek 1: Stary format (płaska tablica widgetów) -> Konwertujemy na zakładki
+            if (Array.isArray(layoutData.layout) && layoutData.layout.length > 0 && !layoutData.layout[0].widgets) {
+              setTabs([
+                { id: 'main', name: t('defaultTabMain'), isDeletable: false, widgets: layoutData.layout }
+              ]);
+            } 
+            // Przypadek 2: Nowy format (tablica zakładek) -> Sprawdzamy czy pierwszy element istnieje
+            else if (Array.isArray(layoutData.layout) && layoutData.layout.length > 0 && layoutData.layout[0].widgets) {
+              setTabs(layoutData.layout);
+            }
+            // Przypadek 3: Pusta tablica lub dziwne dane -> Zostawiamy DEFAULT_TABS (które już są w stanie początkowym)
           }
         }
 
-        // --- B. POBIERANIE ZAPISANYCH USŁUG ---
         const servicesRes = await fetch('/api/docker/scan');
-        const servicesData = await servicesRes.json();
-        
-        if (servicesData.services) {
-          setAvailableServices(servicesData.services);
+        if (servicesRes.ok) {
+           const servicesData = await servicesRes.json();
+           if (servicesData.services) {
+             setAvailableServices(servicesData.services);
+           }
         }
 
       } catch (error) {
         console.error("Błąd podczas ładowania danych startowych:", error);
+        // W razie błędu nic nie robimy - zostaje domyślny layout z useState
       }
     };
 
     loadInitialData();
-  }, [session]); // Uruchom, gdy sesja się załaduje
+  }, [session]);
+
 
 // --- EFEKT PODŚWIETLANIA (Z AUTOMATYCZNĄ ZMIANĄ ZAKŁADKI) ---
   useEffect(() => {
@@ -474,7 +482,6 @@ const handleScan = async () => {
                   onClose={() => setIsGalleryOpen(false)}
                   onAddWidget={addWidget}
                   onAddService={addServiceWidget}
-                  availableServices={availableServices}
                   onScan={handleScan}
                 />
               </motion.div>
@@ -620,7 +627,10 @@ const handleScan = async () => {
        <ServiceDiscoveryModal 
           isOpen={isDiscoveryOpen} 
           onClose={() => setIsDiscoveryOpen(false)}
-          onImport={handleImportServices}
+          onSaveToDb={() => {
+           // Po zapisaniu do bazy opcjonalnie możemy otworzyć galerię, żeby użytkownik dodał widgety
+           setIsGalleryOpen(true);
+        }}
           initialServices={scannedServices}
        />
 

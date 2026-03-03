@@ -183,10 +183,15 @@
   },
   "ServiceDiscovery": {
     "title": "Discovered Services",
-    "subtitle": "Found {count} services. Select the ones you want to add and ensure the ports are correct.",
+    "subtitle": "Found {count} services. Configure IPs before saving.",
+    "portLabel": "PORT",
     "btnCancel": "Cancel",
-    "btnAddCount": "Add {count} Widgets",
-    "portLabel": "Port"
+    "btnSave": "Save to Inventory ({count})",
+    "selectAll": "Select All",
+    "deselectAll": "Deselect All",
+    "toastSaving": "Saving to database...",
+    "toastSaved": "Services saved!",
+    "toastError": "Database save error"
   },
 "CommandPalette": {
     "placeholder": "Search containers, widgets, and pages...",

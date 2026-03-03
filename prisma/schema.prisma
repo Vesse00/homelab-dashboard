@@ -95,3 +95,24 @@ model SystemSettings {
   registrationEnabled Boolean  @default(true)
   updatedAt           DateTime @updatedAt
 }
+
+model Service {
+  id          String   @id @default(uuid())
+  containerId String? //(Unikalny ID z Dockera)
+  name        String
+  type        String   @default("generic") // np. pihole, docker_stats
+  protocol    String   @default("http")    // http lub https
+  ip          String
+  port        Int
+  publicUrl   String?  // np. portainer.local
+  icon        String   @default("Box")
+  
+  // Autoryzacja
+  authType    String   @default("none") // none, basic, apikey
+  username    String?
+  password    String?
+  apiKey      String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

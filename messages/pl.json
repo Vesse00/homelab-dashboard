@@ -183,10 +183,15 @@
   },
   "ServiceDiscovery": {
     "title": "Wykryte Usługi",
-    "subtitle": "Znaleziono {count} usług. Zaznacz te, które chcesz dodać i upewnij się, że porty są poprawne.",
+    "subtitle": "Znaleziono {count} usług. Skonfiguruj adresy IP przed zapisaniem.",
+    "portLabel": "PORT",
     "btnCancel": "Anuluj",
-    "btnAddCount": "Dodaj {count} Widgetów",
-    "portLabel": "Port"
+    "btnSave": "Zapisz do Bazy ({count})",
+    "selectAll": "Zaznacz wszystkie",
+    "deselectAll": "Odznacz wszystkie",
+    "toastSaving": "Zapisywanie do bazy...",
+    "toastSaved": "Zapisano usługi!",
+    "toastError": "Błąd zapisu do bazy"
   },
 "CommandPalette": {
     "placeholder": "Szukaj kontenerów, widgetów i stron...",
