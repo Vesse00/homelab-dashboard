@@ -98,6 +98,11 @@ export default function Dashboard() {
   const [isBgModalOpen, setIsBgModalOpen] = useState(false);
   const [tempBgUrl, setTempBgUrl] = useState('');
 
+  // Tworzy ID w stylu: widget-1709234023-xk29sla
+  const generateUniqueId = () => {
+    return `widget-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  };
+
   // Zapisywanie i Pobieranie Layoutu z API
 // 1. Ładowanie danych startowych (Layout + Usługi)
   useEffect(() => {
@@ -203,17 +208,9 @@ const handleScan = async () => {
 
 
   const addServiceWidget = async (serviceData: any) => {
-    // Zbieramy wszystkie widgety z całej aplikacji (ze wszystkich zakładek)
-    const allWidgets = tabs.flatMap(t => t.widgets || []);
-    
-    // Szukamy najwyższego ID globalnie
-    const newId = allWidgets.length > 0 
-      ? (Math.max(0, ...allWidgets.map(w => parseInt(w.i) || 0)) + 1).toString() 
-      : "1";
-    
     // Tworzymy widget na podstawie zapisanych danych
     const newWidget: WidgetItem = {
-      i: newId,
+      i: generateUniqueId(),  //  Generujemy unikalne ID dla tego widgetu
       x: 0, 
       y: Infinity, // Grid sam znajdzie miejsce na dole
       w: 2,
@@ -238,19 +235,12 @@ const handleScan = async () => {
 
   // 2. IMPORTOWANIE Z MODALA (dodaje widgety na pulpit)
   const handleImportServices = (servicesData: any[]) => {
-    const newWidgets: WidgetItem[] = [...activeWidgets];
-    // ZMIANA: Pobieramy absolutnie wszystkie widgety ze wszystkich zakładek
-    const allWidgets = tabs.flatMap(t => t.widgets || []);
-    
-    // ZMIANA: Szukamy najwyższego ID globalnie (zabezpieczone przez || 0 w razie NaN)
-    let lastId = allWidgets.length > 0 
-      ? Math.max(0, ...allWidgets.map(w => parseInt(w.i) || 0)) 
-      : 0;
+    const newWidgets: WidgetItem[] = [];
+    servicesData.forEach((data, index) => {
 
-    servicesData.forEach((data) => {
-      lastId++;
+      const safeId = `widget-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 5)}`;
       newWidgets.push({
-        i: lastId.toString(),
+        i: safeId,
         x: (newWidgets.length * 2) % 12,
         y: Infinity,
         w: 2,
@@ -312,15 +302,8 @@ const handleScan = async () => {
 
 // Zaktualizowana funkcja dodawania widgetu
   const addWidget = (type: string) => {
-    // Zbieramy wszystkie widgety z całej aplikacji (ze wszystkich zakładek)
-    const allWidgets = tabs.flatMap(t => t.widgets || []);
-    
-    // Szukamy najwyższego ID globalnie
-    const newId = allWidgets.length > 0 
-      ? (Math.max(0, ...allWidgets.map(w => parseInt(w.i) || 0)) + 1).toString() 
-      : "1";
     const newWidget: WidgetItem = { 
-      i: newId, 
+      i: generateUniqueId(), // Generujemy unikalne ID dla tego widgetu
       x: 0, y: 0, w: 4, h: 2, 
       type: type 
     };

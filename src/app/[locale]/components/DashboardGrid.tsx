@@ -35,6 +35,16 @@ export default function DashboardGrid({
   highlightedId
 }: DashboardGridProps) {
 
+  const seenIds = new Set();
+  const safeLayout = layout.filter(item => {
+    if (seenIds.has(item.i)) {
+      console.warn(`[DashboardGrid] Wykryto i usunięto duplikat widgetu o ID: ${item.i}`);
+      return false;
+    }
+    seenIds.add(item.i);
+    return true;
+  });
+
   // Funkcja, która wybiera odpowiedni komponent widgetu
   const renderWidget = (item: any) => {
     // Wspólne właściwości przekazywane do każdego widgetu
@@ -62,6 +72,8 @@ export default function DashboardGrid({
       case 'uptime-kuma':
       case 'tailscale':
       case 'dns':
+      case 'admin':
+      case 'proxy':
       case 'vaultwarden':
         return <ServiceWidget {...commonProps} />;
       

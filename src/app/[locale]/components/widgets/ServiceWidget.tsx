@@ -16,6 +16,7 @@ import UptimeKumaWidget from './templates/UptimeKumaWidget';
 import TailscaleWidget from './templates/TailscaleWidget';
 import VaultwardenWidget from './templates/VaultwardenWidget';
 import { useTranslations } from 'next-intl';
+import { text } from 'stream/consumers';
 
 interface ServiceWidgetProps {
   style?: React.CSSProperties;
@@ -38,6 +39,34 @@ export default function ServiceWidget(props: ServiceWidgetProps) {
   const { style, className, onMouseDown, onMouseUp, onTouchEnd, id, isEditMode, onRemove, onUpdateData, w, h, data, isLocked, onToggleLock } = props;
 
   const t = useTranslations('Widgets.ServiceWidget');
+  const tApiStats = useTranslations('ApiStats');
+  const tApiErrors = useTranslations('ApiErrors');
+
+  // --- FUNKCJA TŁUMACZĄCA (TERAZ W GŁÓWNYM KOMPONENCIE) ---
+  const translateApiText = (text: string) => {
+    if (typeof text !== 'string') return text;
+
+    // Sprawdzamy czy to kod z API (prefiks API_)
+    if (text.startsWith('API_')) {
+      const parts = text.split('|');
+      const key = parts[0];
+      const param = parts[1]; // Opcjonalny parametr (liczba)
+      
+      try {
+        if (key.startsWith('API_STATS_')) {
+          // @ts-ignore
+          return tApiStats(key, { count: param });
+        }
+        if (key.startsWith('API_ERROR_')) {
+          // @ts-ignore
+          return tApiErrors(key, { count: param });
+        }
+      } catch (e) {
+        return text; // Fallback jakby klucz nie istniał
+      }
+    }
+    return text;
+  };
 
   if (!data) {
     return (
@@ -84,7 +113,7 @@ export default function ServiceWidget(props: ServiceWidgetProps) {
         }
       } catch (err) {
         if (isMounted) {
-          setLiveStats({ status: 'error', primaryText: t('errorConnection'), secondaryText: t('checkLogs') });
+          setLiveStats({ status: 'error', primaryText: 'API_ERROR_CONNECTION', secondaryText: 'API_ERROR_LOGS' });
           setIsLoading(false);
         }
       }
@@ -110,7 +139,21 @@ export default function ServiceWidget(props: ServiceWidgetProps) {
 
     // 3. PRZEKAZUJEMY: Tworzymy ulepszony obiekt data z naszym gotowym linkiem `clickUrl`
     const enhancedData = { ...data, clickUrl: finalClickUrl };
-    const templateProps = { data: enhancedData, stats: liveStats, isLoading, w, h };
+    
+
+    // Tworzymy kopię statystyk z przetłumaczonymi tekstami
+    let processedStats = liveStats;
+    
+    if (liveStats) {
+      processedStats = {
+        ...liveStats,
+        primaryText: translateApiText(liveStats.primaryText),
+        secondaryText: translateApiText(liveStats.secondaryText),
+      };
+    }
+
+    // Przekazujemy przetłumaczone 'processedStats' zamiast surowych 'liveStats'
+    const templateProps = { data: enhancedData, stats: processedStats, isLoading, w, h };
 
     switch (data.widgetType) {
       case 'minecraft': return <MinecraftWidget {...templateProps} />;
@@ -194,6 +237,34 @@ export default function ServiceWidget(props: ServiceWidgetProps) {
 // Domyślny wygląd z obsługą clickUrl
 function GenericTemplate({ data, stats }: any) {
   const t = useTranslations('Widgets.ServiceWidget');
+  const tApiStats = useTranslations('ApiStats');
+  const tApiErrors = useTranslations('ApiErrors');
+
+  const translateApiText = (text: string) => {
+    if (typeof text !== 'string') return text;
+
+    // Sprawdzamy czy to kod z API (prefiks API_)
+    if (text.startsWith('API_')) {
+      const parts = text.split('|');
+      const key = parts[0];
+      const param = parts[1]; // Opcjonalny parametr (liczba)
+      
+      try {
+        if (key.startsWith('API_STATS_')) {
+          // @ts-ignore
+          return tApiStats(key, { count: param });
+        }
+        if (key.startsWith('API_ERROR_')) {
+          // @ts-ignore
+          return tApiErrors(key, { count: param });
+        }
+      } catch (e) {
+        return text; // Fallback jakby klucz nie istniał
+      }
+    }
+    return text;
+  };
+
   // @ts-ignore
   const IconComponent = LucideIcons[data.icon] || LucideIcons.Box;
   
@@ -230,9 +301,9 @@ function GenericTemplate({ data, stats }: any) {
         
         {isError && stats && (
            <div className="flex flex-col items-center mt-3 z-10 animate-in fade-in duration-500">
-             <span className="text-2xl font-black text-white tracking-tight leading-none drop-shadow-md text-center">{stats.primaryText}</span>
-             <span className="text-xs text-slate-400 font-mono mt-1 text-center" title={stats.secondaryText}>
-               {stats.secondaryText}
+             <span className="text-2xl font-black text-white tracking-tight leading-none drop-shadow-md text-center">{translateApiText(stats.primaryText)}</span>
+             <span className="text-xs text-slate-400 font-mono mt-1 text-center" title={translateApiText(stats.secondaryText)}>
+               {translateApiText(stats.secondaryText)}
              </span>
            </div>
         )}
@@ -240,10 +311,10 @@ function GenericTemplate({ data, stats }: any) {
         {isOnline && stats && (
            <div className="flex flex-col items-center mt-1 z-10 animate-in fade-in duration-500">
              <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-400">
-               {stats.primaryText}
+               {translateApiText(stats.primaryText)}
              </span>
-             <span className="text-[9px] max-w-[120px] text-center truncate text-slate-400" title={stats.secondaryText}>
-               {stats.secondaryText}
+             <span className="text-[9px] max-w-[120px] text-center truncate text-slate-400" title={translateApiText(stats.secondaryText)}>
+               {translateApiText(stats.secondaryText)}
              </span>
            </div>
         )}
