@@ -136,3 +136,27 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: "Update Error" }, { status: 500 });
   }
 }
+
+// 4. DELETE: Usuwanie usługi z bazy
+export async function DELETE(req: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: "Missing ID" }, { status: 400 });
+    }
+
+    await prisma.service.delete({
+      where: { id }
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Błąd usuwania:", error);
+    return NextResponse.json({ error: "Delete Error" }, { status: 500 });
+  }
+}

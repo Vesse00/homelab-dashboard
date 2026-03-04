@@ -172,7 +172,11 @@
       "system": "System",
       "network": "Sieć",
       "media": "Media",
-      "apps": "Twoje Aplikacje"
+      "apps": "Aplikacje",
+      "monitoring": "Monitoring",
+      "cloud": "Chmura",
+      "security": "Bezpieczeństwo",
+      "games": "Gry"
     },
     "widgets": {
       "docker_stats": { "name": "Docker Stats", "desc": "Monitoruj status i zasoby swoich kontenerów Docker w czasie rzeczywistym." },
@@ -193,6 +197,26 @@
     "toastSaved": "Zapisano usługi!",
     "toastError": "Błąd zapisu do bazy"
   },
+"ServiceEdit": {
+  "UpdateErr": "Błąd aktualizacji",
+  "UpdateSuccess": "Zaktualizowano usługę!",
+  "WantDelete": "Czy na pewno chcesz usunąć tę usługę? Ta operacja jest nieodwracalna.",
+  "DeleteSuccess": "Usługa usunięta!",
+  "DeleteErr": "Błąd usuwania usługi",
+  "EditTitle": "Edytcja:",
+  "AdressLocalChange": "Adres Lokalny (Docker/IP)",
+  "PublicUrl": "Publiczny URL (Opcjonalnie)",
+  "PublicUrlHint": "Jeśli wypełnione, widget otworzy ten link po kliknięciu.",
+  "AuthApi": "Autoryzacja API (Statystyki)",
+  "AuthNone": "Brak",
+  "AuthApiKey": "Token / API key",
+  "AuthBasic": "Login + Hasło",
+  "ApiKeyPlaceholder": "Wklej API Key / Token tutaj...",
+  "Login": "Użytkownik",
+  "Password": "Hasło",
+  "BtnCancel": "Anuluj",
+  "BtnSave": "Zapisz"
+},
 "CommandPalette": {
     "placeholder": "Szukaj kontenerów, widgetów i stron...",
     "empty": "Brak wyników dla \"{query}\"",

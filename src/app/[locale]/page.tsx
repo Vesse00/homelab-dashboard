@@ -70,6 +70,7 @@ export default function Dashboard() {
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [isDiscoveryOpen, setIsDiscoveryOpen] = useState(false);
   const userName = session?.user?.name || session?.user?.email?.split('@')[0] || 'Admin'; // Fallback na nazwę użytkownika
+  const [galleryRefreshKey, setGalleryRefreshKey] = useState(0);
   
   // Stan widgetów (pobieramy z localStorage lub domyślny)
   // Domyślna struktura zakładek dla nowego użytkownika
@@ -482,7 +483,8 @@ const handleScan = async () => {
                   onClose={() => setIsGalleryOpen(false)}
                   onAddWidget={addWidget}
                   onAddService={addServiceWidget}
-                  onScan={handleScan}
+                  onScan={handleScan} 
+                  refreshTrigger={galleryRefreshKey}
                 />
               </motion.div>
             )}

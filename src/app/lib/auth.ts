@@ -25,7 +25,7 @@ export const authOptions: NextAuthOptions = {
           where: { email: credentials.email }
         });
 
-        if (!user) {
+        if (!user || !user.password) {
           console.log("❌ Logowanie: Nie znaleziono użytkownika:", credentials.email);
           return null;
         }

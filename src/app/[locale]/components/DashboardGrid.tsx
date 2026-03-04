@@ -121,7 +121,7 @@ export default function DashboardGrid({
           // 2. Zawsze priorytetyzujemy układ 'lg' (desktopowy), żeby po zwężeniu
           // i rozszerzeniu okna wszystko miało gdzie wrócić.
           const layoutToSave = allLayouts.lg || currentLayout;
-          onLayoutChange(layoutToSave);
+          onLayoutChange(layoutToSave as any);
         }
       }}
     >
