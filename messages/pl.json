@@ -305,7 +305,17 @@
     "noActions": "Brak akcji",
     "titleRevokeAdmin": "Zabierz uprawnienia Admina",
     "titleGrantAdmin": "Nadaj uprawnienia Admina",
-    "titleDeleteUser": "Usuń użytkownika"
+    "titleDeleteUser": "Usuń użytkownika",
+    "consoleBtn": "Konsola",
+    "sudoTitle": "Wymagana Autoryzacja",
+    "sudoDesc": "Wprowadź swoje hasło logowania, aby uzyskać bezpieczny dostęp do terminala serwera.",
+    "sudoPlaceholder": "Hasło administratora...",
+    "btnUnlock": "Odblokuj",
+    "consoleTerminalTitle": "Terminal Serwera",
+    "consolePlaceholder": "np. ls -la, docker ps, free -h (wpisz 'clear' aby wyczyścić)",
+    "consoleExecuting": "Wykonywanie...",
+    "consoleWrongPassword": "Błędne hasło administratora!",
+    "consoleAuthError": "Wystąpił błąd podczas autoryzacji."
   },
   "Widgets": {
     "ContainerCard": {

@@ -305,7 +305,17 @@
     "noActions": "No actions",
     "titleRevokeAdmin": "Revoke Admin permissions",
     "titleGrantAdmin": "Grant Admin permissions",
-    "titleDeleteUser": "Delete user"
+    "titleDeleteUser": "Delete user",
+    "consoleBtn": "Console",
+    "sudoTitle": "Authorization Required",
+    "sudoDesc": "Enter your login password to gain secure access to the server terminal.",
+    "sudoPlaceholder": "Administrator password...",
+    "btnUnlock": "Unlock",
+    "consoleTerminalTitle": "Server Terminal",
+    "consolePlaceholder": "e.g. ls -la, docker ps, free -h (type 'clear' to clear)",
+    "consoleExecuting": "Executing...",
+    "consoleWrongPassword": "Wrong administrator password!",
+    "consoleAuthError": "An error occurred during authorization."
   },
   "Widgets": {
     "ContainerCard": {
