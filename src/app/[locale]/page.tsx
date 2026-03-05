@@ -36,6 +36,7 @@ interface WidgetItem {
   static?: boolean;
   // Pole opcjonalne, tylko dla widgetów typu 'service'
   data?: {
+    serviceId: string; // Unikalny identyfikator usługi
     name: string;
     icon: string;
     url: string;
@@ -77,6 +78,9 @@ export default function Dashboard() {
   const DEFAULT_TABS: TabData[] = [
     { id: 'main', name: t('defaultTabMain'), isDeletable: false, widgets: DEFAULT_LAYOUT }
   ];
+
+  // Sprawdzenie, czy użytkownik jest adminem (na podstawie roli w sesji)
+  const isAdmin = session?.user?.role?.toUpperCase() === 'ADMIN';
 
   const [tabs, setTabs] = useState<TabData[]>(DEFAULT_TABS);
   const [activeTabId, setActiveTabId] = useState<string>('main');
@@ -447,7 +451,7 @@ const handleScan = async () => {
         <div className="flex items-center gap-3">
           {/* PRZYCISK AUTODETEKCJI (Widoczny w trybie edycji) */}
              <AnimatePresence>
-               {isEditMode && (
+               {isEditMode && isAdmin && (
                  <motion.button
                    initial={{ opacity: 0, scale: 0.9 }}
                    animate={{ opacity: 1, scale: 1 }}
@@ -481,6 +485,7 @@ const handleScan = async () => {
                 <WidgetGalleryModal 
                   isOpen={isGalleryOpen}
                   onClose={() => setIsGalleryOpen(false)}
+                  isAdmin={isAdmin}
                   onAddWidget={addWidget}
                   onAddService={addServiceWidget}
                   onScan={handleScan} 
@@ -616,6 +621,7 @@ const handleScan = async () => {
             // Funkcja saveLayout zaktualizuje stan zakładek i od razu wyśle to do bazy
              saveLayout(newLayout);
           }}
+        isAdmin={isAdmin}
         onToggleLock={toggleWidgetLock}
         isEditMode={isEditMode}
         onRemove={removeWidget}

@@ -28,6 +28,7 @@ interface ServiceWidgetProps {
   isEditMode: boolean;
   onRemove: (id: string) => void;
   onUpdateData?: (id: string, newData: any) => void;
+  isAdmin?: boolean;
   data: any;
   w?: number;
   h?: number;
@@ -36,7 +37,7 @@ interface ServiceWidgetProps {
 }
 
 export default function ServiceWidget(props: ServiceWidgetProps) {
-  const { style, className, onMouseDown, onMouseUp, onTouchEnd, id, isEditMode, onRemove, onUpdateData, w, h, data, isLocked, onToggleLock } = props;
+  const { style, className, onMouseDown, isAdmin, onMouseUp, onTouchEnd, id, isEditMode, onRemove, onUpdateData, w, h, data, isLocked, onToggleLock } = props;
 
   const t = useTranslations('Widgets.ServiceWidget');
   const tApiStats = useTranslations('ApiStats');
@@ -189,6 +190,7 @@ export default function ServiceWidget(props: ServiceWidgetProps) {
                {isLocked ? <Lock size={18} /> : <Unlock size={18} />}
              </div>
               <div className="absolute top-2 right-2 flex gap-2 z-50">
+                
                 <button 
                   className="text-slate-400 hover:text-emerald-400 bg-slate-800/80 p-1.5 rounded-lg transition-colors cursor-pointer"
                   onMouseDown={(e) => e.stopPropagation()} 
@@ -196,6 +198,7 @@ export default function ServiceWidget(props: ServiceWidgetProps) {
                 >
                   <Settings size={18} />
                 </button>
+                
                 <button 
                   className="text-slate-400 hover:text-red-500 bg-slate-800/80 p-1.5 rounded-lg transition-colors cursor-pointer"
                   onMouseDown={(e) => e.stopPropagation()} 
@@ -217,13 +220,14 @@ export default function ServiceWidget(props: ServiceWidgetProps) {
 
         {/* WŁAŚCIWY SZABLON */}
         <div className="h-full w-full">
-           {renderContent()}
+           {renderContent()} 
         </div>
       </div>
 
       {/* --- WYWOŁANIE ZEWNĘTRZNEGO MODALU --- */}
       {isConfiguring && (
         <EditWidgetModal 
+          isAdmin={isAdmin}
           id={id}
           data={data}
           onClose={() => setIsConfiguring(false)}

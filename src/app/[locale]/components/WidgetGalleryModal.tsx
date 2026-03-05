@@ -34,7 +34,7 @@ const THEME_STYLES: Record<string, { container: string, iconBox: string, icon: s
 // OPTYMALIZACJA 1: Wyodrębnienie Kafelka i opakowanie w React.memo
 // Kafelek nie przerenderuje się, dopóki nie zmienią się jego konkretne propsy
 // ============================================================================
-const GalleryItem = React.memo(({ widget, theme, onAddWidget, onAddService, onClose, setEditingService, t }: any) => {
+const GalleryItem = React.memo(({ widget, isAdmin, theme, onAddWidget, onAddService, onClose, setEditingService, t }: any) => {
   const Icon = widget.icon;
   
   return (
@@ -48,7 +48,7 @@ const GalleryItem = React.memo(({ widget, theme, onAddWidget, onAddService, onCl
           </div>
 
           <div className="flex items-center gap-2 h-7">
-            {widget.isService && (
+            {widget.isService && isAdmin && (
               <button 
                 onClick={(e) => { e.stopPropagation(); if (widget.rawData) setEditingService(widget.rawData); }}
                 className="hidden group-hover:flex items-center justify-center w-7 h-7 bg-slate-950/80 hover:bg-blue-600 text-slate-400 hover:text-white rounded-lg transition-all duration-200 ease-out border border-slate-700/50 hover:border-blue-500 animate-in fade-in slide-in-from-right-1"
@@ -87,7 +87,7 @@ GalleryItem.displayName = 'GalleryItem';
 
 // ============================================================================
 
-export default function WidgetGalleryModal({ isOpen, onClose, onAddWidget, onAddService, onScan, refreshTrigger }: any) {
+export default function WidgetGalleryModal({ isOpen, isAdmin, onClose, onAddWidget, onAddService, onScan, refreshTrigger }: any) {
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -132,7 +132,25 @@ export default function WidgetGalleryModal({ isOpen, onClose, onAddWidget, onAdd
       const knownApp = Object.values(KNOWN_APPS).find(app => app.widgetType === s.type);
       return {
         isService: true,
-        data: { name: s.name, icon: s.icon, url: `${s.protocol}://${s.ip}:${s.port}`, publicUrl: s.publicUrl, color: knownApp?.color || 'blue', status: 'running', widgetType: s.type, settings: { authType: s.authType, apiKey: s.apiKey, username: s.username, password: s.password } },
+        data: { 
+          serviceId: s.id,
+          name: s.name,
+          icon: s.icon,
+          url: `${s.protocol}://${s.ip}:${s.port}`,
+          publicUrl: s.publicUrl,
+          color: knownApp?.color || 'blue',
+          status: 'running',
+          widgetType: s.type,
+          settings: { 
+            authType: s.authType,
+            apiKey: s.apiKey,
+            username: s.username,
+            password: s.password,
+            // Specjalne pola dla niektórych typów usług, np. statusPage dla uptime-kuma czy tailnet dla tailscale
+            statusPage: s.type === 'uptime-kuma' ? s.username : '',
+            tailnet: s.type === 'tailscale' ? s.username : ''
+          } 
+        },
         rawData: s, 
         id: s.name,
         name: s.name,
@@ -177,11 +195,14 @@ export default function WidgetGalleryModal({ isOpen, onClose, onAddWidget, onAdd
                   </button>
               ))}
             </div>
-            <div className="p-4 border-t border-slate-800/50">
+            {isAdmin && (
+              <div className="p-4 border-t border-slate-800/50">
                <button onClick={onScan} className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/20 rounded-xl transition-transform hover:scale-[1.02] text-sm font-bold shadow-sm will-change-transform">
                   <Radar size={16} /> {t('btnScan')}
                </button>
             </div>
+            )}
+            
           </div>
 
           <div className="flex-1 flex flex-col h-full overflow-hidden relative bg-gradient-to-br from-slate-900/50 to-slate-950/50">
@@ -210,6 +231,7 @@ export default function WidgetGalleryModal({ isOpen, onClose, onAddWidget, onAdd
                           onAddWidget={onAddWidget}
                           onAddService={onAddService}
                           onClose={onClose}
+                          isAdmin={isAdmin}
                           setEditingService={setEditingService}
                           t={t}
                         />
@@ -220,7 +242,10 @@ export default function WidgetGalleryModal({ isOpen, onClose, onAddWidget, onAdd
           </div>
         </div>
       </div>
-      {editingService && <ServiceEditModal service={editingService} onClose={() => setEditingService(null)} onUpdate={fetchServices} />}
+      {editingService && <ServiceEditModal 
+        service={editingService} 
+        onClose={() => setEditingService(null)} 
+        onUpdate={fetchServices}/>}
     </>
   );
 }
