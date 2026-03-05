@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { HardDrive, GripHorizontal, X, ArrowDownRight, Server, Lock, Unlock } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useSmartInterval } from '@/app/hooks/useSmartInterval';
 
 interface DiskWidgetProps {
   style?: React.CSSProperties;
@@ -26,22 +27,20 @@ export default function DiskWidget({
   const [disks, setDisks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchDisks = async () => {
-      try {
-        const res = await fetch('/api/system/disks');
-        const data = await res.json();
-        if (Array.isArray(data)) setDisks(data);
-      } catch (e) {
-        console.error(e);
-      } finally { 
-        setLoading(false); 
-      }
-    };
-    fetchDisks();
-    const interval = setInterval(fetchDisks, 30000); 
-    return () => clearInterval(interval);
+  const fetchDisks = useCallback(async () => {
+    try {
+      const res = await fetch('/api/system/disks');
+      const data = await res.json();
+      setDisks(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  // Dyski rzadko się zmieniają: 10s aktywne, 60s w tle
+  useSmartInterval(fetchDisks, 10000, 60000);
 
   const isExpanded = w >= 3 && h >= 3;
   // W trybie kompaktowym pokazujemy max 2 partycje, w rozszerzonym - wszystkie
