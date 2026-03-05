@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/auth";
+import { encrypt } from '@/app/lib/encryption';
 
 // 1. GET: Pobiera wszystkie usługi do Galerii
 export async function GET() {
@@ -128,9 +129,10 @@ export async function PUT(req: Request) {
         port: parseInt(data.port),
         publicUrl: data.publicUrl,
         authType: data.authType,
-        apiKey: data.apiKey,
+        //szyfrowanie klucza API przed zapisem do bazy
+        apiKey: encrypt(data.apiKey),
         username: data.username,
-        password: data.password,
+        password: encrypt(data.password),
       }
     });
     return NextResponse.json(updated);
