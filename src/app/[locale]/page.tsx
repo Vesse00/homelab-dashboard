@@ -477,7 +477,7 @@ const handleScan = async () => {
                   <span>{t('btnAdd')}</span>
                 </button>
 
-                {/* Dropdown Menu Dodawania */}
+                {/* Menu Dodawania */}
                 <WidgetGalleryModal 
                   isOpen={isGalleryOpen}
                   onClose={() => setIsGalleryOpen(false)}
