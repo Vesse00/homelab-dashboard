@@ -21,6 +21,7 @@ interface DashboardGridProps {
   isEditMode: boolean;
   onRemove: (id: string) => void;
   onUpdateData?: (id: string, newData: any) => void;
+  isAdmin?: boolean; // Dodajemy opcjonalny prop isAdmin
   onToggleLock: (id: string) => void;
   highlightedId?: string | null; // Dodajemy opcjonalny prop dla highlight
 }
@@ -32,7 +33,8 @@ export default function DashboardGrid({
   onRemove,
   onUpdateData,
   onToggleLock,
-  highlightedId
+  highlightedId,
+  isAdmin
 }: DashboardGridProps) {
 
   const seenIds = new Set();
@@ -54,6 +56,7 @@ export default function DashboardGrid({
       onRemove: onRemove,
       className: "h-full w-full", // To naprawia rozjeżdżanie się (zajmuje 100% kafelka)
       data: item.data,
+      isAdmin: isAdmin, // Przekazujemy informację o adminie do widgetu
       onUpdateData: onUpdateData,
       w: item.w,
       h: item.h,
@@ -121,7 +124,7 @@ export default function DashboardGrid({
           // 2. Zawsze priorytetyzujemy układ 'lg' (desktopowy), żeby po zwężeniu
           // i rozszerzeniu okna wszystko miało gdzie wrócić.
           const layoutToSave = allLayouts.lg || currentLayout;
-          onLayoutChange(layoutToSave);
+          onLayoutChange(layoutToSave as any);
         }
       }}
     >

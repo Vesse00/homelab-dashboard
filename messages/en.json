@@ -172,7 +172,11 @@
       "system": "System",
       "network": "Network",
       "media": "Media",
-      "apps": "Your Applications"
+      "apps": "Apps",
+      "monitoring": "Monitoring",
+      "cloud": "Cloud",
+      "security": "Security",
+      "games": "Games"
     },
     "widgets": {
       "docker_stats": { "name": "Docker Stats", "desc": "Monitor the status and resources of your Docker containers in real-time." },
@@ -183,11 +187,36 @@
   },
   "ServiceDiscovery": {
     "title": "Discovered Services",
-    "subtitle": "Found {count} services. Select the ones you want to add and ensure the ports are correct.",
+    "subtitle": "Found {count} services. Configure IPs before saving.",
+    "portLabel": "PORT",
     "btnCancel": "Cancel",
-    "btnAddCount": "Add {count} Widgets",
-    "portLabel": "Port"
+    "btnSave": "Save to Inventory ({count})",
+    "selectAll": "Select All",
+    "deselectAll": "Deselect All",
+    "toastSaving": "Saving to database...",
+    "toastSaved": "Services saved!",
+    "toastError": "Database save error"
   },
+"ServiceEdit": {
+  "UpdateErr": "Error updating service",
+  "UpdateSuccess": "Service updated!",
+  "WantDelete": "Are you sure you want to delete this service? This operation is irreversible.",
+  "DeleteSuccess": "Service deleted!",
+  "DeleteErr": "Error deleting service",
+  "EditTitle": "Edit:",
+  "AdressLocalChange": "Local Address (Docker/IP)",
+  "PublicUrl": "Public URL (Optional)",
+  "PublicUrlHint": "If filled, the widget will open this link when clicked.",
+  "AuthApi": "Authorization API (Statistics)",
+  "AuthNone": "None",
+  "AuthApiKey": "Token / API key",
+  "AuthBasic": "Login + Password",
+  "ApiKeyPlaceholder": "Paste API Key / Token here...",
+  "Login": "Login",
+  "Password": "Password",
+  "BtnCancel": "Cancel",
+  "BtnSave": "Save"
+},
 "CommandPalette": {
     "placeholder": "Search containers, widgets, and pages...",
     "empty": "No results found for \"{query}\"",

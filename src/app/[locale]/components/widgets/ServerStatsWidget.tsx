@@ -109,7 +109,7 @@ export default function ServerStatsWidget({
             <div className="flex justify-around items-center flex-1">
               {/* CPU Ring */}
               <div className="flex flex-col items-center gap-2">
-                 <div className="relative w-[70px] h-[70px] rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(0,0,0,0.5)]" style={{ background: `conic-gradient(currentColor ${stats.cpu}%, #1e293b 0)` }} className={`relative w-[70px] h-[70px] rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(0,0,0,0.5)] ${getCpuColor(stats.cpu)}`}>
+                 <div style={{ background: `conic-gradient(currentColor ${stats.cpu}%, #1e293b 0)` }} className={`relative w-[70px] h-[70px] rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(0,0,0,0.5)] ${getCpuColor(stats.cpu)}`}>
                     <div className="w-[58px] h-[58px] bg-slate-900 rounded-full flex flex-col items-center justify-center border border-white/5 shadow-inner">
                        <span className="text-lg font-black text-white">{stats.cpu}%</span>
                     </div>
@@ -119,7 +119,7 @@ export default function ServerStatsWidget({
 
               {/* RAM Ring */}
               <div className="flex flex-col items-center gap-2">
-                 <div className="relative w-[70px] h-[70px] rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(0,0,0,0.5)]" style={{ background: `conic-gradient(currentColor ${stats.ram}%, #1e293b 0)` }} className={`relative w-[70px] h-[70px] rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(0,0,0,0.5)] ${getRamColor(stats.ram)}`}>
+                 <div style={{ background: `conic-gradient(currentColor ${stats.ram}%, #1e293b 0)` }} className={`relative w-[70px] h-[70px] rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(0,0,0,0.5)] ${getRamColor(stats.ram)}`}>
                     <div className="w-[58px] h-[58px] bg-slate-900 rounded-full flex flex-col items-center justify-center border border-white/5 shadow-inner">
                        <span className="text-lg font-black text-white">{stats.ram}%</span>
                     </div>

@@ -205,7 +205,7 @@ export default function WeatherWidget({ id, isEditMode, onRemove, className, w =
           <div className="animate-in fade-in duration-500 flex flex-col h-full">
             <div className="flex items-end gap-2">
                <span className="text-5xl font-black text-white tracking-tighter drop-shadow-lg">{weatherData.temp}°</span>
-               <span className="text-lg text-blue-200 font-medium mb-1.5">{currentCondition.text}</span>
+               <span className="text-lg text-blue-200 font-medium mb-1.5">{currentCondition?.text}</span>
             </div>
 
             <div className="grid grid-cols-2 gap-2 mt-auto">
