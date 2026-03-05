@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   }
 
   // 2. NOWOŚĆ: Sprawdzamy, czy jest ADMINEM
-  if (session.user.role !== 'ADMIN') {
+  if ((session.user as any).role?.toUpperCase() !== 'ADMIN') {
     return NextResponse.json({ 
       error: "Forbidden: Only admins can control containers" 
     }, { status: 403 });

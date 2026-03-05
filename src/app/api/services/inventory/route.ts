@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/auth";
+import { encrypt } from '@/app/lib/encryption';
 
 // 1. GET: Pobiera wszystkie usługi do Galerii
 export async function GET() {
@@ -22,8 +23,9 @@ export async function GET() {
 // To wykonuje się, gdy w Modalu Discovery klikniesz "Zapisz do Bazy"
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
+if (!session || (session.user as any)?.role?.toUpperCase() !== 'ADMIN') {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
   try {
     const body = await req.json();
     
@@ -109,7 +111,9 @@ export async function POST(req: Request) {
 // 3. PUT: Ręczna edycja (z Galerii - Ołówek)
 export async function PUT(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session || (session.user as any)?.role?.toUpperCase() !== 'ADMIN') {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
 
   try {
     const body = await req.json();
@@ -125,9 +129,10 @@ export async function PUT(req: Request) {
         port: parseInt(data.port),
         publicUrl: data.publicUrl,
         authType: data.authType,
-        apiKey: data.apiKey,
+        //szyfrowanie klucza API przed zapisem do bazy
+        apiKey: encrypt(data.apiKey),
         username: data.username,
-        password: data.password,
+        password: encrypt(data.password),
       }
     });
     return NextResponse.json(updated);
@@ -140,7 +145,9 @@ export async function PUT(req: Request) {
 // 4. DELETE: Usuwanie usługi z bazy
 export async function DELETE(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session || (session.user as any)?.role?.toUpperCase() !== 'ADMIN') {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
 
   try {
     const { searchParams } = new URL(req.url);

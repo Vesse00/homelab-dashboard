@@ -33,7 +33,9 @@ function getServerIp(): string {
 
 export async function GET() {
   const session = await getServerSession(authOptions);
-  if (!session || !session.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session || (session.user as any)?.role?.toUpperCase() !== 'ADMIN') {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
@@ -46,8 +48,11 @@ export async function GET() {
 
 export async function POST() {
   const session = await getServerSession(authOptions);
-  if (!session || !session.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  // Sprawdzamy, czy użytkownik jest zalogowany i ma rolę ADMIN (bez względu na wielkość liter)
+  if (!session || (session.user as any)?.role?.toUpperCase() !== 'ADMIN') {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   try {
     // ZAMIAST CZYTAĆ Z NAGŁÓWKÓW PRZEGLĄDARKI, CZYTAMY Z KARTY SIECIOWEJ
     const serverIp = getServerIp();
@@ -80,7 +85,7 @@ export async function POST() {
     });
 
     await prisma.user.update({
-      where: { email: session.user.email },
+      where: { email: session.user.email! },
       data: { discoveredServices: JSON.stringify(foundServices) }
     });
 

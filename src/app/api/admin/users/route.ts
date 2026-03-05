@@ -6,7 +6,7 @@ import { authOptions } from '@/app/lib/auth';
 // Pomocnicza funkcja do sprawdzania roli
 async function checkAdmin() {
   const session = await getServerSession(authOptions);
-  return (session?.user as any)?.role === 'ADMIN';
+  return (session?.user as any)?.role?.toUpperCase() === 'ADMIN';
 }
 
 // POBIERANIE LISTY UŻYTKOWNIKÓW

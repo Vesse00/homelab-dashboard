@@ -5,7 +5,7 @@ import { authOptions } from '@/app/lib/auth';
 
 async function checkAdmin() {
   const session = await getServerSession(authOptions);
-  return (session?.user as any)?.role === 'ADMIN';
+  return (session?.user as any)?.role?.toUpperCase() === 'ADMIN';
 }
 
 // Pobieranie statusu rejestracji

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/auth";
+import { decrypt } from '@/app/lib/encryption';
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
@@ -14,6 +15,11 @@ export async function POST(req: Request) {
 
     if (!url) {
       return NextResponse.json({ error: 'Brak adresu URL' }, { status: 400 });
+    }
+
+    if (settings) {
+      if (settings.apiKey) settings.apiKey = decrypt(settings.apiKey);
+      if (settings.password) settings.password = decrypt(settings.password);
     }
 
     interface UnifiedStats {

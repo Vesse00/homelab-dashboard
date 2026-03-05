@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 import Docker from 'dockerode';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  
   try {
     const docker = new Docker({ socketPath: '/var/run/docker.sock' });
     const containers = await docker.listContainers({ all: true });
