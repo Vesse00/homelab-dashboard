@@ -22,8 +22,9 @@ export async function GET() {
 // To wykonuje się, gdy w Modalu Discovery klikniesz "Zapisz do Bazy"
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
+if (!session || (session.user as any)?.role?.toUpperCase() !== 'ADMIN') {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
   try {
     const body = await req.json();
     
@@ -109,7 +110,9 @@ export async function POST(req: Request) {
 // 3. PUT: Ręczna edycja (z Galerii - Ołówek)
 export async function PUT(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session || (session.user as any)?.role?.toUpperCase() !== 'ADMIN') {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
 
   try {
     const body = await req.json();
@@ -140,7 +143,9 @@ export async function PUT(req: Request) {
 // 4. DELETE: Usuwanie usługi z bazy
 export async function DELETE(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session || (session.user as any)?.role?.toUpperCase() !== 'ADMIN') {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
 
   try {
     const { searchParams } = new URL(req.url);
