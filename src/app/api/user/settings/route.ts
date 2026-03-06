@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/lib/auth';
+import * as OTPAuth from 'otpauth';
+import QRCode from 'qrcode';
 import bcrypt from 'bcryptjs';
 
 // --- POBIERANIE POWIĄZANYCH KONT ---
@@ -21,12 +23,13 @@ export async function GET(req: Request) {
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { password: true }
+      select: { password: true, twoFactorEnabled: true }
     });
 
     return NextResponse.json({ 
       providers: accounts.map(acc => acc.provider),
-      hasPassword: !!user?.password
+      hasPassword: !!user?.password,
+      is2FAEnabled: user?.twoFactorEnabled || false
     });
   } catch (error) {
     return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 });
@@ -101,6 +104,60 @@ export async function POST(req: Request) {
         where: { userId, provider }
       });
       return NextResponse.json({ message: 'Konto zostało pomyślnie odłączone.' });
+    }
+
+    // --- AKCJE 2FA ---
+    
+    // 4. Generowanie kodu QR dla 2FA
+    if (action === 'generate2fa') {
+      const totp = new OTPAuth.TOTP({
+        issuer: 'Homelab Dashboard',
+        label: currentSessionEmail,
+        algorithm: 'SHA1',
+        digits: 6,
+        period: 30,
+        secret: new OTPAuth.Secret({ size: 20 }) // Generuje losowy klucz
+      });
+
+      const secret = totp.secret.base32;
+      const otpauthUrl = totp.toString();
+      const qrCode = await QRCode.toDataURL(otpauthUrl);
+      
+      return NextResponse.json({ secret, qrCode });
+    }
+
+    // 5. Potwierdzenie i włączenie 2FA
+    if (action === 'enable2fa') {
+      const { secret, token } = body;
+      
+      const totp = new OTPAuth.TOTP({
+        algorithm: 'SHA1',
+        digits: 6,
+        period: 30,
+        secret: OTPAuth.Secret.fromBase32(secret)
+      });
+
+      // Weryfikujemy kod. 'window: 1' pozwala na minimalne opóźnienie czasu między serwerem a telefonem
+      const delta = totp.validate({ token, window: 1 });
+      
+      if (delta === null) {
+        return NextResponse.json({ error: 'Nieprawidłowy kod weryfikacyjny TOTP.' }, { status: 400 });
+      }
+
+      await prisma.user.update({
+        where: { id: userId },
+        data: { twoFactorSecret: secret, twoFactorEnabled: true }
+      });
+      return NextResponse.json({ message: 'Weryfikacja dwuetapowa została pomyślnie włączona!' });
+    }
+
+    // 6. Wyłączanie 2FA
+    if (action === 'disable2fa') {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { twoFactorSecret: null, twoFactorEnabled: false }
+      });
+      return NextResponse.json({ message: 'Weryfikacja dwuetapowa została wyłączona.' });
     }
 
     return NextResponse.json({ error: 'Nieznana akcja' }, { status: 400 });

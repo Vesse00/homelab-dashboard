@@ -65,7 +65,11 @@ model User {
   role          String    @default("USER") // "ADMIN" lub "USER"
   createdAt     DateTime  @default(now())
 
-  // Relacje
+  // --- NOWE POLA DO 2FA ---
+  twoFactorSecret  String?
+  twoFactorEnabled Boolean @default(false)
+
+  // --- Relacje ---
   accounts      Account[]
   sessions      Session[]
   

@@ -4,11 +4,16 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GithubProvider from "next-auth/providers/github";
 import { prisma } from "./prisma";
 import { compare } from "bcryptjs"; // Używamy bcryptjs
+import * as OTPAuth from 'otpauth';
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   session: {
     strategy: "jwt",
+  },
+  pages: {
+    signIn: '/login',
+    error: '/login', // Jeśli wywali błąd GitHub, wróci na nasz piękny login
   },
   providers: [
     GithubProvider({
@@ -28,7 +33,8 @@ export const authOptions: NextAuthOptions = {
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
+        totpCode: { label: "2FA Code", type: "text" }
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -40,7 +46,7 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user || !user.password) {
-          console.log("❌ Logowanie: Nie znaleziono użytkownika:", credentials.email);
+          console.log("INVALID_CREDENTIALS");
           return null;
         }
 
@@ -48,11 +54,34 @@ export const authOptions: NextAuthOptions = {
         const isPasswordValid = await compare(credentials.password, user.password);
 
         if (!isPasswordValid) {
-          console.log("❌ Logowanie: Błędne hasło dla:", credentials.email);
+          console.log("INVALID_CREDENTIALS");
           return null;
         }
 
-        console.log("✅ Logowanie: Sukces dla:", user.email, "Rola:", user.role);
+        // --- LOGIKA 2FA ---
+        if (user.twoFactorEnabled && user.twoFactorSecret) {
+          // NextAuth zamienia puste wartości na tekst "undefined", musimy to wyłapać!
+          const code = credentials.totpCode;
+          if (!code || code === "undefined" || code === "null" || code.trim() === "") {
+            throw new Error("2FA_REQUIRED");
+          }
+
+          // Weryfikacja podanego kodu
+          const totp = new OTPAuth.TOTP({
+            algorithm: 'SHA1',
+            digits: 6,
+            period: 30,
+            secret: OTPAuth.Secret.fromBase32(user.twoFactorSecret)
+          });
+
+          const delta = totp.validate({ token: credentials.totpCode, window: 1 });
+          
+          if (delta === null) {
+            throw new Error("2FA_INVALID");
+          }
+        }
+
+        console.log("✅ Login: Success for:", user.email, "Role:", user.role);
 
         return {
           id: user.id,

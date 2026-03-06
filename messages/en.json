@@ -147,7 +147,12 @@
     "registerLink": "Sign Up",
     "errorCredentials": "Invalid email or password",
     "GitHubLogin": "Sign in with GitHub",
-    "or": "Or"
+    "or": "Or",
+    "2faRequired": "Account secured. Enter 2FA code",
+    "2faInvalid": "Invalid 2FA code",
+    "placeholder2fa": "6-digit code",
+    "btnBack": "Back",
+    "btnVerify": "Verify and login"
   },
 "Register": {
     "title": "Create an account",
@@ -284,7 +289,27 @@
     "notConnected": "No account linked.",
     "btnConnect": "Connect account",
     "btnDisconnect": "Disconnect",
-    "toastPassSet": "Password has been set!"
+    "toastPassSet": "Password has been set!",
+    "2faTitle": "Two-Factor Authentication (2FA)",
+    "2faDesc": "Secure your account with an app like Google Authenticator, Authy, or Bitwarden.",
+    "2faEnabled": "2FA is currently ENABLED.",
+    "2faDisabled": "2FA is currently DISABLED.",
+    "btnEnable2fa": "Setup 2FA",
+    "btnDisable2fa": "Disable 2FA",
+    "2faStep1": "1. Scan this QR code in your authenticator app",
+    "2faStep2": "2. Enter the 6-digit code from the app to verify",
+    "placeholder2fa": "E.g. 123456",
+    "btnConfirm2fa": "Verify & Enable",
+    "confirmPassword": "Confirm new password",
+    "passwordMismatch": "Passwords do not match!",
+    "addionalSafe": "Additional Security Layer",
+    "toast2faEnabled": "Two-factor authentication has been successfully enabled!",
+    "toast2faDisabled": "Two-factor authentication has been disabled.",
+    "toast2faInvalidCode": "Invalid TOTP verification code!",
+    "disable2faTitle": "Disable 2FA verification?",
+    "disable2faDesc": "This will reduce the security of your account.",
+    "btnCancel": "Cancel",
+    "btnConfirmDisable": "Disable"
   },
   "AdminPanel": {
     "title": "Admin Panel",
