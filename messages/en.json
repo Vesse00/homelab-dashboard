@@ -145,7 +145,9 @@
     "submitBtn": "Sign In",
     "noAccount": "Don't have an account?",
     "registerLink": "Sign Up",
-    "errorCredentials": "Invalid email or password"
+    "errorCredentials": "Invalid email or password",
+    "GitHubLogin": "Sign in with GitHub",
+    "or": "Or"
   },
 "Register": {
     "title": "Create an account",
@@ -158,7 +160,9 @@
     "haveAccount": "Already have an account?",
     "loginLink": "Log in",
     "errorCredentials": "An error occurred during registration",
-    "errorConnection": "Connection error to the server"
+    "errorConnection": "Connection error to the server",
+    "GitHubLogin": "Register with GitHub",
+    "or": "Or"
 },
 "WidgetGallery": {
     "title": "Gallery",
@@ -272,7 +276,15 @@
     "changePassword": "Change Password",
     "currentPassword": "Current Password",
     "newPassword": "New Password",
-    "btnUpdatePassword": "Update password"
+    "btnUpdatePassword": "Update password",
+    "tabConnections": "Linked Accounts",
+    "connectionsInfo": "Manage connections with external identity providers. Linking an account allows for quick and secure login.",
+    "providerGithub": "Login via GitHub",
+    "connected": "Account is currently linked.",
+    "notConnected": "No account linked.",
+    "btnConnect": "Connect account",
+    "btnDisconnect": "Disconnect",
+    "toastPassSet": "Password has been set!"
   },
   "AdminPanel": {
     "title": "Admin Panel",

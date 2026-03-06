@@ -6,13 +6,10 @@
     "dev:next": "next dev -p 3003",
     "dev:terminal": "node terminal-server.mjs",
     "dev": "concurrently -c \"cyan.bold,magenta.bold\" -n \"NEXT,TERM\" \"npm run dev:next\" \"npm run dev:terminal\"",
-    
     "build": "next build",
-
     "start:next": "next start -p 3004",
     "start:terminal": "node terminal-server.mjs",
     "start": "concurrently -c \"cyan.bold,magenta.bold\" -n \"NEXT,TERM\" \"npm run start:next\" \"npm run start:terminal\"",
-    
     "lint": "eslint",
     "prisma:generate": "prisma generate"
   },
@@ -31,6 +28,8 @@
     "node-disk-info": "^1.3.0",
     "node-pty": "^1.1.0",
     "nodemailer": "^7.0.13",
+    "otplib": "^13.3.0",
+    "qrcode": "^1.5.4",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-grid-layout": "^2.2.2",
@@ -48,6 +47,7 @@
     "@types/dockerode": "^4.0.1",
     "@types/node": "^20.19.33",
     "@types/nodemailer": "^7.0.11",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/react-grid-layout": "^1.3.6",

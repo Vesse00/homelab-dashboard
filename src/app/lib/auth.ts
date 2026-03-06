@@ -1,6 +1,7 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GithubProvider from "next-auth/providers/github";
 import { prisma } from "./prisma";
 import { compare } from "bcryptjs"; // Używamy bcryptjs
 
@@ -10,6 +11,19 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   providers: [
+    GithubProvider({
+      clientId: process.env.GITHUB_ID as string,
+      clientSecret: process.env.GITHUB_SECRET as string,
+      profile(profile) {
+        return {
+          id: profile.id.toString(),
+          name: profile.name || profile.login,
+          email: profile.email,
+          image: profile.avatar_url,
+          role: "USER", // Domyślna rola dla osób logujących się przez GitHuba
+        }
+      }
+    }),
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -49,10 +63,24 @@ export const authOptions: NextAuthOptions = {
       }
     })
   ],
+  events: {
+    async createUser({ user }) {
+      const totalUsers = await prisma.user.count();
+      
+      // Jeżeli to absolutnie pierwszy użytkownik w systemie, zrób go Adminem
+      if (totalUsers === 1) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { role: "ADMIN" }
+        });
+        console.log(`👑 Pierwszy użytkownik (OAuth)! Zmieniono rolę na ADMIN dla: ${user.email}`);
+      }
+    }
+  },
   callbacks: {
     async jwt({ token, user, trigger, session }) {
       if (user) {
-        token.role = user.role;
+        token.role = user.role || "USER"; // Ustawiamy rolę w tokenie
         token.id = user.id;
       }
       if (trigger === "update" && session) {

@@ -1,21 +1,48 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
-import { User, Mail, Shield, KeyRound, Save, Loader2 } from 'lucide-react';
+import { useSession, signIn } from 'next-auth/react';
+import { User, Mail, Shield, KeyRound, Save, Loader2, Link2, Github, Unlink, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTranslations } from 'next-intl';
 
 export default function SettingsPage() {
   const t = useTranslations('Settings');
   const { data: session, update } = useSession();
-  const [activeTab, setActiveTab] = useState<'profile' | 'security'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'connections'>('profile');
   const [loading, setLoading] = useState(false);
 
-  const [name, setName] = useState(session?.user?.name || '');
-  const [email, setEmail] = useState(session?.user?.email || '');
+  // Stany formularza
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+
+  // Stany powiązań
+  const [providers, setProviders] = useState<string[]>([]);
+  const [hasPassword, setHasPassword] = useState<boolean>(true);
+
+  // Pobieranie danych po załadowaniu
+  useEffect(() => {
+    if (session?.user) {
+      setName(session.user.name || '');
+      setEmail(session.user.email || '');
+      fetchConnections();
+    }
+  }, [session]);
+
+  const fetchConnections = async () => {
+    try {
+      const res = await fetch('/api/user/settings');
+      if (res.ok) {
+        const data = await res.json();
+        setProviders(data.providers || []);
+        setHasPassword(data.hasPassword);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,19 +54,9 @@ export default function SettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'updateProfile', name, email }),
       });
-
       const data = await res.json();
-
       if (res.ok) {
-        await update({
-          ...session,
-          user: {
-            ...session?.user,
-            name: name,
-            email: email
-          }
-        });
-
+        await update({ ...session, user: { ...session?.user, name, email } });
         toast.success(data.message || t('toastProfileUpdated'));
         window.location.reload(); 
       } else {
@@ -63,20 +80,36 @@ export default function SettingsPage() {
     const data = await res.json();
     setLoading(false);
     if (res.ok) {
-      alert(data.message);
+      toast.success(data.message || t('toastPassSet'));
       setCurrentPassword('');
       setNewPassword('');
+      fetchConnections(); // Zaktualizujmy stan (żeby wiedział, że ma już hasło)
     } else {
-      alert(data.error);
+      toast.error(data.error);
     }
   };
 
-  useEffect(() => {
-    if (session?.user) {
-      setName(session.user.name || '');
-      setEmail(session.user.email || '');
+  const handleLinkProvider = (provider: string) => {
+    // Odpalamy autoryzację GitHuba bez wylogowywania (powrót na obecną stronę)
+    signIn(provider, { callbackUrl: window.location.href });
+  };
+
+  const handleUnlinkProvider = async (provider: string) => {
+    setLoading(true);
+    const res = await fetch('/api/user/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'unlinkProvider', provider }),
+    });
+    const data = await res.json();
+    setLoading(false);
+    if (res.ok) {
+      toast.success(data.message);
+      fetchConnections();
+    } else {
+      toast.error(data.error);
     }
-  }, [session]);
+  };
 
   return (
     <div className="min-h-screen p-6 relative">
@@ -106,6 +139,12 @@ export default function SettingsPage() {
             >
               <Shield size={18} /> {t('tabSecurity')}
             </button>
+            <button 
+              onClick={() => setActiveTab('connections')}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'connections' ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200 border border-transparent'}`}
+            >
+              <Link2 size={18} /> {t('tabConnections')}
+            </button>
           </div>
 
           <div className="flex-1 bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl animate-in fade-in duration-500">
@@ -113,7 +152,6 @@ export default function SettingsPage() {
             {activeTab === 'profile' && (
               <form onSubmit={handleUpdateProfile} className="space-y-6">
                 <h2 className="text-xl font-bold text-white mb-4">{t('profileInfo')}</h2>
-                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">{t('username')}</label>
@@ -144,13 +182,16 @@ export default function SettingsPage() {
                 <h2 className="text-xl font-bold text-white mb-4">{t('changePassword')}</h2>
                 
                 <div className="max-w-md space-y-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">{t('currentPassword')}</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><KeyRound size={16} className="text-slate-500" /></div>
-                      <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required className="block w-full pl-10 pr-3 py-2.5 border border-slate-700 rounded-xl bg-black/50 text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500" placeholder="••••••••" />
+                  {/* Jeśli użytkownik ma już hasło, musi podać stare. Jeśli zrejestrował się GitHuba, nie ma hasła i to pole ukrywamy */}
+                  {hasPassword && (
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">{t('currentPassword')}</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><KeyRound size={16} className="text-slate-500" /></div>
+                        <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required className="block w-full pl-10 pr-3 py-2.5 border border-slate-700 rounded-xl bg-black/50 text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500" placeholder="••••••••" />
+                      </div>
                     </div>
-                  </div>
+                  )}
                   <div>
                     <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">{t('newPassword')}</label>
                     <div className="relative">
@@ -166,6 +207,41 @@ export default function SettingsPage() {
                   </button>
                 </div>
               </form>
+            )}
+
+            {activeTab === 'connections' && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-bold text-white mb-4">{t('tabConnections')}</h2>
+                <p className="text-slate-400 text-sm mb-6">{t('connectionsInfo')}</p>
+                
+                <div className="bg-black/40 border border-slate-700/50 rounded-2xl p-6 hover:bg-black/60 transition-colors">
+                   <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div className="flex items-center gap-4 w-full sm:w-auto">
+                         <div className="w-12 h-12 bg-[#24292e] rounded-xl flex items-center justify-center shadow-lg shrink-0">
+                            <Github size={24} className="text-white" />
+                         </div>
+                         <div>
+                            <h3 className="text-white font-bold">{t('providerGithub')}</h3>
+                            <p className="text-sm text-slate-400">
+                               {providers.includes('github') ? t('connected') : t('notConnected')}
+                            </p>
+                         </div>
+                      </div>
+                      
+                      <div className="w-full sm:w-auto">
+                        {providers.includes('github') ? (
+                           <button onClick={() => handleUnlinkProvider('github')} disabled={loading} className="w-full sm:w-auto px-4 py-2 border border-red-500/30 text-red-400 hover:bg-red-500/10 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2">
+                              {loading ? <Loader2 size={16} className="animate-spin" /> : <Unlink size={16} />} {t('btnDisconnect')}
+                           </button>
+                        ) : (
+                           <button onClick={() => handleLinkProvider('github')} disabled={loading} className="w-full sm:w-auto px-4 py-2 bg-slate-100 hover:bg-white text-slate-900 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-lg">
+                              {loading ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />} {t('btnConnect')}
+                           </button>
+                        )}
+                      </div>
+                   </div>
+                </div>
+              </div>
             )}
 
           </div>
