@@ -96,6 +96,17 @@ export default function ServiceWidget(props: ServiceWidgetProps) {
   // 3. Inteligentny interwał zwalniający w tle
   useSmartInterval(fetchStats, 15000, 60000);
 
+  // Nasłuchujemy zmian w kluczowych polach konfiguracji widgetu.
+  // Kiedy np. zmienisz adres URL lub slug w Uptime Kuma, ten efekt
+  // wyłapie zmianę, włączy kółko ładowania i natychmiast pobierze nowe dane,
+  // nie czekając na interwał z useSmartInterval.
+  useEffect(() => {
+    if (isMounted.current) {
+      setIsLoading(true); // Opcjonalnie: Pokaż chwilowe ładowanie, by dać znać użytkownikowi
+      fetchStats(); 
+    }
+  }, [data?.url, data?.settings, data?.widgetType, fetchStats]);
+
   // --- FUNKCJA TŁUMACZĄCA (TERAZ W GŁÓWNYM KOMPONENCIE) ---
   const translateApiText = (text: string) => {
     if (typeof text !== 'string') return text;

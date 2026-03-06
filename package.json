@@ -3,16 +3,24 @@
   "version": "0.1.0-beta",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3003",
-    "terminal": "node terminal-server.mjs",
+    "dev:next": "next dev -p 3003",
+    "dev:terminal": "node terminal-server.mjs",
+    "dev": "concurrently -c \"cyan.bold,magenta.bold\" -n \"NEXT,TERM\" \"npm run dev:next\" \"npm run dev:terminal\"",
+    
     "build": "next build",
-    "start": "next start -p 3003",
-    "lint": "eslint"
+
+    "start:next": "next start -p 3004",
+    "start:terminal": "node terminal-server.mjs",
+    "start": "concurrently -c \"cyan.bold,magenta.bold\" -n \"NEXT,TERM\" \"npm run start:next\" \"npm run start:terminal\"",
+    
+    "lint": "eslint",
+    "prisma:generate": "prisma generate"
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",
     "@prisma/client": "^5.18.0-integration-fix-config-dir-client.5",
     "bcryptjs": "^3.0.3",
+    "concurrently": "^9.2.1",
     "date-fns": "^4.1.0",
     "dockerode": "^4.0.9",
     "framer-motion": "^12.34.1",
