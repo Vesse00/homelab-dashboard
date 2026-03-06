@@ -145,7 +145,14 @@
     "submitBtn": "Zaloguj się",
     "noAccount": "Nie masz konta?",
     "registerLink": "Zarejestruj się",
-    "errorCredentials": "Nieprawidłowy e-mail lub hasło"
+    "errorCredentials": "Nieprawidłowy e-mail lub hasło",
+    "GitHubLogin": "Zaloguj się przez GitHub",
+    "or": "Lub",
+    "2faRequired": "Konto zabezpieczone. Wpisz kod 2FA",
+    "2faInvalid": "Nieprawidłowy kod 2FA",
+    "placeholder2fa": "6-cyfrowy kod",
+    "btnBack": "Wróć",
+    "btnVerify": "Zweryfikuj i zaloguj"
   },
 "Register": {
     "title": "Utwórz konto",
@@ -158,7 +165,9 @@
     "haveAccount": "Masz już konto?",
     "loginLink": "Zaloguj się",
     "errorCredentials": "Wystąpił błąd podczas rejestracji",
-    "errorConnection": "Błąd połączenia z serwerem"
+    "errorConnection": "Błąd połączenia z serwerem",
+    "GitHubLogin": "Zarejestruj się przez GitHub",
+    "or": "Lub"
 },
 "WidgetGallery": {
     "title": "Galeria",
@@ -272,7 +281,35 @@
     "changePassword": "Zmiana hasła",
     "currentPassword": "Obecne hasło",
     "newPassword": "Nowe hasło",
-    "btnUpdatePassword": "Zaktualizuj hasło"
+    "btnUpdatePassword": "Zaktualizuj hasło",
+    "tabConnections": "Powiązane konta",
+    "connectionsInfo": "Zarządzaj powiązaniami z zewnętrznymi dostawcami tożsamości. Podłączenie konta pozwala na szybkie i bezpieczne logowanie.",
+    "providerGithub": "Logowanie przez GitHub",
+    "connected": "Konto jest aktualnie powiązane.",
+    "notConnected": "Brak powiązanego konta.",
+    "btnConnect": "Podłącz konto",
+    "btnDisconnect": "Odłącz",
+    "toastPassSet": "Hasło zostało ustawione!",
+    "2faTitle": "Weryfikacja Dwuetapowa (2FA)",
+    "2faDesc": "Zabezpiecz swoje konto aplikacją taką jak Google Authenticator, Authy lub Bitwarden.",
+    "2faEnabled": "2FA jest aktualnie WŁĄCZONE.",
+    "2faDisabled": "2FA jest aktualnie WYŁĄCZONE.",
+    "btnEnable2fa": "Skonfiguruj 2FA",
+    "btnDisable2fa": "Wyłącz 2FA",
+    "2faStep1": "1. Zeskanuj ten kod QR w swojej aplikacji",
+    "2faStep2": "2. Wpisz 6-cyfrowy kod z aplikacji, aby potwierdzić",
+    "placeholder2fa": "Np. 123456",
+    "btnConfirm2fa": "Potwierdź i Włącz",
+    "confirmPassword": "Potwierdź nowe hasło",
+    "passwordMismatch": "Hasła nie są identyczne!",
+    "addionalSafe": "Dodatkowa warstwa ochrony",
+    "toast2faEnabled": "Weryfikacja dwuetapowa została pomyślnie włączona!",
+    "toast2faDisabled": "Weryfikacja dwuetapowa została wyłączona.",
+    "toast2faInvalidCode": "Nieprawidłowy kod weryfikacyjny TOTP!",
+    "disable2faTitle": "Wyłączyć weryfikację 2FA?",
+    "disable2faDesc": "Zmniejszy to bezpieczeństwo Twojego konta.",
+    "btnCancel": "Anuluj",
+    "btnConfirmDisable": "Wyłącz"
   },
   "AdminPanel": {
     "title": "Panel Administratora",
@@ -305,7 +342,17 @@
     "noActions": "Brak akcji",
     "titleRevokeAdmin": "Zabierz uprawnienia Admina",
     "titleGrantAdmin": "Nadaj uprawnienia Admina",
-    "titleDeleteUser": "Usuń użytkownika"
+    "titleDeleteUser": "Usuń użytkownika",
+    "consoleBtn": "Konsola",
+    "sudoTitle": "Wymagana Autoryzacja",
+    "sudoDesc": "Wprowadź swoje hasło logowania, aby uzyskać bezpieczny dostęp do terminala serwera.",
+    "sudoPlaceholder": "Hasło administratora...",
+    "btnUnlock": "Odblokuj",
+    "consoleTerminalTitle": "Terminal Serwera",
+    "consolePlaceholder": "np. ls -la, docker ps, free -h (wpisz 'clear' aby wyczyścić)",
+    "consoleExecuting": "Wykonywanie...",
+    "consoleWrongPassword": "Błędne hasło administratora!",
+    "consoleAuthError": "Wystąpił błąd podczas autoryzacji."
   },
   "Widgets": {
     "ContainerCard": {

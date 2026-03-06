@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Shield, Mail, KeyRound, User, Loader2, UserPlus, Eye, EyeOff } from 'lucide-react';
+import { Shield, Mail, KeyRound, User, Loader2, UserPlus, Eye, EyeOff, Github } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
+import { signIn } from 'next-auth/react';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -132,6 +133,21 @@ export default function RegisterPage() {
             >
               {loading ? <Loader2 size={18} className="animate-spin" /> : <><UserPlus size={18} /> {t('submitBtn')}</>}
             </button>
+            {/* --- SEKCJA GITHUB --- */}
+          <div className="mt-8 mb-6 flex items-center gap-4">
+            <div className="flex-1 h-px bg-slate-800"></div>
+            <span className="text-slate-500 text-sm font-medium">{t('or')}</span>
+            <div className="flex-1 h-px bg-slate-800"></div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => signIn('github', { callbackUrl: '/' })}
+            className="w-full py-3.5 bg-[#24292e] hover:bg-[#2f363d] text-white rounded-xl font-bold transition-all shadow-lg flex items-center justify-center gap-3 group"
+          >
+            <Github size={20} className="group-hover:scale-110 transition-transform" />
+            {t('GitHubLogin')}
+          </button>
           </form>
         </div>
 

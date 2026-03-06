@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { GripHorizontal, X, ArrowDownRight, Cpu, MemoryStick, ThermometerSun, Activity, Lock, Unlock } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useCallback } from 'react';
+import { useSmartInterval } from '@/app/hooks/useSmartInterval';
 
 interface ServerStatsWidgetProps {
   style?: React.CSSProperties;
@@ -26,8 +28,7 @@ export default function ServerStatsWidget({
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchStats = async () => {
+    const fetchStats = useCallback(async () => {
       try {
         const res = await fetch('/api/system/stats');
         const data = await res.json();
@@ -37,11 +38,9 @@ export default function ServerStatsWidget({
       } finally {
         setLoading(false);
       }
-    };
-    fetchStats();
-    const interval = setInterval(fetchStats, 3000); // Odświeża co 3 sekundy
-    return () => clearInterval(interval);
-  }, []);
+    }, []);
+
+  useSmartInterval(fetchStats, 3000, 30000);
 
   const isExpanded = w >= 3 && h >= 3;
 

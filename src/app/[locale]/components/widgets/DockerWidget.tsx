@@ -5,6 +5,8 @@ import { X, GripHorizontal, Activity, Server, ExternalLink, ArrowDownRight, Play
 import { useRouter } from 'next/navigation';
 import { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
+import { useCallback } from 'react';
+import { useSmartInterval } from '@/app/hooks/useSmartInterval';
 
 interface DockerWidgetProps {
   style?: React.CSSProperties;
@@ -31,8 +33,8 @@ export default function DockerWidget({
   const [data, setData] = useState({ running: 0, total: 0, uptime: '0.00' });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
+
+  const fetchData = useCallback(async () => {
       try {
         const res = await fetch('/api/docker/stats');
         const json = await res.json();
@@ -42,11 +44,9 @@ export default function DockerWidget({
       } finally {
         setLoading(false);
       }
-    };
-    fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
-  }, []);
+    }, []);
+    // Docker odpytuje szybko, zwalniamy z 3s do 30s
+  useSmartInterval(fetchData, 3000, 30000);
 
   const isExpanded = w >= 3 && h >= 3;
   const stopped = data.total - data.running;

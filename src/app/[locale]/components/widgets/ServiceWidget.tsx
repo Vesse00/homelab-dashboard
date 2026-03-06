@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { GripHorizontal, X, ExternalLink, Settings, ArrowDownRight, Lock, Unlock } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
+import { useSmartInterval } from '@/app/hooks/useSmartInterval';
 
 // Import modalu i szablonów
 import EditWidgetModal from './EditWidgetModal'; // <--- IMPORT NASZEGO NOWEGO MODALU
@@ -43,6 +44,69 @@ export default function ServiceWidget(props: ServiceWidgetProps) {
   const tApiStats = useTranslations('ApiStats');
   const tApiErrors = useTranslations('ApiErrors');
 
+  // --- TYLKO JEDEN STAN DO OBSŁUGI MODALU ---
+  const [isConfiguring, setIsConfiguring] = useState(false);
+
+  // Stan na statystyki "Live"
+  const [liveStats, setLiveStats] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // 1. Dodajemy referencję, która śledzi cykl życia komponentu
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => { isMounted.current = false; };
+  }, []);
+
+  // 2. Nasz callback z przywróconym zabezpieczeniem
+  const fetchStats = useCallback(async () => {
+    if (!data.url || !data.widgetType || data.widgetType === 'generic') {
+      if (isMounted.current) setIsLoading(false);
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/services/stats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          appName: data.name,
+          url: data.url,
+          widgetType: data.widgetType,
+          settings: data.settings
+        })
+      });
+
+      const result = await res.json();
+      
+      // Przywrócone zabezpieczenie!
+      if (isMounted.current) {
+         setLiveStats(result);
+         setIsLoading(false);
+      }
+    } catch (err) {
+      if (isMounted.current) {
+         setLiveStats({ status: 'error', primaryText: 'API_ERROR_CONNECTION', secondaryText: 'API_ERROR_LOGS' });
+         setIsLoading(false);
+      }
+    }
+  }, [data.url, data.settings, data.name, data.widgetType]);
+
+  // 3. Inteligentny interwał zwalniający w tle
+  useSmartInterval(fetchStats, 15000, 60000);
+
+  // Nasłuchujemy zmian w kluczowych polach konfiguracji widgetu.
+  // Kiedy np. zmienisz adres URL lub slug w Uptime Kuma, ten efekt
+  // wyłapie zmianę, włączy kółko ładowania i natychmiast pobierze nowe dane,
+  // nie czekając na interwał z useSmartInterval.
+  useEffect(() => {
+    if (isMounted.current) {
+      setIsLoading(true); // Opcjonalnie: Pokaż chwilowe ładowanie, by dać znać użytkownikowi
+      fetchStats(); 
+    }
+  }, [data?.url, data?.settings, data?.widgetType, fetchStats]);
+
   // --- FUNKCJA TŁUMACZĄCA (TERAZ W GŁÓWNYM KOMPONENCIE) ---
   const translateApiText = (text: string) => {
     if (typeof text !== 'string') return text;
@@ -77,57 +141,6 @@ export default function ServiceWidget(props: ServiceWidgetProps) {
       </div>
     );
   }
-
-  // --- TYLKO JEDEN STAN DO OBSŁUGI MODALU ---
-  const [isConfiguring, setIsConfiguring] = useState(false);
-
-  // Stan na statystyki "Live"
-  const [liveStats, setLiveStats] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchStats = async () => {
-      if (!data.url || !data.widgetType || data.widgetType === 'generic') {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/services/stats', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            appName: data.name,
-            url: data.url,
-            widgetType: data.widgetType,
-            settings: data.settings
-          })
-        });
-
-        const result = await res.json();
-        
-        if (isMounted) {
-          setLiveStats(result);
-          setIsLoading(false);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setLiveStats({ status: 'error', primaryText: 'API_ERROR_CONNECTION', secondaryText: 'API_ERROR_LOGS' });
-          setIsLoading(false);
-        }
-      }
-    };
-
-    fetchStats();
-    const interval = setInterval(fetchStats, 15000);
-
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
-  }, [data.url, data.settings, data.name, data.widgetType, t]);
 
   const renderContent = () => {
     // 1. WALIDACJA: Jeśli publicUrl istnieje i nie jest pusty -> używamy go. W przeciwnym razie bierzemy lokalny url (IP:port).

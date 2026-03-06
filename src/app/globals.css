@@ -102,3 +102,11 @@ body {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
 }
+
+.xterm-viewport {
+  background-color: transparent !important;
+}
+
+.xterm-screen {
+  padding: 10px;
+}
