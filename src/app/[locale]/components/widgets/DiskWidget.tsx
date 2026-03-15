@@ -28,8 +28,13 @@ export default function DiskWidget({
   const [loading, setLoading] = useState(true);
 
   const fetchDisks = useCallback(async () => {
+    const kioskToken = localStorage.getItem('kiosk_device_token');
     try {
-      const res = await fetch('/api/system/disks');
+      const res = await fetch('/api/system/disks', {
+        headers: {
+          'Authorization': `Bearer ${kioskToken}`
+        }
+      });
       const data = await res.json();
       setDisks(data);
     } catch (e) {

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { signOut, useSession } from 'next-auth/react';
 import { User, Settings, LogOut, Shield, Heart } from 'lucide-react';
@@ -13,6 +13,7 @@ import CommandPalette from './CommandPalette';
 export default function Navbar() {
   const t = useTranslations('Navbar');
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { data: session, status } = useSession();
   const [time, setTime] = useState<Date | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -34,6 +35,23 @@ export default function Navbar() {
   if (hiddenPaths.some(path => pathname?.startsWith(path))) {
     return null;
   }
+
+
+  // 1. Sprawdzamy, czy jesteśmy na stronie logowania, rejestracji lub resetu hasła
+  const isAuthPage = pathname.includes('/login') || 
+                     pathname.includes('/register') || 
+                     pathname.includes('/forgot-password') || 
+                     pathname.includes('/reset');
+
+  // 2. Sprawdzamy, czy jesteśmy w Kiosku (jako strona /kiosk lub z parametrem ?kiosk=true)
+  const isKioskPage = pathname.includes('/kiosk') || searchParams.get('kiosk') === 'true';
+
+  // Jeśli to strona autoryzacji lub Kiosk, w ogóle nie renderujemy paska nawigacji!
+  if (isAuthPage || isKioskPage) {
+    return null;
+  }
+
+  
   
   const formattedTime = time ? time.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '...';
   const formattedDate = time ? time.toLocaleDateString('pl-PL', { weekday: 'short', day: 'numeric', month: 'short' }) : '...';

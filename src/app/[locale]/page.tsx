@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Edit2, Save, Plus, X, LayoutGrid, HardDrive, CloudSun, Radar, Settings, Image as ImageIcon } from 'lucide-react';
+import { Edit2, Save, Plus, X, LayoutGrid, HardDrive, CloudSun, Radar, Settings, Image as ImageIcon, Tablet, Smartphone, Check } from 'lucide-react';
 import DashboardGrid from '@/app/[locale]/components/DashboardGrid';
 import DockerWidget from '@/app/[locale]/components/widgets/DockerWidget';
 import ContainerCard from '@/app/[locale]/components/ContainerCard';
@@ -52,6 +52,7 @@ interface TabData {
   id: string;
   name: string;
   isDeletable: boolean;
+  isKiosk?: boolean; // Nowa właściwość, która może być używana do oznaczenia zakładek, które mają być ukrywane w trybie kiosk
   widgets: WidgetItem[];
 }
 
@@ -72,6 +73,12 @@ export default function Dashboard() {
   const [isDiscoveryOpen, setIsDiscoveryOpen] = useState(false);
   const userName = session?.user?.name || session?.user?.email?.split('@')[0] || 'Admin'; // Fallback na nazwę użytkownika
   const [galleryRefreshKey, setGalleryRefreshKey] = useState(0);
+
+  // Stany związane z trybem kiosk i parowaniem nowych zakładek
+  const [isNewTabKiosk, setIsNewTabKiosk] = useState(false);
+  const [isPairingModalOpen, setIsPairingModalOpen] = useState(false);
+  const [pairingCode, setPairingCode] = useState('');
+  const [kioskTabIdToPair, setKioskTabIdToPair] = useState<string | null>(null);
   
   // Stan widgetów (pobieramy z localStorage lub domyślny)
   // Domyślna struktura zakładek dla nowego użytkownika
@@ -358,6 +365,7 @@ const handleScan = async () => {
       id: newTabId,
       name: newTabName.trim(),
       isDeletable: true,
+      isKiosk: isNewTabKiosk, // Ustawiamy flagę kiosk na podstawie stanu
       widgets: [] // Nowa zakładka jest pusta na start
     };
 
@@ -373,6 +381,12 @@ const handleScan = async () => {
 
     setNewTabName('');
     setIsAddTabModalOpen(false);
+    if(isNewTabKiosk) {
+      setKioskTabIdToPair(newTabId);
+      setIsPairingModalOpen(true);
+    }
+
+    setIsNewTabKiosk(false); // Resetujemy stan po dodaniu
   };
 
 // --- USUWANIE ZAKŁADKI (Z CUSTOMOWYM, WYBLUROWANYM TOASTEM) ---
@@ -531,13 +545,22 @@ const handleScan = async () => {
             >
               {/* Ikona z odstępem (margin-right) */}
               <div className="mr-2 flex items-center justify-center">
-                {tab.id === 'main' 
-                  ? <LayoutGrid size={15} className={isActive ? "text-sky-400" : "text-slate-500"} /> 
-                  : <HardDrive size={15} className={isActive ? "text-sky-400" : "text-slate-500"} />
-                }
-              </div>
-              
-              <span>{tab.name}</span>
+              {tab.isKiosk ? (
+                <Tablet size={15} className={isActive ? "text-purple-400 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]" : "text-purple-500/60"} />
+              ) : tab.id === 'main' ? (
+                <LayoutGrid size={15} className={isActive ? "text-sky-400" : "text-slate-500"} />
+              ) : (
+                <HardDrive size={15} className={isActive ? "text-sky-400" : "text-slate-500"} />
+              )}
+            </div>
+
+            <span>{tab.name}</span>
+            {/* Dodatkowy mini-badge dla Kiosku */}
+            {tab.isKiosk && (
+              <span className="ml-2 px-1.5 py-0.5 rounded-md bg-purple-500/10 text-[10px] font-bold text-purple-400 border border-purple-500/20 uppercase tracking-wider">
+                Kiosk
+              </span>
+            )}
               
               {/* ANIMOWANY PRZYCISK "X" (Płynnie rozwija szerokość) */}
               {tab.isDeletable && (
@@ -579,21 +602,37 @@ const handleScan = async () => {
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-sm p-6 shadow-2xl relative overflow-hidden"
             >
-              {/* Dekoracyjne tło */}
               <div className="absolute -top-10 -right-10 w-32 h-32 bg-sky-500/10 blur-3xl rounded-full" />
               
               <h3 className="text-xl font-bold text-white mb-2 relative z-10">{t('newTabTitle')}</h3>
-              <p className="text-sm text-slate-400 mb-6 relative z-10">{t('newTabDesc')}</p>
+              <p className="text-sm text-slate-400 mb-5 relative z-10">Utwórz nową pustą przestrzeń na widgety.</p>
               
               <input
                 type="text"
                 autoFocus
-                placeholder={t('newTabPlaceholder')}
+                placeholder="Np. Kamery, Serwery..."
                 value={newTabName}
                 onChange={(e) => setNewTabName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddTab()}
-                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all mb-6 relative z-10"
+                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all mb-4 relative z-10"
               />
+
+              {/* CHECKBOX KIOSKU */}
+              <label className="flex items-center gap-3 p-3 mb-6 rounded-xl border border-slate-800 bg-slate-950/50 cursor-pointer hover:bg-slate-800/50 transition-colors relative z-10 group">
+                <div className={`flex items-center justify-center w-5 h-5 rounded border ${isNewTabKiosk ? 'bg-purple-500 border-purple-500' : 'bg-slate-900 border-slate-600 group-hover:border-purple-500/50'}`}>
+                  {isNewTabKiosk && <Check size={14} className="text-white" />}
+                </div>
+                <input 
+                  type="checkbox" 
+                  className="hidden" 
+                  checked={isNewTabKiosk} 
+                  onChange={(e) => setIsNewTabKiosk(e.target.checked)} 
+                />
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold text-slate-200">Przeznacz na tablet (Kiosk Mode)</span>
+                  <span className="text-xs text-slate-500">Otworzy asystenta parowania ekranu</span>
+                </div>
+              </label>
               
               <div className="flex justify-end gap-3 relative z-10">
                 <button 
@@ -604,9 +643,92 @@ const handleScan = async () => {
                 </button>
                 <button 
                   onClick={handleAddTab} 
-                  className="px-6 py-2 text-sm font-bold bg-sky-600 hover:bg-sky-500 text-white rounded-xl shadow-[0_0_15px_rgba(14,165,233,0.3)] transition-all active:scale-95"
+                  className={`px-6 py-2 text-sm font-bold text-white rounded-xl shadow-lg transition-all active:scale-95 ${
+                    isNewTabKiosk ? 'bg-purple-600 hover:bg-purple-500 shadow-purple-500/30' : 'bg-sky-600 hover:bg-sky-500 shadow-sky-500/30'
+                  }`}
                 >
-                  {t('btnCreate')}
+                  {isNewTabKiosk ? 'Dalej' : t('btnCreate')}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* --- NOWY: MODAL PAROWANIA KIOSKU --- */}
+      <AnimatePresence>
+        {isPairingModalOpen && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/90 backdrop-blur-md px-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-slate-900 border border-purple-500/30 rounded-3xl w-full max-w-md p-8 shadow-2xl relative overflow-hidden flex flex-col items-center text-center"
+            >
+              {/* Tło Modala */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1/2 bg-gradient-to-b from-purple-500/20 to-transparent blur-2xl -z-10" />
+
+              <div className="w-16 h-16 bg-purple-500/20 text-purple-400 rounded-2xl flex items-center justify-center mb-6 ring-1 ring-purple-500/50 shadow-[0_0_30px_rgba(168,85,247,0.3)]">
+                <Smartphone size={32} />
+              </div>
+
+              <h3 className="text-2xl font-bold text-white mb-2">Połącz z ekranem</h3>
+              <p className="text-slate-400 mb-8 text-sm leading-relaxed">
+                Otwórz panel na swoim tablecie, wybierz <strong>Skonfiguruj jako Kiosk</strong> i wpisz wyświetlony tam 8-cyfrowy kod autoryzacji.
+              </p>
+
+              {/* Input Kodu - Stylizowany na duże cyfry */}
+              <input
+                type="text"
+                maxLength={9} // "1234-5678" z myślnikiem
+                placeholder="0000-0000"
+                value={pairingCode}
+                onChange={(e) => {
+                  // Proste formatowanie kodu XXXX-XXXX w locie
+                  let val = e.target.value.replace(/\D/g, ''); 
+                  if (val.length > 4) val = val.slice(0,4) + '-' + val.slice(4,8);
+                  setPairingCode(val);
+                }}
+                className="w-48 bg-slate-950/50 border-2 border-purple-500/50 rounded-2xl px-4 py-4 text-center text-3xl font-mono font-bold text-white placeholder-slate-700 focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-500/20 transition-all mb-8 tracking-widest uppercase"
+              />
+
+              <div className="flex gap-4 w-full">
+                <button 
+                  onClick={() => setIsPairingModalOpen(false)} 
+                  className="flex-1 py-3 text-sm font-semibold text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors"
+                >
+                  Pomiń na razie
+                </button>
+                <button 
+                  onClick={async () => {
+                    const toastId = toast.loading('Łączenie urządzenia...');
+                    try {
+                      const res = await fetch('/api/kiosk/pair', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          pairingCode: pairingCode,
+                          tabId: kioskTabIdToPair 
+                        })
+                      });
+
+                      const data = await res.json();
+                      
+                      if (res.ok) {
+                        toast.success(data.message || 'Pomyślnie połączono urządzenie!', { id: toastId });
+                        setIsPairingModalOpen(false);
+                        setPairingCode(''); 
+                      } else {
+                        toast.error(data.error || 'Błąd parowania. Sprawdź kod.', { id: toastId });
+                      }
+                    } catch (error) {
+                      toast.error('Błąd połączenia z serwerem.', { id: toastId });
+                    }
+                  }} 
+                  disabled={pairingCode.length !== 9}
+                  className="flex-1 py-3 text-sm font-bold bg-purple-600 hover:bg-purple-500 text-white rounded-xl shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Połącz
                 </button>
               </div>
             </motion.div>

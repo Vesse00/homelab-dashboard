@@ -29,8 +29,13 @@ export default function ServerStatsWidget({
   const [loading, setLoading] = useState(true);
 
     const fetchStats = useCallback(async () => {
+      const kioskToken = localStorage.getItem('kiosk_device_token');
       try {
-        const res = await fetch('/api/system/stats');
+        const res = await fetch('/api/system/stats', {
+          headers: {
+            'Authorization': `Bearer ${kioskToken}`
+          }
+        });
         const data = await res.json();
         setStats(data);
       } catch (e) {

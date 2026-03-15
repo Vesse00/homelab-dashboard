@@ -2,13 +2,16 @@ import { NextResponse } from 'next/server';
 import si from 'systeminformation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/lib/auth';
+import { checkDualAuth } from '@/app/lib/auth';
 
 // Blokujemy cache, żeby dane zawsze były na żywo
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export async function GET(req: Request) {
+  const isAuthenticated = await checkDualAuth(req);
+  if (!isAuthenticated) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   
   try {
     const [cpu, mem, temp] = await Promise.all([

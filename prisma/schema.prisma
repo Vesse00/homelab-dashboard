@@ -72,6 +72,7 @@ model User {
   // --- Relacje ---
   accounts      Account[]
   sessions      Session[]
+  kiosks         Kiosk[]   
   
   // Tu możesz dodać relacje do kontenerów jeśli chcesz przypisywać kontenery do userów
 }
@@ -119,4 +120,20 @@ model Service {
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Kiosk {
+  id           String   @id @default(cuid())
+  name         String   // np. "Tablet w Kuchni"
+  pairingCode  String?  @unique // Tymczasowy 8-cyfrowy kod (np. "48291034")
+  deviceToken  String?  @unique // Bezpieczny token sesji dla tabletu
+  layout       String?  // Zapisany układ kafelków tylko dla tego tabletu (JSON)
+  tabId        String?  // (Opcjonalnie) ID zakładki z głównego panelu, z której pochodzi układ
+  
+  // Relacja - kto przypisał i skonfigurował ten kiosk
+  userId       String?  
+  user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

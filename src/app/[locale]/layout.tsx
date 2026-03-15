@@ -3,6 +3,28 @@ import Navbar from "@/app/[locale]/components/Navbar";
 import Providers from "@/app/[locale]/components/Providers";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
+import { Metadata, Viewport } from "next";
+
+// --- KONFIGURACJA PWA i METADANYCH ---
+export const metadata: Metadata = {
+  title: 'HomeLab Dashboard',
+  description: 'Scentralizowane zarządzanie Twoim homelabem',
+  manifest: '/manifest.json', // Podpięcie naszego pliku PWA
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'HomeLab',
+  },
+};
+
+// --- KONFIGURACJA WIDOKU (Zapobiega zoomowaniu na tabletach) ---
+export const viewport: Viewport = {
+  themeColor: '#020617', // Pasuje do Twojego bg-slate-950
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false, // MEGA WAŻNE dla Kiosku - blokuje podwójne tapnięcia przybliżające ekran!
+};
 
 export default async function RootLayout({
   children,

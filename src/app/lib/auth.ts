@@ -1,6 +1,7 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { getServerSession } from "next-auth/next";
 import GithubProvider from "next-auth/providers/github";
 import { prisma } from "./prisma";
 import { compare } from "bcryptjs"; // Używamy bcryptjs
@@ -127,3 +128,27 @@ export const authOptions: NextAuthOptions = {
     }
   }
 };
+
+// --- NOWY SYSTEM PODWÓJNEJ AUTORYZACJI (PC + KIOSK) ---
+export async function checkDualAuth(req: Request) {
+  // 1. Sprawdzamy klasyczną sesję z przeglądarki (NextAuth)
+  const session = await getServerSession(authOptions);
+  if (session) return true;
+
+  // 2. Jeśli nie ma sesji (czyli to tablet), sprawdzamy nagłówek Kiosku
+  const authHeader = req.headers.get('authorization');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    
+    // Sprawdzamy, czy token istnieje w bazie
+    const kiosk = await prisma.kiosk.findUnique({
+      where: { deviceToken: token },
+      select: { id: true } // Pobieramy tylko ID dla szybkości
+    });
+    
+    if (kiosk) return true;
+  }
+
+  // Odmowa dostępu
+  return false;
+}
