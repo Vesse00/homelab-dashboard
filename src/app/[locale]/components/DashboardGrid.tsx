@@ -1,6 +1,7 @@
 'use client';
 
 import { Responsive, WidthProvider } from 'react-grid-layout/legacy';
+import { renderKioskWidget } from './kiosk-widgets/KioskWidgetRenderer';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
@@ -24,6 +25,7 @@ interface DashboardGridProps {
   isAdmin?: boolean; // Dodajemy opcjonalny prop isAdmin
   onToggleLock: (id: string) => void;
   highlightedId?: string | null; // Dodajemy opcjonalny prop dla highlight
+  isKiosk?: boolean; // Czy ten grid jest częścią Kiosku (domyślnie false)
 }
 
 export default function DashboardGrid({ 
@@ -34,7 +36,8 @@ export default function DashboardGrid({
   onUpdateData,
   onToggleLock,
   highlightedId,
-  isAdmin
+  isAdmin,
+  isKiosk,
 }: DashboardGridProps) {
 
   const seenIds = new Set();
@@ -63,6 +66,11 @@ export default function DashboardGrid({
       isLocked: item.static, // <--- PRZEKAZUJEMY STAN KŁÓDKI (wbudowane w item)
       onToggleLock: onToggleLock
     };
+
+    const kioskElement = renderKioskWidget(item, commonProps);
+    if (kioskElement) {
+      return kioskElement; // Jeśli tak, przerywamy i renderujemy od razu ten piękny kafelek!
+    }
 
     switch (item.type) {
       // Łączymy wszystkie typy "usługowe" w jeden case, aby obsłużył je ServiceWidget
@@ -107,8 +115,8 @@ export default function DashboardGrid({
     <ResponsiveGridLayout
       className="layout"
       layouts={{ lg: layout }}
-      breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-      cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+      breakpoints={isKiosk ? { lg: 0 } : { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+      cols={isKiosk ? { lg: 12 } : { lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
       rowHeight={100} // Zachowałem Twoje ustawienie wysokości
       margin={[16, 16]}
       

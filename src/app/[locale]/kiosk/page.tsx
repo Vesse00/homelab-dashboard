@@ -52,6 +52,39 @@ export default function KioskPage() {
     fetchLayout();
   }, [locale, router]);
 
+  // --- AUTOMATYCZNE WYKRYWANIE I WYSYŁANIE WYMIARÓW EKRANU ---
+  useEffect(() => {
+    const syncDimensions = async () => {
+      const token = localStorage.getItem('kiosk_device_token');
+      if (!token) return;
+
+      // Pobieramy wymiary LOGICZNE (te, które widzi CSS)
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const ratio = window.devicePixelRatio;
+
+      try {
+        await fetch('/api/kiosk/dimensions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ width, height, ratio })
+        });
+      } catch (err) {
+        console.error("Nie udało się zsynchronizować wymiarów ekranu", err);
+      }
+    };
+
+    // Odpalamy po załadowaniu
+    syncDimensions();
+
+    // Opcjonalnie: odpalamy ponownie, gdy ktoś obróci ekran telefonu!
+    window.addEventListener('resize', syncDimensions);
+    return () => window.removeEventListener('resize', syncDimensions);
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-transparent flex items-center justify-center -mt-16 pt-16">
@@ -117,6 +150,7 @@ export default function KioskPage() {
           isAdmin={false}           
           onRemove={() => {}}
           onToggleLock={() => {}}
+          isKiosk={true}
         />
       </div>
     </div>

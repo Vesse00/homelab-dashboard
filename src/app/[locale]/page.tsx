@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Edit2, Save, Plus, X, LayoutGrid, HardDrive, CloudSun, Radar, Settings, Image as ImageIcon, Tablet, Smartphone, Check } from 'lucide-react';
+import { Edit2, Save, Plus, X, LayoutGrid, HardDrive, CloudSun, Radar, Settings, Image as ImageIcon, Tablet, Smartphone, Check, MonitorSmartphone } from 'lucide-react';
 import DashboardGrid from '@/app/[locale]/components/DashboardGrid';
 import DockerWidget from '@/app/[locale]/components/widgets/DockerWidget';
 import ContainerCard from '@/app/[locale]/components/ContainerCard';
@@ -16,6 +16,7 @@ import ServiceWidget from '@/app/[locale]/components/widgets/ServiceWidget';
 import ServerStatsWidget from '@/app/[locale]/components/widgets/ServerStatsWidget';
 import { useLocale, useTranslations } from 'next-intl';
 import WidgetGalleryModal from './components/WidgetGalleryModal';
+import KioskWidgetGalleryModal from '@/app/[locale]/components/KioskWidgetGalleryModal';
 
 // Definicja dostępnych typów widgetów
 const WIDGET_TYPES = {
@@ -53,6 +54,8 @@ interface TabData {
   name: string;
   isDeletable: boolean;
   isKiosk?: boolean; // Nowa właściwość, która może być używana do oznaczenia zakładek, które mają być ukrywane w trybie kiosk
+  kioskWidth?: number;  // <--- DOKŁADNA SZEROKOŚĆ (PX)
+  kioskHeight?: number; // <--- DOKŁADNA WYSOKOŚĆ (PX)
   widgets: WidgetItem[];
 }
 
@@ -91,6 +94,8 @@ export default function Dashboard() {
 
   const [tabs, setTabs] = useState<TabData[]>(DEFAULT_TABS);
   const [activeTabId, setActiveTabId] = useState<string>('main');
+
+  const activeTab = tabs.find(t => t.id === activeTabId);
   
   // Pomocnicza zmienna, żeby kod poniżej (z gridem) wiedział, jakie widgety ma wyświetlić
   const activeWidgets = tabs.find(t => t.id === activeTabId)?.widgets || [];
@@ -355,6 +360,21 @@ const handleScan = async () => {
     saveLayout(newLayout); // <--- Zapisuje do bazy
   };
 
+  // --- AKTUALIZACJA WYMIARÓW KIOSKU ---
+  const handleUpdateKioskDimensions = (w: number, h: number) => {
+    const updatedTabs = tabs.map(tab => 
+      tab.id === activeTabId ? { ...tab, kioskWidth: w, kioskHeight: h } : tab
+    );
+    setTabs(updatedTabs); // Zmiana UI natychmiast
+    
+    // Zapis do bazy w tle
+    fetch('/api/user/layout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ layout: updatedTabs })
+    }).catch(err => console.error("Błąd zapisu wymiarów", err));
+  };
+
 
 // --- DODAWANIE ZAKŁADKI ---
   const handleAddTab = () => {
@@ -496,6 +516,7 @@ const handleScan = async () => {
                 </button>
 
                 {/* Menu Dodawania */}
+                {!activeTab?.isKiosk && (
                 <WidgetGalleryModal 
                   isOpen={isGalleryOpen}
                   onClose={() => setIsGalleryOpen(false)}
@@ -505,6 +526,17 @@ const handleScan = async () => {
                   onScan={handleScan} 
                   refreshTrigger={galleryRefreshKey}
                 />
+                )}
+
+                {/* Galeria Widgetów dla Kiosku */}
+                {activeTab?.isKiosk && (
+                  <KioskWidgetGalleryModal 
+                    isOpen={isGalleryOpen} 
+                    onClose={() => setIsGalleryOpen(false)} 
+                    onAddWidget={addWidget} // w Kiosku prawdopodobnie też używamy addWidget
+                    onAddService={addServiceWidget}
+                  />
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -736,22 +768,69 @@ const handleScan = async () => {
         )}
       </AnimatePresence>
 
-      {/* Grid z Widgetami */}
-      <DashboardGrid 
-        layout={activeWidgets} 
-        onLayoutChange={(newLayout) => {
-            // Funkcja saveLayout zaktualizuje stan zakładek i od razu wyśle to do bazy
-             saveLayout(newLayout);
-          }}
-        isAdmin={isAdmin}
-        onToggleLock={toggleWidgetLock}
-        isEditMode={isEditMode}
-        onRemove={removeWidget}
-        onUpdateData={updateWidgetData}
-        highlightedId={highlightedId}
-      >
-        
-      </DashboardGrid>
+      {/* --- RENDEROWANIE GRIDA (PC vs KIOSK) --- */}
+      {activeTab?.isKiosk ? (
+        <div className="flex flex-col items-center justify-center py-4 md:py-8 w-full">
+          
+          {/* INFO O WYMIARACH ZSYNCHRONIZOWANYCH Z URZĄDZENIEM */}
+          <div className="mb-6 flex flex-wrap items-center justify-center gap-4 bg-slate-900/80 backdrop-blur-md px-6 py-3 rounded-2xl border border-slate-700 shadow-xl">
+             <div className="flex items-center gap-2 text-purple-400">
+               <MonitorSmartphone size={18} />
+               <span className="text-sm font-bold tracking-widest uppercase">Ekran Docelowy:</span>
+             </div>
+
+             <div className="flex items-center gap-2 bg-slate-950 px-4 py-1.5 rounded-lg border border-slate-800 shadow-inner">
+                <span className="text-emerald-400 font-mono text-sm font-bold">
+                  {activeTab.kioskWidth || 1280} x {activeTab.kioskHeight || 800} px
+                </span>
+             </div>
+
+             {(!activeTab.kioskWidth || !activeTab.kioskHeight) && (
+               <span className="text-xs text-amber-500 font-medium ml-2 animate-pulse flex items-center gap-2">
+                 Uruchom urządzenie, aby zsynchronizować wymiary...
+               </span>
+             )}
+          </div>
+          
+          {/* DYNAMICZNA RAMKA KIOSKU (Automatycznie używa pikseli z bazy) */}
+          <div className="w-full bg-[#050505] border-[16px] border-slate-900 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-y-auto custom-scrollbar relative transition-all duration-500"
+               style={{ 
+                 // 1. CSS automatycznie wylicza idealne proporcje okna na podstawie pikseli!
+                 aspectRatio: `${activeTab.kioskWidth || 1280} / ${activeTab.kioskHeight || 800}`,
+                 // 2. Nie pozwalamy, by np. wymiar 2560px rozsadził monitor PC. Zachowa proporcje, ale zwęzi się do max 1400px.
+                 maxWidth: `${Math.min(activeTab.kioskWidth || 1280, 1400)}px` 
+               }}
+          >
+            {/* Odbicie światła na "szybie" tabletu */}
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none z-50"></div>
+            
+            <DashboardGrid 
+              layout={activeWidgets} 
+              onLayoutChange={(newLayout) => saveLayout(newLayout)}
+              isAdmin={isAdmin}
+              onToggleLock={toggleWidgetLock}
+              isEditMode={isEditMode}
+              onRemove={removeWidget}
+              onUpdateData={updateWidgetData}
+              highlightedId={highlightedId}
+              isKiosk={true}
+            />
+          </div>
+        </div>
+      ) : (
+        /* STANDARDOWY WIDOK PC (Na całą szerokość) */
+        <DashboardGrid 
+          layout={activeWidgets} 
+          onLayoutChange={(newLayout) => saveLayout(newLayout)}
+          isAdmin={isAdmin}
+          onToggleLock={toggleWidgetLock}
+          isEditMode={isEditMode}
+          onRemove={removeWidget}
+          onUpdateData={updateWidgetData}
+          highlightedId={highlightedId}
+          isKiosk={false}
+        />
+      )}
 
       {/* MODAL  */}
        <ServiceDiscoveryModal 
