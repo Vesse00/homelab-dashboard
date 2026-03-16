@@ -14,6 +14,9 @@ export default function KioskPage() {
   const router = useRouter();
   const locale = useLocale();
 
+  // Dodajemy stan, który będzie informował, czy kiosk jest w trybie "Czekania"
+  const [isWaiting, setIsWaiting] = useState(false);
+
   // Zegarek
   const [time, setTime] = useState(new Date());
   useEffect(() => {
@@ -27,6 +30,14 @@ export default function KioskPage() {
   const [kioskTabId, setKioskTabId] = useState<string | null>(null);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   // Zostawiasz też swoje setLoading i setError...
+
+  useEffect(() => {
+    if (!isWaiting) return;
+    const interval = setInterval(() => {
+      window.location.reload();
+    }, 5000); // Sprawdza co 5 sekund
+    return () => clearInterval(interval);
+  }, [isWaiting]);
 
   // --- POBIERANIE UKŁADU I INFORMACJI O KIOSKU ---
   useEffect(() => {
@@ -46,12 +57,20 @@ export default function KioskPage() {
         if (res.ok) {
           const data = await res.json();
           
-          // Zapisujemy WSZYSTKIE zakładki z bazy i ID tego urządzenia
+          // JEŚLI SERWER ZGŁASZA, ŻE JESTEŚMY W POCZEKALNI:
+          if (data.isWaiting) {
+            setIsWaiting(true);
+            setName(data.name || 'Ekran Ścienny');
+            setLoading(false);
+            return; // Przerywamy dalsze ładowanie widgetów
+          }
+
+          // W PRZECIWNYM RAZIE ŁADUJEMY NORMALNIE:
+          setIsWaiting(false);
           setAllTabs(data.allTabs || []);
           setKioskTabId(data.tabId || null);
           setName(data.name || 'Ekran Ścienny');
 
-          // Przy pierwszym wejściu automatycznie włączamy "Stronę Główną" kiosku
           if (!activeTabId && data.tabId) {
             setActiveTabId(data.tabId);
           }
@@ -134,6 +153,36 @@ export default function KioskPage() {
         >
           Sparuj urządzenie ponownie
         </button>
+      </div>
+    );
+  }
+
+  // --- WIDOK POCZEKALNI ---
+  if (isWaiting) {
+    return (
+      <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-4 -mt-16 pt-16">
+        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-8 max-w-md w-full text-center shadow-2xl animate-in zoom-in-95 duration-500">
+          
+          <div className="w-20 h-20 bg-orange-500/20 text-orange-400 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-orange-500/20">
+             <MonitorSmartphone size={40} />
+          </div>
+          
+          <h1 className="text-2xl font-black text-white mb-2 tracking-widest">{name}</h1>
+          
+          <div className="inline-block bg-emerald-500/10 border border-emerald-500/20 px-4 py-1.5 rounded-full mb-6">
+            <span className="text-emerald-400 font-bold text-sm">Sparowano pomyślnie!</span>
+          </div>
+          
+          <p className="text-slate-400 text-sm mb-8 leading-relaxed">
+            Urządzenie poprawnie zautoryzowane na Twoim koncie. Czeka na przypisanie pulpitu przez Administratora w ustawieniach systemu.
+          </p>
+          
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 size={24} className="text-slate-500 animate-spin" />
+            <span className="text-xs text-slate-600 uppercase tracking-widest font-bold">Oczekiwanie...</span>
+          </div>
+          
+        </div>
       </div>
     );
   }

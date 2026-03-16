@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
-import { Shield, Users, Trash2, ShieldAlert, Loader2, User, UserCheck, UserX, AlertTriangle, Lock, Unlock, Terminal as TerminalIcon, X } from 'lucide-react';
+import { Shield, Users, Trash2, ShieldAlert, Loader2, User, UserCheck, UserX, AlertTriangle, Lock, Unlock, Terminal as TerminalIcon, X, Smartphone, CheckCircle2, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { useTranslations } from 'next-intl';
@@ -37,6 +37,15 @@ export default function AdminPage() {
   const userRole = (session?.user as any)?.role;
   const currentUserId = (session?.user as any)?.id;
 
+  // Zakładki w panelu i stany dla Menedżera Urządzeń
+  const [activeTab, setActiveTab] = useState<'users' | 'devices'>('users');
+  const [kiosks, setKiosks] = useState<any[]>([]);
+  const [pairingCode, setPairingCode] = useState('');
+  const [selectedTabId, setSelectedTabId] = useState('');
+  const [availableTabs, setAvailableTabs] = useState<any[]>([]);
+  const [kioskName, setKioskName] = useState(''); // <--- NAZWA URZĄDZENIA
+  
+
   const fetchUsers = async () => {
     const res = await fetch('/api/admin/users');
     if (res.ok) setUsers(await res.json());
@@ -50,10 +59,92 @@ export default function AdminPage() {
     }
   };
 
+  const fetchKiosksAndLayouts = async () => {
+    try {
+      const [kRes, lRes] = await Promise.all([
+        fetch('/api/admin/kiosks'),
+        fetch('/api/user/layout') // Zaciągamy układy Twojego konta (Admina)
+      ]);
+      if (kRes.ok) {
+        const data = await kRes.json();
+        setKiosks(data.kiosks || []);
+      }
+      if (lRes.ok) {
+        const data = await lRes.json();
+        setAvailableTabs(data.layout || []);
+      }
+    } catch (e) { console.error(e); }
+  };
+
+  // NOWA FUNKCJA - Szybka zmiana przypisanego widoku!
+  const handleChangeLayout = async (kioskId: string, newTabId: string) => {
+    toast.loading('Aktualizowanie urządzenia...', { id: 'layoutUpdate' });
+    const res = await fetch('/api/admin/kiosks', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: kioskId, tabId: newTabId })
+    });
+    if (res.ok) {
+      toast.success('Pomyślnie zaktualizowano ekran!', { id: 'layoutUpdate' });
+      fetchKiosksAndLayouts();
+    } else {
+      toast.error('Błąd aktualizacji.', { id: 'layoutUpdate' });
+    }
+  };
+
+  // --- AUTOMATYCZNE FORMATOWANIE KODU PIN ---
+  const handlePairingCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // 1. Wywala wszystko co nie jest cyfrą
+    let val = e.target.value.replace(/\D/g, ''); 
+    // 2. Jeśli mamy więcej niż 4 cyfry, wstawiamy myślnik
+    if (val.length > 4) {
+      val = val.slice(0, 4) + '-' + val.slice(4, 8);
+    }
+    setPairingCode(val);
+  };
+
+  // Zaktualizowane Parowanie
+  const handlePairKiosk = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const res = await fetch('/api/kiosk/pair', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pairingCode, name: kioskName, tabId: selectedTabId }) // name idzie do bazy!
+    });
+    const data = await res.json();
+    setLoading(false);
+    if (res.ok) {
+      toast.success(data.message || 'Urządzenie sparowane!');
+      setPairingCode('');
+      setKioskName(''); // Reset
+      setSelectedTabId('');
+      fetchKiosksAndLayouts();
+    } else {
+      toast.error(data.error || 'Błąd parowania');
+    }
+  };
+
+  const handleUnlinkKiosk = async (id: string) => {
+    if (!confirm('Na pewno chcesz odłączyć to urządzenie?')) return;
+    setLoading(true);
+    const res = await fetch('/api/admin/kiosks', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    setLoading(false);
+    if (res.ok) {
+      toast.success('Urządzenie odłączone.');
+      fetchKiosksAndLayouts();
+    }
+  };
+
   useEffect(() => {
     if (userRole === 'ADMIN') {
       fetchUsers();
       fetchSettings();
+      fetchKiosksAndLayouts();
     }
     setLoading(false);
   }, [userRole]);
@@ -329,7 +420,26 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* TABELA UŻYTKOWNIKÓW */}
+        {/* --- NOWOŚĆ: PASEK ZAKŁADEK (UŻYTKOWNICY vs KIOSKI) --- */}
+        <div className="mt-8 mb-6 flex gap-6 border-b border-slate-800">
+          <button 
+            onClick={() => setActiveTab('users')} 
+            className={`pb-3 px-2 font-bold transition-all border-b-2 flex items-center gap-2 ${activeTab === 'users' ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+          >
+            <Users size={18} /> Użytkownicy
+          </button>
+          <button 
+            onClick={() => setActiveTab('devices')} 
+            className={`pb-3 px-2 font-bold transition-all border-b-2 flex items-center gap-2 ${activeTab === 'devices' ? 'border-orange-500 text-orange-400' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+          >
+            <Smartphone size={18} /> Ekrany Ścienne
+          </button>
+        </div>
+
+        {/* --- ZAKŁADKA 1: UŻYTKOWNICY (Twój obecny kod Tabeli wchodzi tutaj!) --- */}
+        {activeTab === 'users' && (
+          <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in duration-500">
+            {/* TABELA UŻYTKOWNIKÓW */}
         <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in duration-500">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -397,6 +507,116 @@ export default function AdminPage() {
             </table>
           </div>
         </div>
+          </div>
+        )}
+
+        {/* --- ZAKŁADKA 2: EKRANY KIOSK (MENEDŻER URZĄDZEŃ) --- */}
+        {activeTab === 'devices' && (
+          <div className="space-y-8 animate-in fade-in duration-500">
+            
+            {/* FORMULARZ PAROWANIA */}
+            <form onSubmit={handlePairKiosk} className="bg-slate-900/80 border border-slate-700/50 rounded-2xl p-6 md:p-8 shadow-xl relative overflow-hidden">
+               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-600 to-amber-400" />
+               <h3 className="text-white text-lg font-bold mb-6 flex items-center gap-2"><Plus size={20} className="text-orange-400"/> Sparuj nowe urządzenie</h3>
+               
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                 <div>
+                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Własna nazwa urządzenia</label>
+                   <input 
+                     type="text" 
+                     required 
+                     value={kioskName}
+                     onChange={e => setKioskName(e.target.value)}
+                     placeholder="np. Tablet w Kuchni" 
+                     className="block w-full px-4 py-3 border border-slate-700 rounded-xl bg-black/50 text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all" 
+                   />
+                 </div>
+                 <div>
+                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Kod z ekranu urządzenia</label>
+                   <input 
+                     type="text" 
+                     required 
+                     value={pairingCode}
+                     onChange={handlePairingCodeChange}
+                     maxLength={9}
+                     placeholder="4829-1034" 
+                     className="block w-full px-4 py-3 border border-slate-700 rounded-xl bg-black/50 text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all font-mono tracking-widest" 
+                   />
+                 </div>
+                 <div>
+                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Pulpit (Opcjonalnie)</label>
+                   <select 
+                     value={selectedTabId}
+                     onChange={e => setSelectedTabId(e.target.value)}
+                     className="block w-full px-4 py-3 border border-slate-700 rounded-xl bg-black/50 text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
+                   >
+                     <option value="">Brak (przypisz później)</option>
+                     {availableTabs.filter(t => t.isKiosk && !t.parentId).map(tab => (
+                       <option key={tab.id} value={tab.id}>{tab.name}</option>
+                     ))}
+                   </select>
+                 </div>
+               </div>
+               
+               <div className="mt-6 flex justify-end">
+                 <button type="submit" disabled={loading || !pairingCode || !kioskName} className="px-8 py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-orange-500/20 disabled:opacity-50 flex items-center gap-2">
+                   {loading ? <Loader2 size={18} className="animate-spin" /> : <><Smartphone size={18}/> Autoryzuj urządzenie</>}
+                 </button>
+               </div>
+            </form>
+
+            {/* LISTA AKTYWNYCH KIOSKÓW Z MOŻLIWOŚCIĄ EDYCJI */}
+            <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-6">
+              <h3 className="text-white font-bold mb-6 flex items-center gap-2"><CheckCircle2 size={20} className="text-emerald-400"/> Sparowane floty urządzeń</h3>
+              
+              <div className="flex flex-col gap-4">
+                {kiosks.length === 0 ? (
+                  <p className="text-slate-500 text-sm py-4">Brak podłączonych ekranów.</p>
+                ) : (
+                  kiosks.map(kiosk => (
+                    <div key={kiosk.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 bg-black/40 border border-slate-700/50 rounded-xl hover:bg-black/60 transition-colors group">
+                      
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-orange-500/10 rounded-xl text-orange-400 shadow-inner border border-orange-500/20">
+                          <Smartphone size={24} />
+                        </div>
+                        <div>
+                          <h4 className="text-white font-bold text-lg">{kiosk.name}</h4>
+                          <p className="text-xs text-slate-500">ID: <span className="font-mono text-[10px]">{kiosk.id}</span></p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 w-full sm:w-auto">
+                        {/* ROZWIJANA LISTA - MOŻESZ ZMIENIĆ PULPIT W KAŻDEJ CHWILI! */}
+                        <select 
+                          value={kiosk.tabId || ''}
+                          onChange={(e) => handleChangeLayout(kiosk.id, e.target.value)}
+                          className="flex-1 sm:w-48 px-3 py-2 border border-slate-600 rounded-lg bg-slate-800 text-sm text-white focus:border-emerald-500 transition-all"
+                        >
+                          <option value="">Nieprzypisany (Pusty ekran)</option>
+                          {availableTabs.filter(t => t.isKiosk && !t.parentId).map(tab => (
+                            <option key={tab.id} value={tab.id}>{tab.name}</option>
+                          ))}
+                        </select>
+
+                        <button 
+                          onClick={() => handleUnlinkKiosk(kiosk.id)}
+                          className="p-2.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors border border-transparent hover:border-red-500/20"
+                          title="Odłącz urządzenie"
+                        >
+                          <X size={18} />
+                        </button>
+                      </div>
+
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        
       </div>
     </div>
   );

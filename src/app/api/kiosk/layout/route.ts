@@ -13,31 +13,37 @@ export async function GET(req: Request) {
   const token = authHeader.split(' ')[1];
 
   try {
-    // Szukamy Kiosku i od razu zaciągamy powiązanego Użytkownika!
     const kiosk = await prisma.kiosk.findUnique({
       where: { deviceToken: token },
-      include: { user: true } // Pobieramy dane właściciela (Ciebie)
+      include: { user: true }
     });
 
-    if (!kiosk || !kiosk.user || !kiosk.user.dashboardLayout || !kiosk.tabId) {
-      return NextResponse.json({ error: 'Nie znaleziono kiosku lub układ jest pusty' }, { status: 404 });
+    // Jeśli Kiosk lub User totalnie nie istnieje - wtedy faktycznie jest błąd
+    if (!kiosk || !kiosk.user) {
+      return NextResponse.json({ error: 'Nie znaleziono kiosku' }, { status: 404 });
     }
 
-    // Wyciągamy na żywo układ z głównego konta użytkownika!
-    const userTabs = JSON.parse(kiosk.user.dashboardLayout);
+    // JEŚLI KIOSK JEST SPAROWANY, ALE NIE MA PRZYPISANEGO PULPITU
+    if (!kiosk.tabId) {
+      return NextResponse.json({ 
+        isWaiting: true,      // Zgłaszamy, że kiosk jest w trybie "Czekania"
+        name: kiosk.name 
+      });
+    }
+
+    // Wyciągamy układ, jeśli wszystko jest przypisane
+    const userTabs = JSON.parse(kiosk.user.dashboardLayout || '[]');
     const kioskTab = userTabs.find((t: any) => t.id === kiosk.tabId);
 
     if (!kioskTab) {
       return NextResponse.json({ error: 'Zakładka przypisana do tego Kiosku została usunięta.' }, { status: 404 });
     }
 
-    // Zamiast szukać tylko jednej zakładki, wyciągamy cały układ (JSON) z bazy
-    const allUserTabs = JSON.parse(kiosk.user.dashboardLayout || '[]');
-
     return NextResponse.json({
-      allTabs: allUserTabs, // <--- NOWOŚĆ: Wysyłamy wszystkie zakładki, żeby kiosk widział podstrony
-      tabId: kiosk.tabId,   // <--- NOWOŚĆ: Informujemy kiosk, jaka jest jego główna zakładka (Rodzic)
-      name: kiosk.name      // Zostawiamy nazwę dla zachowania działania
+      isWaiting: false,
+      allTabs: userTabs,
+      tabId: kiosk.tabId,
+      name: kiosk.name
     });
   } catch (error) {
     console.error("Błąd API Kiosku:", error);
