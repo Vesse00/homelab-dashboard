@@ -57,6 +57,7 @@ interface TabData {
   kioskWidth?: number;  // <--- DOKŁADNA SZEROKOŚĆ (PX)
   kioskHeight?: number; // <--- DOKŁADNA WYSOKOŚĆ (PX)
   widgets: WidgetItem[];
+  parentId?: string; // ID nadrzędnej zakładki (dla hierarchii)
 }
 
 // Domyślny layout startowy
@@ -439,7 +440,7 @@ const handleScan = async () => {
             onClick={() => {
               toast.dismiss(toastItem.id);
               
-              const updatedTabs = tabs.filter(tab => tab.id !== tabIdToDelete);
+              const updatedTabs = tabs.filter(tab => tab.id !== tabIdToDelete && tab.parentId !== tabIdToDelete);
               setTabs(updatedTabs);
               
               if (activeTabId === tabIdToDelete) {
@@ -466,6 +467,39 @@ const handleScan = async () => {
       position: 'top-center'
       // Zniknął obiekt "style", wszystko robimy Tailwindem!
     });
+  };
+
+  // --- DODAWANIE NOWEJ STRONY DO ISTNIEJĄCEGO KIOSKU ---
+  const handleAddSubTab = (parentId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Żeby kliknięcie w plusa nie przełączało zakładki
+    
+    const parentTab = tabs.find(t => t.id === parentId);
+    if (!parentTab) return;
+
+    // Liczymy, ile podstron już ma ten kiosk, żeby nadać ładną nazwę
+    const subTabsCount = tabs.filter(t => t.parentId === parentId).length;
+    
+    const newTabId = `tab-${Date.now()}`;
+    const newTab: TabData = {
+      id: newTabId,
+      name: `Strona ${subTabsCount + 2}`, // Skoro rodzic to str. 1, pierwsza podstrona to str. 2
+      isDeletable: true,
+      widgets: [],
+      isKiosk: true, // Podstrona zawsze jest Kioskiem
+      parentId: parentId, // Przypisanie do "Folderu"
+      kioskWidth: parentTab.kioskWidth,   // ODZIEDZICZENIE WYMIARÓW!
+      kioskHeight: parentTab.kioskHeight  // ODZIEDZICZENIE WYMIARÓW!
+    };
+
+    const updatedTabs = [...tabs, newTab];
+    setTabs(updatedTabs);
+    setActiveTabId(newTabId); // Od razu otwieramy nową stronę
+    
+    fetch('/api/user/layout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ layout: updatedTabs })
+    }).catch(err => console.error("Błąd zapisu podstrony", err));
   };
 
   return (
@@ -561,7 +595,9 @@ const handleScan = async () => {
 
       {/* --- SUB-NAVBAR (ZAKŁADKI W STYLU "PILLS" Z ANIMOWANYM X) --- */}
       <div className="sticky top-[72px] z-40 mb-6 flex items-center gap-2 px-4 py-2 overflow-x-auto scrollbar-hide">
-        {tabs.map((tab) => {
+        
+        {/* GRUPA 1: ZWYKŁE PULPITY (PC) - bez zmian */}
+        {tabs.filter(t => !t.isKiosk).map((tab) => {
           const isActive = tab.id === activeTabId;
           return (
             <button
@@ -575,36 +611,18 @@ const handleScan = async () => {
                 }
               `}
             >
-              {/* Ikona z odstępem (margin-right) */}
               <div className="mr-2 flex items-center justify-center">
-              {tab.isKiosk ? (
-                <Tablet size={15} className={isActive ? "text-purple-400 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]" : "text-purple-500/60"} />
-              ) : tab.id === 'main' ? (
-                <LayoutGrid size={15} className={isActive ? "text-sky-400" : "text-slate-500"} />
-              ) : (
-                <HardDrive size={15} className={isActive ? "text-sky-400" : "text-slate-500"} />
-              )}
-            </div>
-
-            <span>{tab.name}</span>
-            {/* Dodatkowy mini-badge dla Kiosku */}
-            {tab.isKiosk && (
-              <span className="ml-2 px-1.5 py-0.5 rounded-md bg-purple-500/10 text-[10px] font-bold text-purple-400 border border-purple-500/20 uppercase tracking-wider">
-                Kiosk
-              </span>
-            )}
+                {tab.id === 'main' 
+                  ? <LayoutGrid size={15} className={isActive ? "text-sky-400" : "text-slate-500"} /> 
+                  : <HardDrive size={15} className={isActive ? "text-sky-400" : "text-slate-500"} />
+                }
+              </div>
+              <span>{tab.name}</span>
               
-              {/* ANIMOWANY PRZYCISK "X" (Płynnie rozwija szerokość) */}
               {tab.isDeletable && (
                 <div 
                   onClick={(e) => handleDeleteTab(tab.id, e)}
-                  className={`
-                    overflow-hidden transition-all duration-300 ease-out flex items-center justify-center
-                    ${isActive 
-                      ? 'w-5 opacity-100 ml-1.5' // Zawsze rozwinięty dla aktywnej
-                      : 'w-0 opacity-0 group-hover:w-5 group-hover:opacity-100 group-hover:ml-1.5' // Zwinięty do 0px, rozwija się na hover
-                    }
-                  `}
+                  className={`overflow-hidden transition-all duration-300 ease-out flex items-center justify-center ${isActive ? 'w-5 opacity-100 ml-1.5' : 'w-0 opacity-0 group-hover:w-5 group-hover:opacity-100 group-hover:ml-1.5'}`}
                 >
                   <div className={`p-0.5 rounded-full transition-colors ${isActive ? 'text-sky-400/50 hover:text-red-400 hover:bg-red-500/20' : 'text-slate-500 hover:text-red-400 hover:bg-red-500/20'}`}>
                     <X size={14} className="shrink-0" />
@@ -615,10 +633,94 @@ const handleScan = async () => {
           );
         })}
 
-        {/* Przycisk "+" dodający nową zakładkę */}
+        {/* SEPARATOR (Jeśli są jakieś kioski) */}
+        {tabs.some(t => t.isKiosk) && (
+          <div className="w-px h-6 bg-slate-700/50 mx-2 shrink-0 rounded-full" />
+        )}
+
+        {/* GRUPA 2: EKRANY KIOSK (Telefony/Tablety Z PODSTRONAMI) */}
+        {tabs.filter(t => t.isKiosk && !t.parentId).map((mainTab) => {
+          const isMainActive = mainTab.id === activeTabId;
+          const subTabs = tabs.filter(t => t.parentId === mainTab.id); // Szukamy podstron tego kiosku
+
+          return (
+            // WSPÓLNE TŁO DLA CAŁEGO "URZĄDZENIA"
+            <div key={mainTab.id} className="flex items-center gap-1 bg-slate-900/40 p-1 rounded-full border border-slate-700/50 shadow-sm">
+              
+              {/* GŁÓWNA STRONA KIOSKU */}
+              <button
+                onClick={() => setActiveTabId(mainTab.id)}
+                className={`
+                  group relative flex items-center px-4 py-1.5 rounded-full text-sm font-semibold transition-all whitespace-nowrap
+                  ${isMainActive 
+                    ? 'bg-purple-500/20 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.15)]' 
+                    : 'text-slate-400 hover:text-purple-300 hover:bg-slate-800'
+                  }
+                `}
+              >
+                <div className="mr-2 flex items-center justify-center">
+                  <MonitorSmartphone size={15} className={isMainActive ? "text-purple-400" : "text-slate-500 group-hover:text-purple-400"} />
+                </div>
+                <span>{mainTab.name}</span>
+                
+                {/* MENU HOVER (PLUSIK I KRZYŻYK) */}
+                <div className="overflow-hidden transition-all duration-300 ease-out flex items-center justify-center w-0 opacity-0 group-hover:w-12 group-hover:opacity-100 group-hover:ml-2">
+                  <div 
+                    onClick={(e) => handleAddSubTab(mainTab.id, e)}
+                    className="p-1 rounded-full text-emerald-400 hover:bg-emerald-500/20 mr-1 transition-colors"
+                    title="Dodaj nową stronę"
+                  >
+                    <Plus size={14} className="shrink-0" />
+                  </div>
+                  {mainTab.isDeletable && (
+                    <div 
+                      onClick={(e) => handleDeleteTab(mainTab.id, e)}
+                      className="p-1 rounded-full text-slate-500 hover:text-red-400 hover:bg-red-500/20 transition-colors"
+                    >
+                      <X size={14} className="shrink-0" />
+                    </div>
+                  )}
+                </div>
+              </button>
+
+              {/* PODSTRONY KIOSKU (Renderowane obok rodzica wewnątrz tej samej ramki) */}
+              {subTabs.length > 0 && <div className="w-px h-4 bg-slate-700/50 mx-1 shrink-0" />}
+              {subTabs.map(subTab => {
+                 const isSubActive = subTab.id === activeTabId;
+                 return (
+                   <button
+                      key={subTab.id}
+                      onClick={() => setActiveTabId(subTab.id)}
+                      className={`
+                        group relative flex items-center px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap
+                        ${isSubActive
+                          ? 'bg-purple-500/10 text-purple-300 border border-purple-500/30 shadow-sm'
+                          : 'text-slate-500 hover:text-purple-300 hover:bg-slate-800 border border-transparent'
+                        }
+                      `}
+                   >
+                      <span>{subTab.name}</span>
+                      
+                      {/* USUWANIE PODSTRONY */}
+                      <div className="overflow-hidden transition-all duration-300 ease-out flex items-center justify-center w-0 opacity-0 group-hover:w-5 group-hover:opacity-100 group-hover:ml-1.5">
+                        <div
+                          onClick={(e) => handleDeleteTab(subTab.id, e)}
+                          className="p-0.5 rounded-full text-slate-500 hover:text-red-400 hover:bg-red-500/20 transition-colors"
+                        >
+                          <X size={12} className="shrink-0" />
+                        </div>
+                      </div>
+                   </button>
+                 )
+              })}
+            </div>
+          );
+        })}
+
+        {/* Przycisk "+" dodający główną zakładkę */}
         <button
           onClick={() => setIsAddTabModalOpen(true)}
-          className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-900/60 text-slate-400 border border-slate-700/50 hover:bg-slate-800 hover:text-sky-400 hover:border-sky-500/30 transition-all shrink-0 shadow-sm ml-1"
+          className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-900/60 text-slate-400 border border-slate-700/50 hover:bg-slate-800 hover:text-white hover:border-slate-500/50 transition-all shrink-0 shadow-sm ml-1"
         >
           <Plus size={16} />
         </button>

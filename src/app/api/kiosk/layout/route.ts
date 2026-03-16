@@ -31,9 +31,13 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Zakładka przypisana do tego Kiosku została usunięta.' }, { status: 404 });
     }
 
+    // Zamiast szukać tylko jednej zakładki, wyciągamy cały układ (JSON) z bazy
+    const allUserTabs = JSON.parse(kiosk.user.dashboardLayout || '[]');
+
     return NextResponse.json({
-      name: kioskTab.name,
-      layout: kioskTab.widgets // Zwracamy widgety NA ŻYWO z Twojego konta PC!
+      allTabs: allUserTabs, // <--- NOWOŚĆ: Wysyłamy wszystkie zakładki, żeby kiosk widział podstrony
+      tabId: kiosk.tabId,   // <--- NOWOŚĆ: Informujemy kiosk, jaka jest jego główna zakładka (Rodzic)
+      name: kiosk.name      // Zostawiamy nazwę dla zachowania działania
     });
   } catch (error) {
     console.error("Błąd API Kiosku:", error);

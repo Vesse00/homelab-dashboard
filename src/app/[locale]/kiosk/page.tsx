@@ -21,6 +21,14 @@ export default function KioskPage() {
     return () => clearInterval(timer);
   }, []);
 
+  
+  // --- ZMIENNE STANU DLA PODSTRON (zastępują stare `const [layout, setLayout]`) ---
+  const [allTabs, setAllTabs] = useState<any[]>([]); 
+  const [kioskTabId, setKioskTabId] = useState<string | null>(null);
+  const [activeTabId, setActiveTabId] = useState<string | null>(null);
+  // Zostawiasz też swoje setLoading i setError...
+
+  // --- POBIERANIE UKŁADU I INFORMACJI O KIOSKU ---
   useEffect(() => {
     const fetchLayout = async () => {
       const token = localStorage.getItem('kiosk_device_token');
@@ -37,8 +45,16 @@ export default function KioskPage() {
 
         if (res.ok) {
           const data = await res.json();
-          setLayout(data.layout || []);
+          
+          // Zapisujemy WSZYSTKIE zakładki z bazy i ID tego urządzenia
+          setAllTabs(data.allTabs || []);
+          setKioskTabId(data.tabId || null);
           setName(data.name || 'Ekran Ścienny');
+
+          // Przy pierwszym wejściu automatycznie włączamy "Stronę Główną" kiosku
+          if (!activeTabId && data.tabId) {
+            setActiveTabId(data.tabId);
+          }
         } else {
           setError('Nie udało się załadować widoku.');
         }
@@ -50,7 +66,17 @@ export default function KioskPage() {
     };
 
     fetchLayout();
-  }, [locale, router]);
+  }, [locale, router, activeTabId]); // Pamiętaj dodać activeTabId do tablicy zależności!
+
+  // --- MAGIA OBLICZEŃ (Umieść to tuż przed return (...)) ---
+  
+  // 1. Kiosk wybiera z całej bazy tylko te zakładki, które są jego (Główna + Podstrony)
+  const devicePages = allTabs.filter(t => t.id === kioskTabId || t.parentId === kioskTabId);
+  
+  // 2. Kiosk wyciąga widgety TYLKO dla tej strony, w którą akurat kliknąłeś na dolnym pasku
+  const activeWidgets = allTabs.find(t => t.id === activeTabId)?.widgets || [];
+
+  
 
   // --- AUTOMATYCZNE WYKRYWANIE I WYSYŁANIE WYMIARÓW EKRANU ---
   useEffect(() => {
@@ -116,35 +142,68 @@ export default function KioskPage() {
     // ZMIANA: -mt-16 wciąga ekran do góry, bg-transparent przepuszcza tło z layout.tsx
     <div className="min-h-screen bg-transparent p-4 flex flex-col overflow-hidden -mt-16 pt-6">
       
-      {/* 🌟 Nagłówek Kiosku */}
-      <div className="flex justify-between items-center mb-6 px-6 py-3 bg-slate-900/40 rounded-3xl border border-white/5 backdrop-blur-md shadow-2xl">
-        <div className="flex items-center gap-4">
-          <div className="p-2 bg-purple-500/20 rounded-xl">
-            <MonitorSmartphone className="text-purple-400" size={24} />
-          </div>
-          <span className="text-slate-200 font-bold text-lg tracking-wide">{name}</span>
-        </div>
-        
-        <div className="flex items-center gap-6">
-          {/* NOWE: Subtelny guzik odświeżania */}
-          <button 
-            onClick={() => window.location.reload()}
-            className="p-2 text-slate-500 hover:text-white hover:bg-white/10 rounded-xl transition-all active:rotate-180 duration-300"
-            title="Odśwież Kiosk"
-          >
-            <RefreshCw size={22} />
-          </button>
+      {/* 🌟 ELEGANCKI PASEK NAWIGACYJNY (NAGŁÓWEK + ZAKŁADKI) */}
+      <div className="w-full px-4 pt-4 mb-6 z-40 relative">
+        <div className="flex flex-col gap-4 bg-slate-900/50 backdrop-blur-xl p-4 sm:p-5 rounded-3xl border border-slate-700/50 shadow-2xl">
+          
+          {/* WIERSZ 1: Tytuł Kiosku (Lewo) i Odświeżenie (Prawo) */}
+          <div className="flex items-center justify-between w-full">
+            
+            <div className="flex items-center gap-3">
+              <div className="p-2 sm:p-2.5 bg-purple-500/20 rounded-xl shadow-inner hidden sm:flex border border-purple-500/20">
+                <MonitorSmartphone size={20} className="text-purple-400" />
+              </div>
+              <h1 className="text-xl sm:text-2xl font-black text-white tracking-widest uppercase drop-shadow-md">
+                {name}
+              </h1>
+            </div>
 
-          {/* Zegar */}
-          <div className="text-3xl font-black text-white tracking-widest font-mono drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
-            {time.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
+            <button 
+              onClick={() => window.location.reload()}
+              className="p-2 sm:px-4 sm:py-2 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl border border-slate-600/50 hover:border-slate-500 transition-all flex items-center gap-2 group shadow-sm shrink-0"
+              title="Odśwież Kiosk"
+            >
+              <RefreshCw size={18} className="group-active:rotate-180 transition-transform duration-500 text-slate-400 group-hover:text-white" />
+              <span className="hidden sm:block text-sm font-bold">Odśwież</span>
+            </button>
+
           </div>
+
+          {/* WIERSZ 2: Zakładki / Podstrony (Tylko jeśli są podstrony) */}
+          {devicePages.length > 1 && (
+            <div className="flex flex-col gap-3">
+              {/* Delikatny separator oddzielający tytuł od stron */}
+              <div className="w-full h-px bg-slate-700/50 rounded-full" />
+              
+              <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1">
+                {devicePages.map((page) => {
+                  const isActive = activeTabId === page.id;
+                  return (
+                    <button
+                      key={page.id}
+                      onClick={() => setActiveTabId(page.id)}
+                      className={`
+                        relative flex items-center justify-center px-5 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap border
+                        ${isActive 
+                          ? 'bg-purple-500/20 text-purple-300 border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.2)]' 
+                          : 'bg-slate-800/40 text-slate-400 border-transparent hover:bg-slate-700 hover:text-white hover:border-slate-600/50 shadow-sm'
+                        }
+                      `}
+                    >
+                      {page.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
 
       <div className="flex-1 w-full relative overflow-y-auto custom-scrollbar pr-2">
         <DashboardGrid 
-          layout={layout} 
+          layout={activeWidgets} 
           onLayoutChange={() => {}} 
           isEditMode={false}        
           isAdmin={false}           
@@ -152,7 +211,9 @@ export default function KioskPage() {
           onToggleLock={() => {}}
           isKiosk={true}
         />
+        
       </div>
+      
     </div>
   );
 }
