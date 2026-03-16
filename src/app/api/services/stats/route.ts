@@ -3,19 +3,57 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/auth";
 import { decrypt } from '@/app/lib/encryption';
 import { checkDualAuth } from '@/app/lib/auth';
+import {prisma} from '@/app/lib/prisma';
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 export async function POST(req: Request) {
-  const isAuthenticated = await checkDualAuth(req);
-  if (!isAuthenticated) {
+  // 1. SPRAWDZAMY CZY TO JEST KIOSK (CZY MA TOKEN BEARER)
+  let isAuthorized = false;
+  const authHeader = req.headers.get('authorization');
+  
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    const kiosk = await prisma.kiosk.findUnique({ where: { deviceToken: token } });
+    if (kiosk) isAuthorized = true;
+  }
+
+  // 2. JEŚLI TO NIE KIOSK, SPRAWDZAMY ZWYKŁĄ SESJĘ
+  if (!isAuthorized) {
+    const hasSession = await checkDualAuth(req);
+    if (hasSession) isAuthorized = true;
+  }
+
+  // Jeśli brak i Kiosku i Sesji - wyrzucamy 401
+  if (!isAuthorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
     const body = await req.json();
-    const { appName, url, widgetType, settings } = body;
+    let { appName, url, widgetType, settings, serviceId } = body;
 
+    if (serviceId && !url) {
+      const service = await prisma.service.findUnique({ where: { id: serviceId } });
+      if (!service) {
+        return NextResponse.json({ error: 'Usługa nie istnieje' }, { status: 404 });
+      }
+      
+      // Odtwarzamy obiekt tak, jakby przysłał go klasyczny Dashboard
+      appName = service.name;
+      url = `${service.protocol}://${service.ip}:${service.port}`;
+      widgetType = service.type;
+      
+      // Tworzymy paczkę zaszyfrowanych ustawień
+      settings = {
+         authType: service.authType,
+         username: service.username,
+         password: service.password,
+         apiKey: service.apiKey
+      };
+    }
+
+    // Zabezpieczenie (które wcześniej rzucało 400) - teraz przepuści, bo URL jest pobrany z bazy!
     if (!url) {
       return NextResponse.json({ error: 'Brak adresu URL' }, { status: 400 });
     }

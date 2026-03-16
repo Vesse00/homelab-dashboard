@@ -2,6 +2,8 @@ import React from 'react';
 import KioskSystemWidget from './KioskSystemWidget';
 import KioskClockWidget from './KioskClockWidget';
 import WeatherWidget from '../widgets/WeatherWidget';
+import KioskPiholeWidget from './KioskPiholeWidget';
+import KioskHomeAssistantWidget from './KioskHomeAssistantWidget';
 
 // Funkcja, która przyjmuje dane z grida i zwraca gotowy widget kiosku (lub null)
 export function renderKioskWidget(item: any, commonProps: any) {
@@ -20,6 +22,12 @@ export function renderKioskWidget(item: any, commonProps: any) {
     case 'kiosk-weather':
       // Pogoda rozciąga się ładnie, więc na razie możemy użyć klasycznej w Kiosku
       return <WeatherWidget {...commonProps} />;
+
+    case 'kiosk-dns':
+      return <KioskPiholeWidget {...commonProps} />;
+
+    case 'kiosk-home-assistant':
+      return <KioskHomeAssistantWidget {...commonProps} />;
 
     // Tutaj w przyszłości dodamy: case 'kiosk-pihole': return <KioskPiholeWidget ... />
 
