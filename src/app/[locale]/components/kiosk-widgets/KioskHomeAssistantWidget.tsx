@@ -68,9 +68,12 @@ export default function KioskHomeAssistantWidget({
   const onPercent = entities.total > 0 ? (entities.on / entities.total) * 100 : 0;
   const offPercent = entities.total > 0 ? (entities.off / entities.total) * 100 : 0;
 
+  const isTinyHeight = h <= 1;
   const isCompactHeight = h <= 2;       
   const isVertical = w <= 2 && h >= 3;
   const isLarge = w >= 3 && h >= 3;
+
+  const showHeader = h >= 2;
 
   let bgClass = 'bg-slate-900/70 border-slate-700/50';
   let iconColor = 'text-slate-500';
@@ -88,8 +91,8 @@ export default function KioskHomeAssistantWidget({
 
   return (
     <div 
-      style={{ ...style, containerType: 'size', minHeight: `${Math.max(120, h * 40)}px` }} 
-      className={`h-full w-full backdrop-blur-2xl border rounded-3xl flex flex-col relative overflow-hidden transition-all duration-300 group ${bgClass} ${className}`}
+      style={{ ...style, containerType: 'size' }} 
+      className={`absolute inset-0 backdrop-blur-2xl border rounded-3xl flex flex-col overflow-hidden transition-all duration-300 group ${bgClass} ${className || ''}`}
       onMouseDown={onMouseDown} 
       onMouseUp={onMouseUp} 
       onTouchEnd={onTouchEnd}
@@ -109,19 +112,21 @@ export default function KioskHomeAssistantWidget({
       )}
 
       {/* NAGŁÓWEK */}
-      <div className={`flex justify-between items-start z-10 shrink-0 ${isCompactHeight ? 'p-3' : 'p-4'}`}>
-         <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-xl bg-black/40 border border-white/5 shadow-inner ${iconColor}`}>
-               <TopIcon size={isCompactHeight ? 16 : 20} />
-            </div>
-            <div className="truncate">
-              <span style={{ fontSize: 'min(6cqw, 14cqh)' }} className="font-bold text-white block leading-tight truncate">{data.name || 'Home Assistant'}</span>
-              <span style={{ fontSize: 'min(4cqw, 10cqh)' }} className="text-slate-400 font-mono tracking-widest uppercase">Smart Home</span>
-            </div>
-         </div>
-      </div>
+      {showHeader && (
+        <div className={`flex justify-between items-start z-10 shrink-0 ${isCompactHeight ? 'p-2 px-3' : 'p-4'}`}>
+           <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-xl bg-black/40 border border-white/5 shadow-inner ${iconColor}`}>
+                 <TopIcon size={isCompactHeight ? 16 : 20} />
+              </div>
+              <div className="truncate">
+                <span style={{ fontSize: 'min(6cqw, 14cqh)' }} className="font-bold text-white block leading-tight truncate">{data.name || 'Home Assistant'}</span>
+                <span style={{ fontSize: 'min(4cqw, 10cqh)' }} className="text-slate-400 font-mono tracking-widest uppercase">Smart Home</span>
+              </div>
+           </div>
+        </div>
+      )}
 
-      <div className={`flex-1 flex flex-col z-10 min-h-0 justify-center ${isCompactHeight ? 'px-3 pb-3' : 'px-4 pb-4'}`}>
+      <div className={`flex-1 flex flex-col z-10 min-h-0 justify-center ${showHeader ? (isCompactHeight ? 'px-3 pb-2' : 'px-4 pb-4') : 'p-[2cqmin]'}`}>
          {isLoading ? (
             <div className="flex items-center justify-center h-full"><Loader2 size={24} className="animate-spin text-blue-500/50" /></div>
          ) : isError ? (
@@ -129,18 +134,18 @@ export default function KioskHomeAssistantWidget({
               <span style={{ fontSize: 'min(12cqw, 20cqh)' }} className="font-black text-red-400 drop-shadow-md leading-none">{error || t('error')}</span>
             </div>
          ) : (
-            <div className={`flex-1 flex ${isVertical ? 'flex-col' : 'flex-row'} items-center justify-center gap-2 sm:gap-4 min-h-0`}>
+            <div className={`flex-1 flex ${isVertical ? 'flex-col' : 'flex-row'} items-center justify-center gap-[2cqmin] min-h-0 w-full h-full`}>
                
-               <div className={`flex flex-col items-center justify-center bg-black/40 rounded-2xl border border-white/5 shadow-inner min-h-0 transition-colors relative overflow-hidden ${isCompactHeight ? 'flex-1 w-full p-2' : 'w-1/2 h-full p-3'}`}>
+               <div className={`flex flex-col items-center justify-center bg-black/40 rounded-2xl border border-white/5 shadow-inner min-h-0 transition-colors relative overflow-hidden ${isCompactHeight ? 'flex-1 w-full p-[2cqmin]' : 'w-1/2 h-full p-[2cqmin]'}`}>
                   <div className={`absolute inset-0 bg-gradient-to-b ${entities.on > 0 ? 'from-amber-500/20' : 'from-slate-500/10'} to-transparent opacity-30`} />
-                  <Lightbulb size={18} className={`${entities.on > 0 ? 'text-amber-400 shadow-[0_0_10px_#fbbf24] bg-amber-400/10 rounded-full' : 'text-slate-600'} mb-1 relative z-10`} />
-                  <span style={{ fontSize: isCompactHeight ? 'min(25cqw, 40cqh)' : 'min(18cqw, 26cqh)' }} className={`font-black tracking-tighter leading-none relative z-10 drop-shadow-md ${entities.on > 0 ? 'text-amber-400' : 'text-slate-500'}`}>
+                  {!isTinyHeight && <Lightbulb size={isCompactHeight ? 14 : 18} className={`${entities.on > 0 ? 'text-amber-400 shadow-[0_0_10px_#fbbf24] bg-amber-400/10 rounded-full' : 'text-slate-600'} mb-1 relative z-10`} />}
+                  <span style={{ fontSize: isTinyHeight ? 'min(25cqw, 60cqh)' : isCompactHeight ? 'min(20cqw, 40cqh)' : 'min(18cqw, 26cqh)' }} className={`font-black tracking-tighter leading-none relative z-10 drop-shadow-md ${entities.on > 0 ? 'text-amber-400' : 'text-slate-500'}`}>
                     {entities.on > 0 ? entities.on : '0'}
                   </span>
-                  <span style={{ fontSize: isCompactHeight ? 'min(5cqw, 10cqh)' : 'min(3.5cqw, 7cqh)' }} className="text-slate-400 font-bold tracking-widest mt-1 uppercase relative z-10 shrink-0">{t('HomeAssistant.turnedOn')}</span>
+                  {!isTinyHeight && <span style={{ fontSize: isCompactHeight ? 'min(5cqw, 10cqh)' : 'min(3.5cqw, 7cqh)' }} className="text-slate-400 font-bold tracking-widest mt-1 uppercase relative z-10 shrink-0">{t('HomeAssistant.turnedOn')}</span>}
                </div>
 
-               <div className={`flex flex-col justify-center gap-2 min-h-0 ${isCompactHeight ? 'flex-1 w-full' : 'w-1/2 h-full'}`}>
+               <div className={`flex flex-col justify-center gap-2 min-h-0 ${isCompactHeight || isTinyHeight ? 'flex-1 w-full h-full' : 'w-1/2 h-full'}`}>
                  {isLarge ? (
                    <div className="w-full flex flex-col justify-center flex-1 bg-black/40 rounded-2xl border border-white/5 p-4">
                       <span className="text-xs text-slate-400 uppercase font-bold mb-2 flex items-center justify-between">

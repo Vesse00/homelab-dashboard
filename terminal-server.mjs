@@ -5,7 +5,7 @@ import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
-const PORT = 3004;
+const PORT = process.env.TERMINAL_PORT ? parseInt(process.env.TERMINAL_PORT, 10) : 3004;
 
 const io = new Server(PORT, {
   cors: {

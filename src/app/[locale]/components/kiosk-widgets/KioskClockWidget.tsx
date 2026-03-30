@@ -37,7 +37,7 @@ export default function KioskClockWidget({
   const day = time.getDate();
   const month = months[time.getMonth()];
 
-  const fallbackHeight = `${Math.max(80, h * 40)}px`;
+  const fallbackHeight = `${Math.max(120, h * 40)}px`;
 
   // --- BARDZIEJ PRECYZYJNA DETEKCJA ROZMIARÓW ---
   const isTinyWidth = w <= 2;
@@ -45,19 +45,22 @@ export default function KioskClockWidget({
   const isTinyHeight = h <= 1;
   const isCompactHeight = h <= 2;
 
+  // Renderujemy datę tylko wtedy, gdy mamy wystarczająco dużo miejsca
+  const showDate = h >= 2;
+
   return (
-    <div 
-      style={{ 
-        ...style, 
+    <div
+      style={{
+        ...style,
         containerType: 'size',
-        minHeight: (!style?.height || style.height === 'auto') ? fallbackHeight : undefined
-      }} 
-      className={`bg-slate-900/70 backdrop-blur-xl border border-slate-700/50 rounded-3xl shadow-xl flex flex-col relative overflow-hidden transition-all duration-300 h-full w-full group ${className}`} 
-      onMouseDown={onMouseDown} 
-      onMouseUp={onMouseUp} 
+        // usunięto fallbackHeight, polegamy na absolutnym wypełnieniu widżetu w kontenerze
+      }}
+      className={`absolute inset-0 backdrop-blur-2xl border rounded-3xl flex flex-col overflow-hidden transition-all duration-300 group bg-slate-900/70 border-slate-700/50 shadow-[0_8px_32px_rgba(2,6,23,0.6)] ${className || ''}`}
+      onMouseDown={onMouseDown}
+      onMouseUp={onMouseUp}
       onTouchEnd={onTouchEnd}
     >
-      <Clock className="absolute -left-4 -bottom-4 w-32 h-32 text-blue-500 opacity-5 pointer-events-none transform rotate-12" />
+      <Clock className={`absolute -right-6 -bottom-6 ${isCompactHeight ? 'w-24 h-24' : 'w-40 h-40'} text-blue-500 opacity-[0.03] pointer-events-none transform rotate-12`} />
 
       {isEditMode && (
         <div className="absolute inset-0 bg-slate-900/80 z-50 flex flex-col items-center justify-center border-2 border-blue-500/50 rounded-3xl cursor-move grid-drag-handle backdrop-blur-sm">
@@ -76,32 +79,34 @@ export default function KioskClockWidget({
         </div>
       )}
 
-      {/* Marginesy maleją, gdy robi się ciaśniej */}
-      <div className={`flex-1 flex flex-col items-center justify-center z-10 min-h-0 text-center ${isCompactHeight ? 'p-2' : 'p-4'}`}>
-        
-        {/* LEKKO POMNIEJSZONA GODZINA DLA LEPSZYCH PROPORCJI */}
-        <span 
-          style={{ fontSize: isTinyHeight ? 'min(40cqw, 70cqh)' : 'min(30cqw, 40cqh)' }} 
-          className="leading-none font-black text-white tracking-tighter drop-shadow-lg"
+      {/* Content area filled aggressively to take max space with tiny logical paddings based on container size */}
+      <div className="flex flex-col items-center justify-center w-full h-full p-[2cqmin] z-10">
+        <span
+          style={{
+            // Dynamiczne font-size: czas zajmuje zawsze niemal cały ekran.
+            // max-width of '00:00' is roughly ~3em, tak więc max ~30cqw.
+            fontSize: showDate ? 'min(30cqw, 60cqh)' : 'min(32cqw, 85cqh)',
+            lineHeight: 0.85
+          }}
+          className="font-black text-white tracking-tighter drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] z-10"
         >
           {time.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
         </span>
-        
-        {/* DATA */}
-        {!isTinyHeight && (
+
+        {/* Date badge */}
+        {showDate && (
           <div 
-            style={{ marginTop: 'min(2cqh, 0.5rem)' }} 
-            className={`${isCompactWidth ? 'px-3 py-1' : 'px-5 py-1.5 sm:px-6 sm:py-2'} rounded-full bg-slate-800/60 border border-slate-600/50 shadow-inner flex items-center justify-center`}
+            style={{ marginTop: 'min(3cqh, 12px)' }}
+            className={`${isCompactWidth ? 'px-3 py-1' : 'px-5 py-1.5'} rounded-full bg-slate-800/50 border border-slate-700/40 shadow-inner flex items-center justify-center z-10`}
           >
-            {/* ZMNIEJSZONE `cqw/cqh` + DYNAMICZNY SKRÓT DATY */}
             <span 
-              style={{ fontSize: isCompactWidth ? 'min(6cqw, 14cqh)' : 'min(4.5cqw, 10cqh)' }} 
+              style={{ fontSize: isCompactWidth ? 'min(6cqw, 12cqh)' : 'min(4.5cqw, 10cqh)' }} 
               className="font-bold text-blue-400 tracking-widest uppercase whitespace-nowrap"
             >
-              {isTinyWidth 
-                ? `${day}.${(time.getMonth() + 1).toString().padStart(2, '0')}` // Np. 16.03
-                : isCompactWidth 
-                  ? `${shortDayName}, ${day} ${month.substring(0, 3)}` // Np. PON, 16 MAR
+              {isTinyWidth
+                ? `${day}.${(time.getMonth() + 1).toString().padStart(2, '0')}` // Krótka data
+                : isCompactWidth
+                  ? `${shortDayName}, ${day} ${month.substring(0, 3)}` // Średnia data
                   : `${dayName}, ${day} ${month}` // Pełna data
               }
             </span>

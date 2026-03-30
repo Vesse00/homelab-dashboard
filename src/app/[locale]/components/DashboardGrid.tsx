@@ -115,8 +115,8 @@ export default function DashboardGrid({
     <ResponsiveGridLayout
       className="layout"
       layouts={{ lg: layout }}
-      breakpoints={isKiosk ? { lg: 0 } : { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-      cols={isKiosk ? { lg: 12 } : { lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+      breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+      cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
       rowHeight={100} // Zachowałem Twoje ustawienie wysokości
       margin={[16, 16]}
       

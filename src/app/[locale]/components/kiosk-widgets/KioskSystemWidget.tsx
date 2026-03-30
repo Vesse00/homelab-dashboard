@@ -50,26 +50,32 @@ export default function KioskSystemWidget({
   const getCpuBg = (val: number) => val > 80 ? 'bg-red-500/10 border-red-500/20' : val > 50 ? 'bg-amber-500/10 border-amber-500/20' : 'bg-slate-800/80 border-slate-700/50';
   const getMemBg = (val: number) => val > 85 ? 'bg-red-500/10 border-red-500/20' : val > 65 ? 'bg-amber-500/10 border-amber-500/20' : 'bg-slate-800/80 border-slate-700/50';
 
-  const fallbackHeight = `${Math.max(80, h * 40)}px`;
+  const fallbackHeight = `${Math.max(120, h * 40)}px`;
 
   // --- DETEKCJA MIKRO I COMPACT ROZMIARÓW ---
-  const isMicro = w <= 2 && h <= 2;     
-  const isCompactHeight = h <= 2;       // Ukryjemy nagłówek dla płaskich widgetów (np. 3x2)
+  const isMicro = w <= 2 && h <= 2;
+  const isTinyWidth = w <= 2;
   const isCompactWidth = w <= 3;
+  const isTinyHeight = h <= 1;
+  const isCompactHeight = h <= 2;
   const isVertical = w <= 2 && h >= 3;  
+  
+  const showHeader = h >= 2;
 
   return (
     <div 
       style={{ 
         ...style, 
         containerType: 'size',
-        minHeight: (!style?.height || style.height === 'auto') ? fallbackHeight : undefined
+        // usunięto fallbackHeight, polegamy na stylach nadrzędnego kontenera grida
       }} 
-      className={`bg-slate-900/70 backdrop-blur-xl border border-slate-700/50 rounded-3xl shadow-xl flex flex-col relative overflow-hidden transition-all duration-300 h-full w-full group ${className}`} 
+      className={`absolute inset-0 backdrop-blur-2xl border rounded-3xl flex flex-col overflow-hidden transition-all duration-300 group bg-slate-900/70 border-slate-700/50 shadow-[0_8px_32px_rgba(2,6,23,0.6)] ${className || ''}`} 
       onMouseDown={onMouseDown} 
       onMouseUp={onMouseUp} 
       onTouchEnd={onTouchEnd}
     >
+      <ServerCrash className={`absolute -right-6 -bottom-6 ${isCompactHeight ? 'w-32 h-32' : 'w-48 h-48'} text-slate-500 opacity-[0.03] pointer-events-none transform -rotate-12 transition-all duration-500`} />
+
       {isEditMode && (
         <div className="absolute inset-0 bg-slate-900/80 z-50 flex flex-col items-center justify-center border-2 border-emerald-500/50 rounded-3xl cursor-move grid-drag-handle backdrop-blur-sm">
            <div className="absolute top-2 right-2 cursor-pointer text-slate-400 hover:text-red-500 bg-slate-800/80 p-1.5 rounded-lg" onMouseDown={e => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onRemove(id); }}>
@@ -88,19 +94,19 @@ export default function KioskSystemWidget({
       )}
 
       {error ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-red-400 z-10 p-2 text-center min-h-0">
+        <div className="flex-1 flex flex-col items-center justify-center text-red-400 z-10 p-[2cqmin] text-center min-h-0">
           <ServerCrash size={24} className="mb-1 opacity-50 drop-shadow-md" />
-          <span className="font-bold text-[10px] bg-red-500/10 px-2 py-0.5 rounded-full border border-red-500/20">{error}</span>
+          <span style={{ fontSize: 'min(10cqw, 20cqh)' }} className="font-bold bg-red-500/10 px-2 py-0.5 rounded-full border border-red-500/20">{error}</span>
         </div>
       ) : !stats ? (
         <div className="flex-1 flex items-center justify-center z-10">
-          <Activity className="text-emerald-500/30 animate-pulse" size={isMicro ? 24 : 48} />
+          <Activity className="text-emerald-500/30 animate-pulse" size={isTinyHeight ? 24 : 48} />
         </div>
       ) : (
-        <div className={`flex flex-col h-full z-10 min-h-0 ${isCompactHeight ? 'p-2' : 'p-3 sm:p-4'}`}>
+        <div className={`flex flex-col h-full w-full z-10 min-h-0 ${showHeader ? (isCompactHeight ? 'p-2' : 'p-3 sm:p-4') : 'p-[2cqmin]'}`}>
           
-          {/* UKRYWAMY NAGŁÓWEK "Serwer" w trybie h=2 lub w=2, by zrobić miejsce na same procenty! */}
-          {!isCompactHeight && (
+          {/* UKRYWAMY NAGŁÓWEK w trybie mocno kompaktowym, by zrobić miejsce na same procenty! */}
+          {showHeader && (
             <div className="flex justify-between items-center mb-2 px-1 shrink-0">
               <h3 style={{ fontSize: 'min(5cqw, 10cqh)' }} className="font-bold text-slate-300 uppercase tracking-widest truncate flex items-center gap-2">
                 <ServerCrash size={14} className="text-slate-500 hidden sm:block" /> Serwer
@@ -111,38 +117,48 @@ export default function KioskSystemWidget({
             </div>
           )}
 
-          <div className={`flex-1 flex ${isVertical ? 'flex-col' : 'flex-row'} items-center justify-center min-h-0 ${isCompactHeight ? 'gap-2' : 'gap-3 sm:gap-4'}`}>
+          <div className={`flex-1 flex ${isVertical ? 'flex-col' : 'flex-row'} items-center justify-center min-h-0 w-full h-full gap-[2cqmin]`}>
             
             {/* CPU */}
-            <div className={`flex-1 w-full flex flex-col items-center justify-center rounded-2xl h-full border shadow-inner min-h-0 transition-colors ${getCpuBg(stats.cpu)} ${isCompactHeight ? 'p-1' : 'p-2'}`}>
-              {(!isMicro && !isCompactHeight) && <Cpu className={`mb-1 shrink-0 ${getCpuColor(stats.cpu)}`} style={{ width: 'min(12cqw, 18cqh)', height: 'min(12cqw, 18cqh)' }} />}
+            <div className={`flex flex-col rounded-2xl h-full w-full border shadow-inner min-h-0 transition-colors relative overflow-hidden ${getCpuBg(stats.cpu)} p-[3cqmin]`}>
+              <div className="w-full flex justify-start items-center gap-1 opacity-70 shrink-0">
+                <Cpu style={{ width: 'max(12px, min(5cqw, 10cqh))', height: 'max(12px, min(5cqw, 10cqh))' }} className={getCpuColor(stats.cpu)} />
+                <span style={{ fontSize: 'max(8px, min(4cqw, 8cqh))' }} className="font-bold tracking-widest uppercase text-slate-300 leading-none">CPU</span>
+              </div>
               
-              <span 
-                style={{ fontSize: isMicro ? 'min(35cqw, 45cqh)' : isCompactHeight ? 'min(20cqw, 35cqh)' : 'min(16cqw, 24cqh)' }} 
-                className={`font-black ${getCpuColor(stats.cpu)} tracking-tighter leading-none`}
-              >
-                {Math.round(stats.cpu)}<span style={{ fontSize: isMicro ? 'min(15cqw, 20cqh)' : 'min(8cqw, 12cqh)' }} className="opacity-70">%</span>
-              </span>
-              
-              {!isMicro && <span style={{ fontSize: isCompactHeight ? 'min(5cqw, 10cqh)' : 'min(3.5cqw, 7cqh)' }} className="text-slate-400 font-bold tracking-widest mt-1 uppercase shrink-0">CPU</span>}
+              <div className="flex-1 flex items-center justify-center w-full z-10 min-h-0">
+                <div className="flex items-baseline justify-center">
+                  <span 
+                    style={{ fontSize: isTinyHeight ? 'min(24cqw, 45cqh)' : (isVertical ? 'min(24cqw, 30cqh)' : 'min(18cqw, 26cqh)') }} 
+                    className={`font-black tracking-tighter leading-none drop-shadow-md ${getCpuColor(stats.cpu)}`}
+                  >
+                    {Math.round(stats.cpu)}
+                  </span>
+                  <span style={{ fontSize: isTinyHeight ? 'min(10cqw, 18cqh)' : 'min(8cqw, 14cqh)' }} className={`font-bold ml-[2px] opacity-80 ${getCpuColor(stats.cpu)}`}>%</span>
+                </div>
+              </div>
             </div>
 
             {/* RAM */}
-            <div className={`flex-1 w-full flex flex-col items-center justify-center rounded-2xl h-full border shadow-inner min-h-0 transition-colors ${getMemBg(stats.mem)} ${isCompactHeight ? 'p-1' : 'p-2'}`}>
-              {(!isMicro && !isCompactHeight) && (
-                <div className={`rounded-full border-[2px] mb-1 flex items-center justify-center shrink-0 shadow-sm ${getMemColor(stats.mem).replace('text-', 'border-')} ${getMemColor(stats.mem).replace('text-', 'bg-').replace('400', '900/30')}`} style={{ width: 'min(12cqw, 18cqh)', height: 'min(12cqw, 18cqh)' }}>
-                  <span className={`font-black ${getMemColor(stats.mem)} block text-center leading-none`} style={{ fontSize: 'min(6cqw, 10cqh)' }}>R</span>
+            <div className={`flex flex-col rounded-2xl h-full w-full border shadow-inner min-h-0 transition-colors relative overflow-hidden ${getMemBg(stats.mem)} p-[3cqmin]`}>
+              <div className="w-full flex justify-start items-center gap-1 opacity-70 shrink-0">
+                <div className={`rounded-sm border-[1px] flex items-center justify-center shrink-0 shadow-sm ${getMemColor(stats.mem).replace('text-', 'border-')} ${getMemColor(stats.mem).replace('text-', 'bg-').replace('400', '900/30')}`} style={{ width: 'max(12px, min(5cqw, 10cqh))', height: 'max(12px, min(5cqw, 10cqh))' }}>
+                  <span className={`font-black ${getMemColor(stats.mem)} block text-center leading-none`} style={{ fontSize: 'max(7px, min(3cqw, 6cqh))' }}>R</span>
                 </div>
-              )}
+                <span style={{ fontSize: 'max(8px, min(4cqw, 8cqh))' }} className="font-bold tracking-widest uppercase text-slate-300 leading-none">RAM</span>
+              </div>
               
-              <span 
-                style={{ fontSize: isMicro ? 'min(35cqw, 45cqh)' : isCompactHeight ? 'min(20cqw, 35cqh)' : 'min(16cqw, 24cqh)' }} 
-                className={`font-black ${getMemColor(stats.mem)} tracking-tighter leading-none`}
-              >
-                {Math.round(stats.mem)}<span style={{ fontSize: isMicro ? 'min(15cqw, 20cqh)' : 'min(8cqw, 12cqh)' }} className="opacity-70">%</span>
-              </span>
-              
-              {!isMicro && <span style={{ fontSize: isCompactHeight ? 'min(5cqw, 10cqh)' : 'min(3.5cqw, 7cqh)' }} className="text-slate-400 font-bold tracking-widest mt-1 uppercase shrink-0">RAM</span>}
+              <div className="flex-1 flex items-center justify-center w-full z-10 min-h-0">
+                <div className="flex items-baseline justify-center">
+                  <span 
+                    style={{ fontSize: isTinyHeight ? 'min(24cqw, 45cqh)' : (isVertical ? 'min(24cqw, 30cqh)' : 'min(18cqw, 26cqh)') }} 
+                    className={`font-black tracking-tighter leading-none drop-shadow-md ${getMemColor(stats.mem)}`}
+                  >
+                    {Math.round(stats.mem)}
+                  </span>
+                  <span style={{ fontSize: isTinyHeight ? 'min(10cqw, 18cqh)' : 'min(8cqw, 14cqh)' }} className={`font-bold ml-[2px] opacity-80 ${getMemColor(stats.mem)}`}>%</span>
+                </div>
+              </div>
             </div>
             
           </div>
